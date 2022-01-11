@@ -9,7 +9,6 @@ use std::collections::HashMap;
 use steamid_ng::SteamID;
 use steam_tradeoffers::api::Asset;
 
-
 fn is_key(item: &Asset) -> bool {
     item.classinfo.market_hash_name == "Mann Co. Supply Crate Key"
 }
@@ -67,26 +66,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(items) => {
             if let Some(item) = items.iter().find(|item| is_key(*item)) {
                 println!("{:?}", item);
-                // match api.send_offer(&offers_request::CreateTradeOffer {
-                //     id: None,
-                //     items_to_receive: vec![
-                //         Item {
-                //             appid: 440,
-                //             contextid: 2,
-                //             amount: 1,
-                //             assetid: item.assetid,
-                //         }
-                //     ],
-                //     items_to_give: Vec::new(),
-                //     message: Some("give me that key".to_string()),
-                //     partner: steamid,
-                //     token: None,
-                // }).await {
-                //     Ok(res) => {
-                //         println!("{:?}", res);
-                //     },
-                //     Err(err) => println!("{}", err),
-                // }
+                match api.send_offer(&offers_request::CreateTradeOffer {
+                    id: None,
+                    items_to_receive: vec![
+                        Item {
+                            appid: 440,
+                            contextid: 2,
+                            amount: 1,
+                            assetid: item.assetid,
+                        }
+                    ],
+                    items_to_give: Vec::new(),
+                    message: Some("give me that key".to_string()),
+                    partner: steamid,
+                    token: None,
+                }).await {
+                    Ok(res) => {
+                        println!("{:?}", res);
+                    },
+                    Err(err) => println!("{}", err),
+                }
             } else {
                 println!("Can't find that :(");
             }

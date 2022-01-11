@@ -5,7 +5,9 @@ use crate::serializers::string;
 pub struct SentOffer {
     #[serde(with = "string")]
     pub tradeofferid: u64,
+    #[serde(default)]
     pub needs_mobile_confirmation: bool,
+    #[serde(default)]
     pub needs_email_confirmation: bool,
-    pub email_domain: String,
+    pub email_domain: Option<String>,
 }
