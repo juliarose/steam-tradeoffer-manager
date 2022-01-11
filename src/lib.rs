@@ -7,7 +7,7 @@ mod confirmation_method;
 mod offer_filter;
 mod trade_status;
 mod eresult;
-mod api;
+pub mod api;
 mod api_error;
 mod item;
 mod currency;

@@ -3,6 +3,7 @@ use reqwest;
 use reqwest_middleware;
 use anyhow;
 use serde_qs;
+use reqwest::StatusCode;
 
 pub const RESPONSE_UNSUCCESSFUL_MESSAGE: &str = "Empty response";
 
@@ -15,6 +16,9 @@ pub enum APIError {
     StatusError(reqwest::StatusCode),
     QueryParameterError(serde_qs::Error),
     ParseError(serde_json::Error),
+    HttpError(StatusCode),
+    NotLoggedIn,
+    TradeError(String),
 }
 
 impl fmt::Display for APIError {
@@ -27,6 +31,9 @@ impl fmt::Display for APIError {
             APIError::StatusError(e) => write!(f, "{}", e),
             APIError::QueryParameterError(e) => write!(f, "{}", e),
             APIError::ParseError(e) => write!(f, "{}", e),
+            APIError::HttpError(e) => write!(f, "{}", e),
+            APIError::NotLoggedIn => write!(f, "Not logged in"),
+            APIError::TradeError(e) => write!(f, "{}", e),
         }
     }
 }

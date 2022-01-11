@@ -7,6 +7,12 @@ use std::fs::File;
 use std::io::Read;
 use std::collections::HashMap;
 use steamid_ng::SteamID;
+use steam_tradeoffers::api::Asset;
+
+
+fn is_key(item: &Asset) -> bool {
+    item.classinfo.market_hash_name == "Mann Co. Supply Crate Key"
+}
 
 fn get_cookies(hostname: &str, filepath: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let mut file = File::open(filepath).unwrap();
@@ -36,23 +42,54 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let steamid = SteamID::from(76561198080179568);
     
-    match api.send_offer(&offers_request::CreateTradeOffer {
-        id: None,
-        items_to_receive: Vec::new(),
-        items_to_give: vec![
-            Item {
-                appid: 440,
-                contextid: 2,
-                amount: 1,
-                assetid: 10863796759,
+    // match api.send_offer(&offers_request::CreateTradeOffer {
+    //     id: None,
+    //     items_to_receive: Vec::new(),
+    //     items_to_give: vec![
+    //         Item {
+    //             appid: 440,
+    //             contextid: 2,
+    //             amount: 1,
+    //             assetid: 10863796759,
+    //         }
+    //     ],
+    //     message: Some("hello from rust".to_string()),
+    //     partner: steamid,
+    //     token: None,
+    // }).await {
+    //     Ok(res) => {
+    //         println!("{:?}", res);
+    //     },
+    //     Err(err) => println!("{}", err),
+    // }
+    
+    match api.get_inventory(&steamid, 440, 2, true).await {
+        Ok(items) => {
+            if let Some(item) = items.iter().find(|item| is_key(*item)) {
+                println!("{:?}", item);
+                // match api.send_offer(&offers_request::CreateTradeOffer {
+                //     id: None,
+                //     items_to_receive: vec![
+                //         Item {
+                //             appid: 440,
+                //             contextid: 2,
+                //             amount: 1,
+                //             assetid: item.assetid,
+                //         }
+                //     ],
+                //     items_to_give: Vec::new(),
+                //     message: Some("give me that key".to_string()),
+                //     partner: steamid,
+                //     token: None,
+                // }).await {
+                //     Ok(res) => {
+                //         println!("{:?}", res);
+                //     },
+                //     Err(err) => println!("{}", err),
+                // }
+            } else {
+                println!("Can't find that :(");
             }
-        ],
-        message: Some("hello from rust".to_string()),
-        partner: steamid,
-        token: None,
-    }).await {
-        Ok(res) => {
-            println!("{:?}", res);
         },
         Err(err) => println!("{}", err),
     }
