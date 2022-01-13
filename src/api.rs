@@ -203,7 +203,6 @@ impl SteamTradeOfferAPI {
             })
             .send()
             .await?;
-        // let text = response.text().await?;
         let body: GetInventoryResponse = parses_response(response).await?;
         
         if !body.success {

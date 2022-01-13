@@ -2,15 +2,20 @@
 extern crate dotenv_codegen;
 
 use dotenv::dotenv;
-use steam_tradeoffers::{Item, SteamTradeOfferAPI, request as offers_request};
+use steam_tradeoffers::{
+    Item,
+    SteamTradeOfferAPI,
+    response as offers_response,
+    request as offers_request
+};
 use std::fs::File;
 use std::io::Read;
 use std::collections::HashMap;
 use steamid_ng::SteamID;
 use steam_tradeoffers::api::Asset;
 
-fn is_key(item: &Asset) -> bool {
-    item.classinfo.market_hash_name == "Mann Co. Supply Crate Key"
+fn is_key(classinfo: &offers_response::ClassInfo) -> bool {
+    classinfo.market_hash_name == "Mann Co. Supply Crate Key"
 }
 
 fn get_cookies(hostname: &str, filepath: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
@@ -64,7 +69,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     match api.get_inventory(&steamid, 440, 2, true).await {
         Ok(items) => {
-            if let Some(item) = items.iter().find(|item| is_key(*item)) {
+            if let Some(item) = items.iter().find(|item| is_key(&*item.classinfo)) {
                 println!("{:?}", item);
                 match api.send_offer(&offers_request::CreateTradeOffer {
                     id: None,
