@@ -17,6 +17,7 @@ pub mod response;
 pub mod request;
 pub mod serializers;
 
+pub use time::ServerTime;
 pub use item::Item;
 pub use currency::Currency;
 pub use api::SteamTradeOfferAPI;
