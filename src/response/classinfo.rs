@@ -1,10 +1,16 @@
 use serde::Deserialize;
+use std::collections::HashMap;
+use std::sync::Arc;
 use super::deserializers::{
-    from_int_to_bool
+    into_bool,
+    hashmap_or_vec,
+    from_fraudwarnings,
+    string_or_number
 };
 use crate::serializers::string;
+use deepsize::DeepSizeOf;
 
-#[derive(Deserialize, Debug)]
+#[derive(DeepSizeOf, Deserialize, Debug)]
 pub struct Description {
     pub value: String,
     pub color: Option<String>,
@@ -20,16 +26,34 @@ impl Description {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(DeepSizeOf, Deserialize, Debug)]
 pub struct Tag {
-    pub category: String,
     pub internal_name: String,
-    pub localized_tag_name: String,
-    pub localized_category_name: String,
+    #[serde(alias = "localized_tag_name")]
+    pub name: String,
+    pub category: String,
     pub color: Option<String>,
+    #[serde(alias = "localized_category_name")]
+    pub category_name: Option<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(DeepSizeOf, Deserialize, Debug)]
+pub struct Action {
+    pub name: String,
+    pub link: String,
+}
+
+#[derive(DeepSizeOf, Deserialize, Debug)]
+pub struct AppData {
+    #[serde(with = "string", rename = "def_index")]
+    pub defindex: u32,
+    #[serde(with = "string")]
+    pub quantity: u32,
+    #[serde(with = "string")]
+    pub quality: u8,
+}
+
+#[derive(DeepSizeOf, Deserialize, Debug)]
 pub struct ClassInfo {
     #[serde(with = "string")]
     pub classid: u64,
@@ -40,22 +64,33 @@ pub struct ClassInfo {
     pub market_hash_name: String,
     pub name_color: Option<String>,
     pub background_color: Option<String>,
+    pub icon_url: String,
+    pub icon_url_large: String,
     #[serde(rename = "type")]
     pub r#type: String,
-    #[serde(deserialize_with = "from_int_to_bool")]
+    #[serde(deserialize_with = "into_bool")]
     pub tradable: bool,
-    #[serde(deserialize_with = "from_int_to_bool")]
+    #[serde(deserialize_with = "into_bool")]
     pub marketable: bool,
-    #[serde(deserialize_with = "from_int_to_bool")]
+    #[serde(deserialize_with = "into_bool")]
     pub commodity: bool,
-    #[serde(deserialize_with = "from_int_to_bool")]
-    pub market_tradable_restriction: bool,
-    #[serde(deserialize_with = "from_int_to_bool")]
-    pub market_marketable_restriction: bool,
+    #[serde(deserialize_with = "string_or_number")]
+    pub market_tradable_restriction: u8,
+    #[serde(deserialize_with = "string_or_number")]
+    pub market_marketable_restriction: u8,
     #[serde(default)]
+    #[serde(deserialize_with = "from_fraudwarnings")]
     pub fraudwarnings: Option<Vec<String>>,
     #[serde(default)]
+    #[serde(deserialize_with = "hashmap_or_vec")]
     pub descriptions: Vec<Description>,
     #[serde(default)]
+    #[serde(deserialize_with = "hashmap_or_vec")]
     pub tags: Vec<Tag>,
+    #[serde(default)]
+    #[serde(deserialize_with = "hashmap_or_vec")]
+    pub actions: Vec<Action>,
+    pub app_data: Option<AppData>,
 }
+
+pub type ClassInfoMap = HashMap<(u32, u64, u64), Arc<ClassInfo>>;

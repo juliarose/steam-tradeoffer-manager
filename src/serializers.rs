@@ -2,7 +2,7 @@
 use steamid_ng::SteamID;
 use std::fmt::Display;
 use std::str::FromStr;
-use serde::{de, Serializer, Deserialize, Deserializer};
+use serde::{de::{self, IntoDeserializer, Unexpected}, Serializer, Deserialize, Deserializer};
 
 pub mod string {
     use std::fmt::Display;
@@ -66,5 +66,19 @@ where
         s.serialize_str(&v.to_string())
     } else {
         s.serialize_none()
+    }
+}
+
+pub fn bool_from_string<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    match &*String::deserialize(deserializer)? {
+        "0" => Ok(false),
+        "1" => Ok(true),
+        other => Err(de::Error::invalid_value(
+            Unexpected::Str(other),
+            &"zero or one",
+        )),
     }
 }

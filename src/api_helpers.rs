@@ -1,14 +1,12 @@
-use reqwest::header::HeaderValue;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 use reqwest::{header, cookie::CookieStore};
-use serde::Deserialize;
 use serde::de::DeserializeOwned;
 use std::sync::Arc;
-use crate::APIError;
 use lazy_regex::{regex_is_match, regex_captures};
+use crate::APIError;
 
-const USER_AGENT_STRING: &'static str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36";
+const USER_AGENT_STRING: &'static str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
 
 pub fn get_default_middleware<T>(cookie_store: Arc<T>) -> ClientWithMiddleware
 where
@@ -30,7 +28,7 @@ where
         .build()
 }
 
-fn is_login(location_option: Option<&HeaderValue>) -> bool {
+fn is_login(location_option: Option<&header::HeaderValue>) -> bool {
     match location_option {
         Some(location) => {
             if let Ok(location_str) = location.to_str() {

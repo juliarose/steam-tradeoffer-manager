@@ -1,24 +1,26 @@
 use crate::{
     time::ServerTime,
-    Item,
-    TradeOfferState
+    TradeOfferState,
+    ConfirmationMethod
 };
+use super::Asset;
 use steamid_ng::SteamID;
 
+#[derive(Debug)]
 pub struct TradeOffer {
+    pub tradeofferid: u64,
     pub partner: SteamID,
-    pub id: u64,
-    pub state: TradeOfferState,
-    pub items_to_give: Vec<Item>,
-    pub items_to_receive: Vec<Item>,
     pub message: Option<String>,
-    pub created: ServerTime,
-    pub updated: ServerTime,
-    pub expires: ServerTime,
-    pub trade_id: Option<String>,
+    pub items_to_receive: Vec<Asset>,
+    pub items_to_give: Vec<Asset>,
     pub is_our_offer: bool,
     pub from_real_time_trade: bool,
-    pub confirmation_method: u32,
+    pub expiration_time: ServerTime,
+    pub time_created: ServerTime,
+    pub time_updated: ServerTime,
+    pub trade_offer_state: TradeOfferState,
+    pub escrow_end_date: ServerTime,
+    pub confirmation_method: ConfirmationMethod,
 }
 
 impl TradeOffer {
