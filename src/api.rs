@@ -235,8 +235,7 @@ impl SteamTradeOfferAPI {
         Ok(offers)
     }
     
-    pub async fn get_app_asset_classinfos_chunk(&self, appid: u32, classes: Vec<(u64, u64)>) -> Result<ClassInfoMap, APIError> {
-        let map = HashMap::new();
+    pub async fn get_app_asset_classinfos_chunk(&self, appid: u32, classes: Vec<(u64, u64)>) -> Result<HashMap<(u64, u64), Arc<ClassInfo>>, APIError> {
         let mut query = {
             let mut query = Vec::new();
             
@@ -257,15 +256,15 @@ impl SteamTradeOfferAPI {
             .query(&query)
             .send()
             .await?;
-        // let body: GetTradeOffersResponse = parses_response(response).await?;
-        let text = response.text().await?;
+        let body: GetAssetClassInfoResponse = parses_response(response).await?;
+        // let text = response.text().await?;
         
-        println!("{}", text);
+        println!("{:?}", body);
         
-        Ok(map)
+        Ok(body.result)
     }
     
-    async fn get_app_asset_classinfos(&self, appid: u32, classes: Vec<(u64, u64)>) -> Result<Vec<ClassInfoMap>, APIError> {
+    async fn get_app_asset_classinfos(&self, appid: u32, classes: Vec<(u64, u64)>) -> Result<Vec<HashMap<(u64, u64), Arc<ClassInfo>>>, APIError> {
         let mut maps = Vec::new();
         
         for chunk in classes.chunks(100) {
@@ -275,7 +274,7 @@ impl SteamTradeOfferAPI {
         Ok(maps)
     }
     
-    async fn get_asset_classinfos(&self, classes: Vec<(u32, u64, u64)>) -> Result<ClassInfoMap, APIError> {
+    pub async fn get_asset_classinfos(&self, classes: Vec<(u32, u64, u64)>) -> Result<ClassInfoMap, APIError> {
         let mut apps: HashMap<u32, Vec<(u64, u64)>> = HashMap::new();
         let mut map = HashMap::new();
         
@@ -294,8 +293,8 @@ impl SteamTradeOfferAPI {
         
         for (appid, classes) in apps {
             for maps in self.get_app_asset_classinfos(appid, classes).await? {
-                for (class, classinfo) in maps {
-                    map.insert(class, Arc::clone(&classinfo));
+                for (_class, classinfo) in maps {
+                    map.insert((appid, classinfo.classid, classinfo.instanceid), Arc::clone(&classinfo));
                 }
             }
         }
@@ -693,7 +692,7 @@ struct GetInventoryResponse {
 #[derive(Deserialize, Debug)]
 struct GetAssetClassInfoResponse {
     #[serde(deserialize_with = "deserialize_classinfo_map")]
-    result: Vec<ClassInfo>,
+    result: HashMap<(u64, u64), Arc<ClassInfo>>,
 }
 
 #[cfg(test)]

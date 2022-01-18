@@ -70,38 +70,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     },
     //     Err(err) => println!("{}", err),
     // }
-    thread::sleep(time::Duration::from_secs(10));
+    // thread::sleep(time::Duration::from_secs(10));
     
-    match api.get_inventory(&steamid, 440, 2, true).await {
-        Ok(items) => {
-            // println!("{}", items.capacity() * std::mem::size_of::<offers_response::Asset>());
-            // println!("{}", std::mem::size_of::<offers_response::ClassInfo>());
-            println!("{}", items.deep_size_of());
-            if let Some(item) = items.iter().find(|item| is_key(&*item.classinfo)) {
-                // match api.send_offer(&offers_request::CreateTradeOffer {
-                //     id: None,
-                //     items_to_receive: vec![
-                //         Item {
-                //             appid: 440,
-                //             contextid: 2,
-                //             amount: 1,
-                //             assetid: item.assetid,
-                //         }
-                //     ],
-                //     items_to_give: Vec::new(),
-                //     message: Some("give me that key".to_string()),
-                //     partner: steamid,
-                //     token: None,
-                // }).await {
-                //     Ok(res) => println!("{:?}", res),
-                //     Err(err) => println!("{}", err),
-                // }
-            } else {
-                println!("Can't find that :(");
-            }
-        },
-        Err(err) => println!("{}", err),
-    }
+    // match api.get_inventory(&steamid, 440, 2, true).await {
+    //     Ok(items) => {
+    //         // println!("{}", items.capacity() * std::mem::size_of::<offers_response::Asset>());
+    //         // println!("{}", std::mem::size_of::<offers_response::ClassInfo>());
+    //         println!("{}", items.deep_size_of());
+    //         if let Some(item) = items.iter().find(|item| is_key(&*item.classinfo)) {
+    //             // match api.send_offer(&offers_request::CreateTradeOffer {
+    //             //     id: None,
+    //             //     items_to_receive: vec![
+    //             //         Item {
+    //             //             appid: 440,
+    //             //             contextid: 2,
+    //             //             amount: 1,
+    //             //             assetid: item.assetid,
+    //             //         }
+    //             //     ],
+    //             //     items_to_give: Vec::new(),
+    //             //     message: Some("give me that key".to_string()),
+    //             //     partner: steamid,
+    //             //     token: None,
+    //             // }).await {
+    //             //     Ok(res) => println!("{:?}", res),
+    //             //     Err(err) => println!("{}", err),
+    //             // }
+    //         } else {
+    //             println!("Can't find that :(");
+    //         }
+    //     },
+    //     Err(err) => println!("{}", err),
+    // }
     
     // match api.get_trade_offers().await {
     //     Ok(offers) => {
@@ -110,14 +110,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     Err(err) => println!("{}", err),
     // }
     
-    // match api.get_app_asset_classinfos_chunk(440, vec![(101785959, 11040578)]).await {
-    //     Ok(response) => {
-    //         println!("{:?}", response);
-    //     },
-    //     Err(err) => println!("{}", err),
-    // }
+    match api.get_asset_classinfos(vec![(440, 101785959, 11040578)]).await {
+        Ok(response) => {
+            println!("{:?}", response);
+        },
+        Err(err) => println!("{}", err),
+    }
 
-    thread::sleep(time::Duration::from_secs(10));
+    // thread::sleep(time::Duration::from_secs(10));
         
     Ok(())
 }

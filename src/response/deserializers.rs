@@ -17,7 +17,7 @@ use std::fmt;
 use std::marker::PhantomData;
 use std::fmt::Display;
 use lazy_regex::regex_is_match;
-use super::classinfo::ClassInfo;
+use super::classinfo::{ClassInfo, ClassInfoMap};
 
 pub fn string_or_number<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
@@ -294,14 +294,14 @@ where
     deserializer.deserialize_any(HashMapVisitor::new())
 }
 
-pub fn deserialize_classinfo_map<'de, D>(deserializer: D) -> Result<Vec<ClassInfo>, D::Error>
+pub fn deserialize_classinfo_map<'de, D>(deserializer: D) -> Result<HashMap<(u64, u64), Arc<ClassInfo>>, D::Error>
 where
     D: Deserializer<'de>,
 {
     struct ClassInfoMapVisitor;
     
     impl<'de> Visitor<'de> for ClassInfoMapVisitor {
-        type Value = Vec<ClassInfo>;
+        type Value = HashMap<(u64, u64), Arc<ClassInfo>>;
     
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("a map")
@@ -311,18 +311,20 @@ where
         where
             M: MapAccess<'de>,
         {
-            let mut items = Self::Value::new();
+            let mut map = HashMap::new();
             
             while let Some(key) = access.next_key::<String>()? {
                 if regex_is_match!(r#"\d+_\d+"#, &key) {
-                    items.push(access.next_value::<ClassInfo>()?);
+                    let classinfo = access.next_value::<ClassInfo>()?;
+                    
+                    map.insert((classinfo.classid, classinfo.instanceid), Arc::new(classinfo));
                 } else {
                     // invalid key - discard
                     access.next_value::<u8>();
                 }
             }
             
-            Ok(items)
+            Ok(map)
         }
     }
     
