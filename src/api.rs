@@ -34,7 +34,7 @@ use crate::{
 use chrono::serde::ts_seconds;
 use async_recursion::async_recursion;
 use deepsize::DeepSizeOf;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use serde_qs;
@@ -46,6 +46,11 @@ use std::sync::Arc;
 use lazy_regex::{regex_captures, regex_is_match};
 use async_std::task::sleep;
 use itertools::Itertools;
+
+use std::env;
+use std::fs;
+use std::path::Path;
+    
 
 const HOSTNAME: &'static str = "https://steamcommunity.com";
 const API_HOSTNAME: &'static str = "https://api.steampowered.com";
@@ -75,9 +80,42 @@ impl ClassInfoCache {
             None => None,
         }
     }
-    
-    pub fn load_classinfos(&self) {
+
+    pub fn save_cache(&self, class: (u32, u64, u64), classinfo: &Arc<ClassInfo>) -> Result<(), Box<dyn std::error::Error>> {
+        let rootdir = env!("CARGO_MANIFEST_DIR");
+        let data = serde_json::to_string(classinfo)?;
+        let (appid, classid, instanceid) = class;
+        let filepath = Path::new(rootdir).join(format!("classinfos/{}_{}_{}.json", appid, classid, instanceid));
+
+        println!("{}", data);
+
+        fs::write(filepath, data)?;
+
+        Ok(())
+    }
+
+    pub async fn load_classinfos(&mut self, classinfos: &Vec<(u32, u64, u64)>) -> Result<(), Box<dyn std::error::Error>> {
+        let rootdir = env!("CARGO_MANIFEST_DIR");
         
+        for (appid, classid, instanceid) in classinfos {
+            let filepath = Path::new(rootdir).join(format!("classinfos/{}_{}_{}.json", appid, classid, instanceid));
+            
+            match fs::read_to_string(filepath) {
+                Ok(data) => {
+                    let result = serde_json::from_str::<ClassInfo>(&data);
+
+                    match result {
+                        Ok(classinfo) => {
+                            self.cache.insert((*appid, *classid, *instanceid), Arc::new(classinfo));
+                        },
+                        _ => {},
+                    }
+                },
+                // don't care
+                _ => {},
+            }
+        }
+        Ok(())
     }
 }
 
@@ -235,7 +273,7 @@ impl SteamTradeOfferAPI {
         Ok(offers)
     }
     
-    pub async fn get_app_asset_classinfos_chunk(&self, appid: u32, classes: Vec<(u64, u64)>) -> Result<HashMap<(u64, u64), Arc<ClassInfo>>, APIError> {
+    pub async fn get_app_asset_classinfos_chunk(&self, appid: u32, classes: &Vec<(u64, u64)>) -> Result<HashMap<(u64, u64), Arc<ClassInfo>>, APIError> {
         let mut query = {
             let mut query = Vec::new();
             
@@ -258,37 +296,52 @@ impl SteamTradeOfferAPI {
             .await?;
         let body: GetAssetClassInfoResponse = parses_response(response).await?;
         // let text = response.text().await?;
+        let classinfos = body.result;
+        println!("{:?}", classinfos);
+
+        for (_class, classinfo) in &classinfos {
+            self.classinfo_cache.save_cache((appid, classinfo.classid, classinfo.instanceid), &classinfo);
+        }
         
-        println!("{:?}", body);
-        
-        Ok(body.result)
+        Ok(classinfos)
     }
     
     async fn get_app_asset_classinfos(&self, appid: u32, classes: Vec<(u64, u64)>) -> Result<Vec<HashMap<(u64, u64), Arc<ClassInfo>>>, APIError> {
         let mut maps = Vec::new();
         
         for chunk in classes.chunks(100) {
-            maps.push(self.get_app_asset_classinfos_chunk(appid, chunk.to_vec()).await?);
+            maps.push(self.get_app_asset_classinfos_chunk(appid, &chunk.to_vec()).await?);
         }
         
         Ok(maps)
     }
     
-    pub async fn get_asset_classinfos(&self, classes: Vec<(u32, u64, u64)>) -> Result<ClassInfoMap, APIError> {
+    pub async fn get_asset_classinfos(&mut self, classes: &Vec<(u32, u64, u64)>) -> Result<ClassInfoMap, APIError> {
         let mut apps: HashMap<u32, Vec<(u64, u64)>> = HashMap::new();
         let mut map = HashMap::new();
         
+        self.classinfo_cache.load_classinfos(classes).await;
+        
         for (appid, classid, instanceid) in classes {
-            match apps.get_mut(&appid) {
-                Some(classes) => {
-                    classes.push((classid, instanceid));
+            let class = (*appid, *classid, *instanceid);
+
+            match self.classinfo_cache.get_classinfo(class) {
+                Some(classinfo) => {
+                    map.insert(class, classinfo);
                 },
                 None => {
-                    let classes = vec![(classid, instanceid)];
-                    
-                    apps.insert(appid, classes);
+                    match apps.get_mut(&appid) {
+                        Some(classes) => {
+                            classes.push((*classid, *instanceid));
+                        },
+                        None => {
+                            let classes = vec![(*classid, *instanceid)];
+                            
+                            apps.insert(*appid, classes);
+                        },
+                    }
                 }
-            }
+            };
         }
         
         for (appid, classes) in apps {
@@ -303,7 +356,7 @@ impl SteamTradeOfferAPI {
     }
 
     #[async_recursion]
-    async fn get_trade_offers_request<'a, 'b>(&'a self, responses: &'b mut Vec<GetTradeOffersResponseBody>, filter: &OfferFilter, historical_cutoff: &Option<ServerTime>, cursor: Option<u32>) -> Result<Vec<TradeOffer>, APIError> {
+    async fn get_trade_offers_request<'a, 'b>(&'a mut self, responses: &'b mut Vec<GetTradeOffersResponseBody>, filter: &OfferFilter, historical_cutoff: &Option<ServerTime>, cursor: Option<u32>) -> Result<Vec<TradeOffer>, APIError> {
         #[derive(Serialize, Debug)]
         struct Form<'a, 'b> {
             key: &'a str,
@@ -323,7 +376,7 @@ impl SteamTradeOfferAPI {
                 language,
                 get_sent_offers: true,
                 get_received_offers: true,
-                get_descriptions: true,
+                get_descriptions: false,
                 // todo
                 time_historical_cutoff: 1642165779 * 2,
                 cursor: None,
@@ -346,11 +399,11 @@ impl SteamTradeOfferAPI {
             )
         }
         
-        fn collect_items(assets: Vec<RawAsset>, descriptions: &HashMap<(u64, u64), Arc<ClassInfo>>) -> Result<Vec<Asset>, APIError> {
+        fn collect_items(assets: Vec<RawAsset>, descriptions: &ClassInfoMap) -> Result<Vec<Asset>, APIError> {
             let mut items = Vec::new();
                     
             for asset in assets {
-                if let Some(classinfo) = descriptions.get(&(asset.classid, asset.instanceid)) {
+                if let Some(classinfo) = descriptions.get(&(asset.appid, asset.classid, asset.instanceid)) {
                     items.push(Asset {
                         classinfo: Arc::clone(classinfo),
                         appid: asset.appid,
@@ -365,9 +418,25 @@ impl SteamTradeOfferAPI {
             
             Ok(items)
         }
+
+        fn collect_classes(offers: &Vec<RawTradeOffer>) -> Vec<(u32, u64, u64)> {
+            let mut classes_set: HashSet<(u32, u64, u64)> = HashSet::new();
+
+            for offer in offers {
+                for item in &offer.items_to_give {
+                    classes_set.insert((item.appid, item.classid, item.instanceid));
+                }
+
+                for item in &offer.items_to_give {
+                    classes_set.insert((item.appid, item.classid, item.instanceid));
+                }
+            }
+            
+            classes_set.into_iter().collect()
+        }
         
         let next_cursor = body.response.next_cursor;
-        
+
         if next_cursor > 0 {
             responses.push(body.response);
     
@@ -376,33 +445,35 @@ impl SteamTradeOfferAPI {
             responses.push(body.response);
             
             let mut offers: Vec<TradeOffer> = Vec::new();
+            let mut response_offers = Vec::new();
             
             for response in responses {
-                let mut response_offers = Vec::new();
-                
                 response_offers.append(&mut response.trade_offers_received);
                 response_offers.append(&mut response.trade_offers_sent);
+            }
+
+            let classes = collect_classes(&response_offers);
+            let classinfos = self.get_asset_classinfos(&classes).await?;
+
+            for offer in response_offers {
+                let items_to_give = collect_items(offer.items_to_give, &classinfos)?;
+                let items_to_receive = collect_items(offer.items_to_receive, &classinfos)?;
                 
-                for response_offer in response_offers {
-                    let items_to_give = collect_items(response_offer.items_to_give, &response.descriptions)?;
-                    let items_to_receive = collect_items(response_offer.items_to_receive, &response.descriptions)?;
-                    
-                    offers.push(TradeOffer {
-                        tradeofferid: response_offer.tradeofferid,
-                        trade_offer_state: response_offer.trade_offer_state,
-                        partner: steamid_from_accountid(response_offer.accountid_other),
-                        message: response_offer.message,
-                        items_to_give,
-                        items_to_receive,
-                        is_our_offer: response_offer.is_our_offer,
-                        from_real_time_trade: response_offer.from_real_time_trade,
-                        expiration_time: response_offer.expiration_time,
-                        time_updated: response_offer.time_updated,
-                        time_created: response_offer.time_created,
-                        escrow_end_date: response_offer.escrow_end_date,
-                        confirmation_method: response_offer.confirmation_method,
-                    });
-                }
+                offers.push(TradeOffer {
+                    tradeofferid: offer.tradeofferid,
+                    trade_offer_state: offer.trade_offer_state,
+                    partner: steamid_from_accountid(offer.accountid_other),
+                    message: offer.message,
+                    items_to_give,
+                    items_to_receive,
+                    is_our_offer: offer.is_our_offer,
+                    from_real_time_trade: offer.from_real_time_trade,
+                    expiration_time: offer.expiration_time,
+                    time_updated: offer.time_updated,
+                    time_created: offer.time_created,
+                    escrow_end_date: offer.escrow_end_date,
+                    confirmation_method: offer.confirmation_method,
+                });
             }
             
             Ok(offers)

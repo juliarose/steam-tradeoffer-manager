@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use super::deserializers::{
@@ -10,7 +10,7 @@ use super::deserializers::{
 use crate::serializers::string;
 use deepsize::DeepSizeOf;
 
-#[derive(DeepSizeOf, Deserialize, Debug)]
+#[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
 pub struct Description {
     pub value: String,
     pub color: Option<String>,
@@ -26,7 +26,7 @@ impl Description {
     }
 }
 
-#[derive(DeepSizeOf, Deserialize, Debug)]
+#[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
 pub struct Tag {
     pub internal_name: String,
     #[serde(alias = "localized_tag_name")]
@@ -37,13 +37,13 @@ pub struct Tag {
     pub category_name: Option<String>,
 }
 
-#[derive(DeepSizeOf, Deserialize, Debug)]
+#[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
 pub struct Action {
     pub name: String,
     pub link: String,
 }
 
-#[derive(DeepSizeOf, Deserialize, Debug)]
+#[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
 pub struct AppData {
     #[serde(with = "string", rename = "def_index")]
     pub defindex: u32,
@@ -53,7 +53,7 @@ pub struct AppData {
     pub quality: u8,
 }
 
-#[derive(DeepSizeOf, Deserialize, Debug)]
+#[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
 pub struct ClassInfo {
     #[serde(with = "string")]
     pub classid: u64,
