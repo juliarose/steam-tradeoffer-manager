@@ -48,7 +48,8 @@ use async_std::task::sleep;
 use itertools::Itertools;
 
 use std::env;
-use std::fs;
+use async_fs::File;
+use futures_lite::io::AsyncWriteExt;
 use std::path::Path;
     
 
@@ -81,43 +82,51 @@ impl ClassInfoCache {
         }
     }
 
-    pub fn save_cache(&self, class: (u32, u64, u64), classinfo: &Arc<ClassInfo>) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn save_cache(&self, class: (u32, u64, u64), classinfo: &Arc<ClassInfo>) -> Result<(), Box<dyn std::error::Error>> {
         let rootdir = env!("CARGO_MANIFEST_DIR");
-        let data = serde_json::to_string(classinfo)?;
         let (appid, classid, instanceid) = class;
-        let filepath = Path::new(rootdir).join(format!("assets/{}_{}_{}.json", appid, classid, instanceid));
+        
+        match Path::new(rootdir).join(format!("assets/{}_{}_{}.json", appid, classid, instanceid)).to_str() {
+            Some(filepath) => {
+                let mut file = File::create(filepath).await?;
+                let data = serde_json::to_string(classinfo)?;
 
-        println!("save {:?}", filepath);
-        // println!("{}", data);
+                println!("save {:?}", filepath);
+                file.write_all(data.as_bytes()).await?;
 
-        fs::write(filepath, data)?;
-
+                Ok(())
+            },
+            None => {
+                // maybe put an error here...
+                Ok(())
+            },
+        }
+    }
+    
+    async fn load_classinfo(&mut self, class: &(u32, u64, u64)) -> Result<(), Box<dyn std::error::Error>> {
+        let rootdir = env!("CARGO_MANIFEST_DIR");
+        let (appid, classid, instanceid) = class;
+        
+        match Path::new(rootdir).join(format!("assets/{}_{}_{}.json", appid, classid, instanceid)).to_str() {
+            Some(filepath) => {
+                let data = async_fs::read_to_string(filepath).await?;
+                let classinfo = serde_json::from_str::<ClassInfo>(&data)?;
+                
+                self.cache.insert((*appid, *classid, *instanceid), Arc::new(classinfo));
+            },
+            None => {
+                // skip..
+            }
+        }
+        
         Ok(())
     }
 
     pub async fn load_classinfos(&mut self, classinfos: &Vec<(u32, u64, u64)>) -> Result<(), Box<dyn std::error::Error>> {
-        let rootdir = env!("CARGO_MANIFEST_DIR");
-        
         for (appid, classid, instanceid) in classinfos {
-            let filepath = Path::new(rootdir).join(format!("assets/{}_{}_{}.json", appid, classid, instanceid));
-            
-            match fs::read_to_string(filepath) {
-                Ok(data) => {
-                    let result = serde_json::from_str::<ClassInfo>(&data);
-
-                    match result {
-                        Ok(classinfo) => {
-                            self.cache.insert((*appid, *classid, *instanceid), Arc::new(classinfo));
-                        },
-                        Err(err) => {
-                            println!("err {:?}", err);
-                        },
-                    }
-                },
-                // don't care
-                _ => {},
-            }
+            self.load_classinfo(&(*appid, *classid, *instanceid)).await?;
         }
+        
         Ok(())
     }
 }
@@ -304,7 +313,7 @@ impl SteamTradeOfferAPI {
         println!("{:?}", classinfos);
 
         for (_class, classinfo) in &classinfos {
-            match self.classinfo_cache.save_cache((appid, classinfo.classid, classinfo.instanceid), &classinfo) {
+            match self.classinfo_cache.save_cache((appid, classinfo.classid, classinfo.instanceid), &classinfo).await {
                 Err(err) => {
                     println!("{:?}", err);
                 },
