@@ -81,27 +81,6 @@ impl ClassInfoCache {
             None => None,
         }
     }
-
-    pub async fn save_cache(&self, class: (u32, u64, u64), classinfo: &Arc<ClassInfo>) -> Result<(), Box<dyn std::error::Error>> {
-        let rootdir = env!("CARGO_MANIFEST_DIR");
-        let (appid, classid, instanceid) = class;
-        
-        match Path::new(rootdir).join(format!("assets/{}_{}_{}.json", appid, classid, instanceid)).to_str() {
-            Some(filepath) => {
-                let mut file = File::create(filepath).await?;
-                let data = serde_json::to_string(classinfo)?;
-
-                println!("save {:?}", filepath);
-                file.write_all(data.as_bytes()).await?;
-
-                Ok(())
-            },
-            None => {
-                // maybe put an error here...
-                Ok(())
-            },
-        }
-    }
     
     pub async fn load_classinfos(&mut self, classes: &Vec<(u32, u64, u64)>) -> Result<(), Box<dyn std::error::Error>> {
         let map = Arc::clone(&self.map);
@@ -137,6 +116,43 @@ async fn load_classinfo(map: Arc<Mutex<ClassInfoMap>>, class: (u32, u64, u64)) -
         }
     }
     
+    Ok(())
+}
+
+async fn save_classinfo(map: Arc<Mutex<ClassInfoMap>>, appid: u32, classinfo: &ClassInfo) -> Result<(), Box<dyn std::error::Error>> {
+    let rootdir = env!("CARGO_MANIFEST_DIR");
+    let classid = classinfo.classid;
+    let instanceid = classinfo.instanceid;
+    
+    match Path::new(rootdir).join(format!("assets/{}_{}_{}.json", appid, classid, instanceid)).to_str() {
+        Some(filepath) => {
+            let mut file = File::create(filepath).await?;
+            let data = serde_json::to_string(classinfo)?;
+
+            println!("save {:?}", filepath);
+            file.write_all(data.as_bytes()).await?;
+
+            Ok(())
+        },
+        None => {
+            // maybe put an error here...
+            Ok(())
+        },
+    }
+}
+
+async fn save_classinfos(map: Arc<Mutex<ClassInfoMap>>, appid: u32, classinfos: &HashMap<(u64, u64), Arc<ClassInfo>>) -> Result<(), Box<dyn std::error::Error>> {
+    let threads: Vec<_> = classinfos
+        .iter()
+        .map(|(_class, classinfo)| {
+            let map = Arc::clone(&map);
+
+            save_classinfo(map, appid, classinfo)
+        })
+        .collect();
+
+    join_all(threads).await;
+
     Ok(())
 }
 
@@ -321,14 +337,7 @@ impl SteamTradeOfferAPI {
         let classinfos = body.result;
         println!("{:?}", classinfos);
 
-        for (_class, classinfo) in &classinfos {
-            match self.classinfo_cache.save_cache((appid, classinfo.classid, classinfo.instanceid), &classinfo).await {
-                Err(err) => {
-                    println!("{:?}", err);
-                },
-                _ => {},
-            }
-        }
+        let _ = save_classinfos(Arc::clone(&self.classinfo_cache.map), appid, &classinfos).await;
         
         Ok(classinfos)
     }
