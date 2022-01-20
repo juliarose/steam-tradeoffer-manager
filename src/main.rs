@@ -103,19 +103,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     Err(err) => println!("{}", err),
     // }
     
-    // match api.get_trade_offers().await {
-    //     Ok(offers) => {
-            
-    //     },
-    //     Err(err) => println!("{}", err),
-    // }
-    
-    match api.get_asset_classinfos(&vec![(440, 101785959, 11040578)]).await {
-        Ok(response) => {
-            println!("{:?}", response);
+    match api.get_trade_offers().await {
+        Ok(offers) => {
+            println!("{:?}", offers);
         },
         Err(err) => println!("{}", err),
     }
+    
+    // match api.get_asset_classinfos(&vec![(440, 101785959, 11040578)]).await {
+    //     Ok(response) => {
+    //         println!("{:?}", response);
+    //     },
+    //     Err(err) => println!("{}", err),
+    // }
 
     // thread::sleep(time::Duration::from_secs(10));
         

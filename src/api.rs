@@ -85,9 +85,10 @@ impl ClassInfoCache {
         let rootdir = env!("CARGO_MANIFEST_DIR");
         let data = serde_json::to_string(classinfo)?;
         let (appid, classid, instanceid) = class;
-        let filepath = Path::new(rootdir).join(format!("classinfos/{}_{}_{}.json", appid, classid, instanceid));
+        let filepath = Path::new(rootdir).join(format!("assets/{}_{}_{}.json", appid, classid, instanceid));
 
-        println!("{}", data);
+        println!("save {:?}", filepath);
+        // println!("{}", data);
 
         fs::write(filepath, data)?;
 
@@ -98,7 +99,7 @@ impl ClassInfoCache {
         let rootdir = env!("CARGO_MANIFEST_DIR");
         
         for (appid, classid, instanceid) in classinfos {
-            let filepath = Path::new(rootdir).join(format!("classinfos/{}_{}_{}.json", appid, classid, instanceid));
+            let filepath = Path::new(rootdir).join(format!("assets/{}_{}_{}.json", appid, classid, instanceid));
             
             match fs::read_to_string(filepath) {
                 Ok(data) => {
@@ -108,7 +109,9 @@ impl ClassInfoCache {
                         Ok(classinfo) => {
                             self.cache.insert((*appid, *classid, *instanceid), Arc::new(classinfo));
                         },
-                        _ => {},
+                        Err(err) => {
+                            println!("err {:?}", err);
+                        },
                     }
                 },
                 // don't care
@@ -266,7 +269,7 @@ impl SteamTradeOfferAPI {
         Ok(body)
     }
     
-    pub async fn get_trade_offers(&self) -> Result<Vec<TradeOffer>, APIError> {
+    pub async fn get_trade_offers(&mut self) -> Result<Vec<TradeOffer>, APIError> {
         let mut responses = Vec::new();
         let offers = self.get_trade_offers_request(&mut responses, &OfferFilter::ActiveOnly, &None, None).await?;
         
@@ -290,6 +293,7 @@ impl SteamTradeOfferAPI {
             query
         };
         let uri = self.get_api_url("ISteamEconomy", "GetAssetClassInfo", 1);
+        println!("get {}", uri);
         let response = self.client.get(&uri)
             .query(&query)
             .send()
@@ -300,7 +304,12 @@ impl SteamTradeOfferAPI {
         println!("{:?}", classinfos);
 
         for (_class, classinfo) in &classinfos {
-            self.classinfo_cache.save_cache((appid, classinfo.classid, classinfo.instanceid), &classinfo);
+            match self.classinfo_cache.save_cache((appid, classinfo.classid, classinfo.instanceid), &classinfo) {
+                Err(err) => {
+                    println!("{:?}", err);
+                },
+                _ => {},
+            }
         }
         
         Ok(classinfos)
@@ -385,11 +394,6 @@ impl SteamTradeOfferAPI {
             .await?;
         let body: GetTradeOffersResponse = parses_response(response).await?;
         
-        // let text = response.text().await?;
-        // println!("{}", text);
-        
-        // Ok(Vec::new())
-        
         fn steamid_from_accountid(accountid: u32) -> SteamID {
             SteamID::new(
                 accountid,
@@ -401,8 +405,10 @@ impl SteamTradeOfferAPI {
         
         fn collect_items(assets: Vec<RawAsset>, descriptions: &ClassInfoMap) -> Result<Vec<Asset>, APIError> {
             let mut items = Vec::new();
-                    
+            
             for asset in assets {
+                println!("{:?}", asset);
+                        
                 if let Some(classinfo) = descriptions.get(&(asset.appid, asset.classid, asset.instanceid)) {
                     items.push(Asset {
                         classinfo: Arc::clone(classinfo),
@@ -427,12 +433,14 @@ impl SteamTradeOfferAPI {
                     classes_set.insert((item.appid, item.classid, item.instanceid));
                 }
 
-                for item in &offer.items_to_give {
+                for item in &offer.items_to_receive {
                     classes_set.insert((item.appid, item.classid, item.instanceid));
                 }
             }
             
-            classes_set.into_iter().collect()
+            let classes: Vec<_> = classes_set.into_iter().collect();
+            
+            classes
         }
         
         let next_cursor = body.response.next_cursor;
@@ -453,6 +461,9 @@ impl SteamTradeOfferAPI {
             }
 
             let classes = collect_classes(&response_offers);
+        
+            println!("{:?}", classes);
+            
             let classinfos = self.get_asset_classinfos(&classes).await?;
 
             for offer in response_offers {
@@ -691,8 +702,8 @@ impl SteamTradeOfferAPI {
 struct GetTradeOffersResponseBody {
     trade_offers_sent: Vec<RawTradeOffer>,
     trade_offers_received: Vec<RawTradeOffer>,
-    #[serde(deserialize_with = "to_classinfo_map")]
-    descriptions: HashMap<(u64, u64), Arc<ClassInfo>>,
+    // #[serde(deserialize_with = "to_classinfo_map")]
+    // descriptions: HashMap<(u64, u64), Arc<ClassInfo>>,
     next_cursor: u32,
 }
 

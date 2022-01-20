@@ -7,7 +7,10 @@ use super::deserializers::{
     from_fraudwarnings,
     string_or_number
 };
-use crate::serializers::string;
+use crate::serializers::{
+    string,
+    option_string
+};
 use deepsize::DeepSizeOf;
 
 #[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
@@ -45,12 +48,15 @@ pub struct Action {
 
 #[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
 pub struct AppData {
-    #[serde(with = "string", rename = "def_index")]
-    pub defindex: u32,
-    #[serde(with = "string")]
-    pub quantity: u32,
-    #[serde(with = "string")]
-    pub quality: u8,
+    #[serde(default)]
+    #[serde(with = "option_string", rename = "def_index")]
+    pub defindex: Option<u32>,
+    #[serde(default)]
+    #[serde(with = "option_string")]
+    pub quantity: Option<u32>,
+    #[serde(default)]
+    #[serde(with = "option_string")]
+    pub quality: Option<u8>,
 }
 
 #[derive(DeepSizeOf, Serialize, Deserialize, Debug)]

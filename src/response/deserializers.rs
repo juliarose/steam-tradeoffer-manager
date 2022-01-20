@@ -136,7 +136,21 @@ where
                 other => Ok(Some(vec![other.to_string()])),
             }
         }
-
+        
+        fn visit_none<E>(self) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(None)
+        }
+        
+        fn visit_unit<E>(self) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(None)
+        }
+        
         fn visit_seq<V>(self, mut seq: V) -> Result<Self::Value, V::Error>
         where
             V: SeqAccess<'de>,
@@ -277,6 +291,26 @@ where
             Ok(vec)
         }
         
+        fn visit_none<E>(self) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(Vec::new())
+        }
+
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            match v {
+                "" => Ok(Vec::new()),
+                other => Err(de::Error::invalid_value(
+                    Unexpected::Str(other),
+                    &"zero or one",
+                )),
+            }
+        }
+        
         fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
         where
             M: MapAccess<'de>,
@@ -318,9 +352,8 @@ where
                     let classinfo = access.next_value::<ClassInfo>()?;
                     
                     map.insert((classinfo.classid, classinfo.instanceid), Arc::new(classinfo));
-                } else {
+                } else if let Ok(_invalid) = access.next_value::<u8>() {
                     // invalid key - discard
-                    access.next_value::<u8>();
                 }
             }
             
