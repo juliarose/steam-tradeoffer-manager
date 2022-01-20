@@ -42,7 +42,7 @@ use reqwest::{cookie::Jar, Url};
 use reqwest_middleware::ClientWithMiddleware;
 use reqwest::header::REFERER;
 use steamid_ng::SteamID;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use lazy_regex::{regex_captures, regex_is_match};
 use async_std::task::sleep;
 use itertools::Itertools;
@@ -51,7 +51,7 @@ use std::env;
 use async_fs::File;
 use futures_lite::io::AsyncWriteExt;
 use std::path::Path;
-    
+use futures::future::join_all;
 
 const HOSTNAME: &'static str = "https://steamcommunity.com";
 const API_HOSTNAME: &'static str = "https://api.steampowered.com";
@@ -65,18 +65,18 @@ pub struct SteamTradeOfferAPI {
 }
 
 struct ClassInfoCache {
-    cache: ClassInfoMap,
+    map: Arc<Mutex<HashMap<(u32, u64, u64), Arc<ClassInfo>>>>,
 }
 
 impl ClassInfoCache {
     fn new() -> Self {
         Self {
-            cache: HashMap::new()
+            map: Arc::new(Mutex::new(HashMap::new()))
         }
     }
     
     pub fn get_classinfo(&self, class: (u32, u64, u64)) -> Option<Arc<ClassInfo>> {
-        match self.cache.get(&class) {
+        match self.map.get(&class) {
             Some(classinfo) => Some(Arc::clone(classinfo)),
             None => None,
         }
@@ -103,32 +103,35 @@ impl ClassInfoCache {
         }
     }
     
-    async fn load_classinfo(&mut self, class: &(u32, u64, u64)) -> Result<(), Box<dyn std::error::Error>> {
-        let rootdir = env!("CARGO_MANIFEST_DIR");
-        let (appid, classid, instanceid) = class;
+    pub async fn load_classinfos(&mut self, classes: &Vec<(u32, u64, u64)>) -> Result<(), Box<dyn std::error::Error>> {
+        let futures: Vec<_> = classes
+            .iter()
+            .map(|(appid, classid, instanceid)| load_classinfo(&mut Arc::clone(&self.map), &(*appid, *classid, *instanceid)))
+            .collect();
         
-        match Path::new(rootdir).join(format!("assets/{}_{}_{}.json", appid, classid, instanceid)).to_str() {
-            Some(filepath) => {
-                let data = async_fs::read_to_string(filepath).await?;
-                let classinfo = serde_json::from_str::<ClassInfo>(&data)?;
-                
-                self.cache.insert((*appid, *classid, *instanceid), Arc::new(classinfo));
-            },
-            None => {
-                // skip..
-            }
-        }
+        join_all(futures).await;
         
         Ok(())
     }
+}
 
-    pub async fn load_classinfos(&mut self, classinfos: &Vec<(u32, u64, u64)>) -> Result<(), Box<dyn std::error::Error>> {
-        for (appid, classid, instanceid) in classinfos {
-            self.load_classinfo(&(*appid, *classid, *instanceid)).await?;
+async fn load_classinfo(map: &mut Arc<Mutex<ClassInfoMap>>, class: &(u32, u64, u64)) -> Result<(), Box<dyn std::error::Error>> {
+    let rootdir = env!("CARGO_MANIFEST_DIR");
+    let (appid, classid, instanceid) = class;
+    
+    match Path::new(rootdir).join(format!("assets/{}_{}_{}.json", appid, classid, instanceid)).to_str() {
+        Some(filepath) => {
+            let data = async_fs::read_to_string(filepath).await?;
+            let classinfo = serde_json::from_str::<ClassInfo>(&data)?;
+            
+            map.insert((*appid, *classid, *instanceid), Arc::new(classinfo));
+        },
+        None => {
+            // skip..
         }
-        
-        Ok(())
     }
+    
+    Ok(())
 }
 
 impl SteamTradeOfferAPI {
