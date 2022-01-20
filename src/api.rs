@@ -76,7 +76,7 @@ impl ClassInfoCache {
     }
     
     pub fn get_classinfo(&self, class: (u32, u64, u64)) -> Option<Arc<ClassInfo>> {
-        match self.map.get(&class) {
+        match self.map.lock().unwrap().get(&class) {
             Some(classinfo) => Some(Arc::clone(classinfo)),
             None => None,
         }
@@ -104,18 +104,24 @@ impl ClassInfoCache {
     }
     
     pub async fn load_classinfos(&mut self, classes: &Vec<(u32, u64, u64)>) -> Result<(), Box<dyn std::error::Error>> {
-        let futures: Vec<_> = classes
+        let map = Arc::clone(&self.map);
+        let threads: Vec<_> = classes
             .iter()
-            .map(|(appid, classid, instanceid)| load_classinfo(&mut Arc::clone(&self.map), &(*appid, *classid, *instanceid)))
+            .map(|(appid, classid, instanceid)| {
+                let map = Arc::clone(&self.map);
+                let class = (appid.clone(), classid.clone(), instanceid.clone());
+
+                load_classinfo(map, class)
+            })
             .collect();
         
-        join_all(futures).await;
+        join_all(threads).await;
         
         Ok(())
     }
 }
 
-async fn load_classinfo(map: &mut Arc<Mutex<ClassInfoMap>>, class: &(u32, u64, u64)) -> Result<(), Box<dyn std::error::Error>> {
+async fn load_classinfo(map: Arc<Mutex<ClassInfoMap>>, class: (u32, u64, u64)) -> Result<(), Box<dyn std::error::Error>> {
     let rootdir = env!("CARGO_MANIFEST_DIR");
     let (appid, classid, instanceid) = class;
     
@@ -124,7 +130,7 @@ async fn load_classinfo(map: &mut Arc<Mutex<ClassInfoMap>>, class: &(u32, u64, u
             let data = async_fs::read_to_string(filepath).await?;
             let classinfo = serde_json::from_str::<ClassInfo>(&data)?;
             
-            map.insert((*appid, *classid, *instanceid), Arc::new(classinfo));
+            map.lock().unwrap().insert(class, Arc::new(classinfo));
         },
         None => {
             // skip..
