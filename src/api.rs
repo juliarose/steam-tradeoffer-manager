@@ -119,7 +119,7 @@ async fn load_classinfo(map: Arc<Mutex<ClassInfoMap>>, class: (u32, u64, u64)) -
     Ok(())
 }
 
-async fn save_classinfo(map: Arc<Mutex<ClassInfoMap>>, appid: u32, classinfo: &ClassInfo) -> Result<(), Box<dyn std::error::Error>> {
+async fn save_classinfo(appid: u32, classinfo: &ClassInfo) -> Result<(), Box<dyn std::error::Error>> {
     let rootdir = env!("CARGO_MANIFEST_DIR");
     let classid = classinfo.classid;
     let instanceid = classinfo.instanceid;
@@ -141,13 +141,11 @@ async fn save_classinfo(map: Arc<Mutex<ClassInfoMap>>, appid: u32, classinfo: &C
     }
 }
 
-async fn save_classinfos(map: Arc<Mutex<ClassInfoMap>>, appid: u32, classinfos: &HashMap<(u64, u64), Arc<ClassInfo>>) -> Result<(), Box<dyn std::error::Error>> {
+async fn save_classinfos(appid: u32, classinfos: &HashMap<(u64, u64), Arc<ClassInfo>>) -> Result<(), Box<dyn std::error::Error>> {
     let threads: Vec<_> = classinfos
         .iter()
         .map(|(_class, classinfo)| {
-            let map = Arc::clone(&map);
-
-            save_classinfo(map, appid, classinfo)
+            save_classinfo(appid, classinfo)
         })
         .collect();
 
@@ -311,7 +309,7 @@ impl SteamTradeOfferAPI {
     }
     
     pub async fn get_app_asset_classinfos_chunk(&self, appid: u32, classes: &Vec<(u64, u64)>) -> Result<HashMap<(u64, u64), Arc<ClassInfo>>, APIError> {
-        let mut query = {
+        let query = {
             let mut query = Vec::new();
             
             query.push(("key".to_string(), self.key.to_string()));
@@ -333,11 +331,8 @@ impl SteamTradeOfferAPI {
             .send()
             .await?;
         let body: GetAssetClassInfoResponse = parses_response(response).await?;
-        // let text = response.text().await?;
         let classinfos = body.result;
-        println!("{:?}", classinfos);
-
-        let _ = save_classinfos(Arc::clone(&self.classinfo_cache.map), appid, &classinfos).await;
+        let _ = save_classinfos(appid, &classinfos).await;
         
         Ok(classinfos)
     }
