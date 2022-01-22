@@ -41,6 +41,25 @@ fn is_login(location_option: Option<&header::HeaderValue>) -> bool {
     }
 }
 
+pub async fn check_response(response: reqwest::Response) -> Result<bytes::Bytes, APIError> {
+    let status = &response.status();
+    
+    match status.as_u16() {
+        300..=399 if is_login(response.headers().get("location")) => {
+            Err(APIError::NotLoggedIn)
+        },
+        400..=499 => {
+            Err(APIError::HttpError(*status))
+        },
+        500..=599 => {
+            Err(APIError::HttpError(*status))
+        },
+        _ => {
+            Ok(response.bytes().await?)
+        }
+    }
+}
+
 pub async fn parses_response<D>(response: reqwest::Response) -> Result<D, APIError>
 where
     D: DeserializeOwned
