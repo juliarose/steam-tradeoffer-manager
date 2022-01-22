@@ -50,7 +50,7 @@ pub mod option_string {
         T::Err: Display,
         D: Deserializer<'de>
     {
-        let s: Option<String> = Option::deserialize(deserializer)?;
+        let s: Option<String> = Option::<String>::deserialize(deserializer)?;
         
         if let Some(v) = s {
             return Ok(Some(v.parse::<T>().map_err(serde::de::Error::custom)?))

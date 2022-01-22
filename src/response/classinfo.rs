@@ -68,15 +68,19 @@ pub struct AppData {
 #[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
 pub struct ClassInfo {
     #[serde(with = "string")]
-    pub classid: u64,
-    #[serde(with = "string")]
-    pub instanceid: u64,
+    pub classid: ClassId,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(with = "option_string")]
+    pub instanceid: InstanceId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     pub market_name: String,
     pub market_hash_name: String,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name_color: Option<String>,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub background_color: Option<String>,
     pub icon_url: String,
@@ -110,4 +114,11 @@ pub struct ClassInfo {
     pub app_data: Option<AppData>,
 }
 
-pub type ClassInfoMap = HashMap<(u32, u64, u64), Arc<ClassInfo>>;
+pub type AppId = u32;
+pub type ClassId = u64;
+pub type InstanceId = Option<u64>;
+pub type ClassInfoAppClass = (ClassId, InstanceId);
+pub type ClassInfoClass = (AppId, ClassId, InstanceId);
+pub type ClassInfoMap = HashMap<ClassInfoClass, Arc<ClassInfo>>;
+pub type ClassInfoAppMap = HashMap<ClassInfoAppClass, Arc<ClassInfo>>;
+

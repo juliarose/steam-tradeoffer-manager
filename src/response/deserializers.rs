@@ -17,7 +17,7 @@ use std::fmt;
 use std::marker::PhantomData;
 use std::fmt::Display;
 use lazy_regex::regex_is_match;
-use super::classinfo::{ClassInfo, ClassInfoMap};
+use super::classinfo::{ClassInfo, ClassInfoAppClass, ClassInfoAppMap};
 
 pub fn string_or_number<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
@@ -221,24 +221,24 @@ where
     deserializer.deserialize_any(DeserializeBoolVisitor)
 }
 
-pub fn to_classinfo_map<'de, D>(deserializer: D) -> Result<HashMap<(u64, u64), Arc<ClassInfo>>, D::Error>
+pub fn to_classinfo_map<'de, D>(deserializer: D) -> Result<HashMap<ClassInfoAppClass, Arc<ClassInfo>>, D::Error>
 where
     D: Deserializer<'de>,
 {
     struct ClassInfoVisitor;
 
     impl<'de> Visitor<'de> for ClassInfoVisitor {
-        type Value = HashMap<(u64, u64), Arc<ClassInfo>>;
+        type Value = HashMap<ClassInfoAppClass, Arc<ClassInfo>>;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
             formatter.write_str("a sequence of classinfos")
         }
 
-        fn visit_seq<V>(self, mut seq: V) -> Result<HashMap<(u64, u64), Arc<ClassInfo>>, V::Error>
+        fn visit_seq<V>(self, mut seq: V) -> Result<HashMap<ClassInfoAppClass, Arc<ClassInfo>>, V::Error>
         where
             V: SeqAccess<'de>,
         {
-            let mut map: HashMap<(u64, u64), Arc<ClassInfo>> = HashMap::with_capacity(seq.size_hint().unwrap_or(0));
+            let mut map: HashMap<(u64, Option<u64>), Arc<ClassInfo>> = HashMap::with_capacity(seq.size_hint().unwrap_or(0));
 
             while let Some(classinfo) = seq.next_element::<ClassInfo>()? {
                 map.insert((classinfo.classid, classinfo.instanceid), Arc::new(classinfo));
@@ -328,14 +328,14 @@ where
     deserializer.deserialize_any(HashMapVisitor::new())
 }
 
-pub fn deserialize_classinfo_map<'de, D>(deserializer: D) -> Result<HashMap<(u64, u64), Arc<ClassInfo>>, D::Error>
+pub fn deserialize_classinfo_map<'de, D>(deserializer: D) -> Result<ClassInfoAppMap, D::Error>
 where
     D: Deserializer<'de>,
 {
     struct ClassInfoMapVisitor;
     
     impl<'de> Visitor<'de> for ClassInfoMapVisitor {
-        type Value = HashMap<(u64, u64), Arc<ClassInfo>>;
+        type Value = ClassInfoAppMap;
     
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("a map")
@@ -348,7 +348,7 @@ where
             let mut map = HashMap::new();
             
             while let Some(key) = access.next_key::<String>()? {
-                if regex_is_match!(r#"\d+_\d+"#, &key) {
+                if regex_is_match!(r#"\d+"#, &key) {
                     let classinfo = access.next_value::<ClassInfo>()?;
                     
                     map.insert((classinfo.classid, classinfo.instanceid), Arc::new(classinfo));

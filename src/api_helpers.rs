@@ -79,6 +79,7 @@ where
                     } else if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
                         Err(APIError::TradeError(message.into()))
                     } else {
+                        // println!("{}", String::from_utf8_lossy(&body));
                         Err(APIError::ParseError(parse_error))
                     }
                 }
