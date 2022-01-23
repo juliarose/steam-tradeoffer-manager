@@ -11,6 +11,7 @@ pub mod api;
 mod api_error;
 mod item;
 mod currency;
+pub mod classinfo_cache;
 pub mod time;
 pub mod api_helpers;
 pub mod response;
