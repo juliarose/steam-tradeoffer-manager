@@ -16,8 +16,13 @@ use std::sync::Arc;
 use std::fmt;
 use std::marker::PhantomData;
 use std::fmt::Display;
-use lazy_regex::regex_is_match;
-use super::classinfo::{ClassInfo, ClassInfoAppClass, ClassInfoAppMap};
+use lazy_regex::{regex_is_match, regex_captures};
+use super::classinfo::{
+    ClassInfo,
+    ClassInfoAppClass,
+    ClassInfoAppMap
+};
+use serde_json::value::RawValue;
 
 pub fn string_or_number<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
@@ -167,7 +172,6 @@ where
 
     deserializer.deserialize_any(FraudWarningsVisitor)
 }
-
 
 pub fn into_bool<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
@@ -352,6 +356,48 @@ where
                     let classinfo = access.next_value::<ClassInfo>()?;
                     
                     map.insert((classinfo.classid, classinfo.instanceid), Arc::new(classinfo));
+                } else if let Ok(_invalid) = access.next_value::<u8>() {
+                    // invalid key - discard
+                }
+            }
+            
+            Ok(map)
+        }
+    }
+    
+    deserializer.deserialize_any(ClassInfoMapVisitor)
+}
+
+pub fn deserialize_classinfo_map_raw<'de, D>(deserializer: D) -> Result<HashMap<ClassInfoAppClass, String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct ClassInfoMapVisitor;
+    
+    impl<'de> Visitor<'de> for ClassInfoMapVisitor {
+        type Value = HashMap<ClassInfoAppClass, String>;
+    
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a map")
+        }
+    
+        fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
+        where
+            M: MapAccess<'de>,
+        {
+            let mut map = HashMap::new();
+            
+            while let Some(key) = access.next_key::<String>()? {
+                if let Some((_, classid_string, instanceid_string)) = regex_captures!(r#"(\d+)_?(\d+)?"#, &key) {
+                    let classid = classid_string.parse::<u64>().map_err(de::Error::custom)?;
+                    let instanceid = match instanceid_string.parse::<u64>() {
+                        Ok(instanceid) => Some(instanceid),
+                        Err(_) => None,
+                    };
+                    let raw_value = access.next_value::<Box<RawValue>>()?;
+                    let classinfo_string = raw_value.to_string();
+                    
+                    map.insert((classid, instanceid), classinfo_string);
                 } else if let Ok(_invalid) = access.next_value::<u8>() {
                     // invalid key - discard
                 }

@@ -20,7 +20,7 @@ use crate::{
         deserializers::{
             from_int_to_bool,
             to_classinfo_map,
-            deserialize_classinfo_map
+            deserialize_classinfo_map_raw
         }
     },
     request,
@@ -41,6 +41,7 @@ use deepsize::DeepSizeOf;
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 use serde::{Deserialize, Serialize};
+use serde_json::value::RawValue;
 use serde_qs;
 use reqwest::{cookie::Jar, Url};
 use reqwest_middleware::ClientWithMiddleware;
@@ -97,10 +98,19 @@ impl ClassInfoCache {
         }
     }
     
-    pub fn insert_classinfos(&mut self, appid: u32, classinfos: &ClassInfoAppMap) {
-        for ((classid, instanceid), classinfo) in classinfos {
-            self.map.insert((appid.clone(), *classid, *instanceid), Arc::clone(classinfo));
+    pub fn insert_classinfos(&mut self, appid: u32, classinfos: &HashMap<ClassInfoAppClass, String>) -> Result<ClassInfoMap, serde_json::Error> {
+        let mut map = HashMap::new();
+        
+        for ((classid, instanceid), classinfo_string) in classinfos {
+            let classinfo = serde_json::from_str(classinfo_string)?;
+            let classinfo = Arc::new(classinfo);
+            let class = (appid.clone(), *classid, *instanceid);
+
+            self.map.insert(class, Arc::clone(&classinfo));
+            map.insert(class, Arc::clone(&classinfo));
         }
+
+        Ok(map)
     }
 }
 
@@ -198,8 +208,8 @@ fn get_classinfo_file_path(class: &ClassInfoClass) -> Option<String> {
     }
 }
 
-async fn save_classinfo(appid: u32, classinfo: Arc<ClassInfo>) -> Result<(), FileError> {
-    match get_classinfo_file_path(&(appid, classinfo.classid, classinfo.instanceid)) {
+async fn save_classinfo(class: ClassInfoClass, classinfo: String) -> Result<(), FileError> {
+    match get_classinfo_file_path(&class) {
         Some(filepath) => {
             let mut file = File::create(filepath).await?;
             let data = serde_json::to_string(&classinfo)?;
@@ -211,16 +221,16 @@ async fn save_classinfo(appid: u32, classinfo: Arc<ClassInfo>) -> Result<(), Fil
     }
 }
 
-async fn save_classinfos(appid: u32, classinfos: &ClassInfoAppMap) -> Vec<Result<(), FileError>> {
+async fn save_classinfos(appid: u32, classinfos: &HashMap<ClassInfoAppClass, String>) -> Vec<Result<(), FileError>> {
     let mut tasks: Vec<JoinHandle<Result<(), FileError>>>= vec![];
     
-    for (_, classinfo) in classinfos {
+    for ((classid, instanceid), classinfo) in classinfos {
         // must be cloned to move across threads
-        let appid = appid.clone();
-        let classinfo = Arc::clone(classinfo);
+        let classinfo = classinfo.clone();
+        let class = (appid.clone(), *classid, *instanceid);
         
         tasks.push(tokio::spawn(async move {
-            save_classinfo(appid, classinfo).await
+            save_classinfo(class, classinfo).await
         }));
     }
     
@@ -390,7 +400,7 @@ impl SteamTradeOfferAPI {
         Ok(offers)
     }
     
-    pub async fn get_app_asset_classinfos_chunk(&mut self, appid: u32, classes: &Vec<ClassInfoAppClass>) -> Result<HashMap<ClassInfoAppClass, Arc<ClassInfo>>, APIError> {
+    pub async fn get_app_asset_classinfos_chunk(&mut self, appid: u32, classes: &Vec<ClassInfoAppClass>) -> Result<ClassInfoMap, APIError> {
         let query = {
             let mut query = Vec::new();
             
@@ -418,13 +428,12 @@ impl SteamTradeOfferAPI {
         let body: GetAssetClassInfoResponse = parses_response(response).await?;
         let classinfos = body.result;
         
-        self.classinfo_cache.insert_classinfos(appid, &classinfos);
         save_classinfos(appid, &classinfos).await;
-        
-        Ok(classinfos)
+
+        Ok(self.classinfo_cache.insert_classinfos(appid, &classinfos)?)
     }
     
-    async fn get_app_asset_classinfos(&mut self, appid: u32, classes: Vec<ClassInfoAppClass>) -> Result<Vec<HashMap<ClassInfoAppClass, Arc<ClassInfo>>>, APIError> {
+    async fn get_app_asset_classinfos(&mut self, appid: u32, classes: Vec<ClassInfoAppClass>) -> Result<Vec<ClassInfoMap>, APIError> {
         let mut maps = Vec::new();
         
         for chunk in classes.chunks(100) {
@@ -464,8 +473,8 @@ impl SteamTradeOfferAPI {
         
         for (appid, classes) in apps {
             for maps in self.get_app_asset_classinfos(appid, classes).await? {
-                for (_class, classinfo) in maps {
-                    map.insert((appid, classinfo.classid, classinfo.instanceid), Arc::clone(&classinfo));
+                for (class, classinfo) in maps {
+                    map.insert(class, Arc::clone(&classinfo));
                 }
             }
         }
@@ -885,8 +894,8 @@ struct GetInventoryResponse {
 
 #[derive(Deserialize, Debug)]
 struct GetAssetClassInfoResponse {
-    #[serde(deserialize_with = "deserialize_classinfo_map")]
-    result: HashMap<ClassInfoAppClass, Arc<ClassInfo>>,
+    #[serde(deserialize_with = "deserialize_classinfo_map_raw")]
+    result: HashMap<ClassInfoAppClass, String>,
 }
 
 #[cfg(test)]
@@ -918,9 +927,9 @@ mod tests {
     #[test]
     fn parses_get_asset_classinfo_response() {
         let response: GetAssetClassInfoResponse = tests::read_and_parse_file("get_asset_classinfo.json").unwrap();
+        let classinfo_string = response.result.get(&(101785959, Some(11040578))).unwrap();
+        let parsed = serde_json::from_str::<ClassInfo>(classinfo_string).unwrap();
         
-        println!("{:?}", response);
-        
-        assert_eq!(180, 180);
+        assert_eq!(parsed.market_hash_name, String::from("Mann Co. Supply Crate Key"));
     }
 }
