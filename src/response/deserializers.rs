@@ -16,7 +16,10 @@ use std::sync::Arc;
 use std::fmt;
 use std::marker::PhantomData;
 use std::fmt::Display;
-use lazy_regex::{regex_is_match, regex_captures};
+use lazy_regex::{
+    regex_is_match,
+    regex_captures
+};
 use super::classinfo::{
     ClassInfo,
     ClassInfoAppClass,

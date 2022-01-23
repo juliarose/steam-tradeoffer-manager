@@ -1,20 +1,9 @@
 
-use crate::{
-    APIError,
-    Item,
-    Currency,
-    OfferFilter,
-    TradeOfferState,
-    ConfirmationMethod,
-    ServerTime,
-    response::{
-        self,
-        ClassInfo,
-        ClassInfoMap,
-        ClassInfoAppClass,
-        ClassInfoClass,
-        ClassInfoAppMap
-    }
+use crate::response::{
+    ClassInfo,
+    ClassInfoMap,
+    ClassInfoAppClass,
+    ClassInfoClass
 };
 use std::{
     env,
