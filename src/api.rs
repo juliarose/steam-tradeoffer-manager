@@ -556,12 +556,24 @@ impl SteamTradeOfferAPI {
     }
     
     #[async_recursion]
-    async fn get_inventory_request(&self, responses: &mut Vec<GetInventoryResponse>, start_assetid: Option<u64>, steamid: &SteamID, appid: u32, contextid: u32, tradable_only: bool) -> Result<Inventory, APIError> { 
+    async fn get_inventory_request(&mut self, responses: &mut Vec<GetInventoryResponse>, start_assetid: Option<u64>, steamid: &SteamID, appid: u32, contextid: u32, tradable_only: bool) -> Result<Inventory, APIError> { 
         #[derive(Serialize, Debug)]
         struct Query<'a> {
             l: &'a str,
             count: u32,
             start_assetid: Option<u64>,
+        }
+
+        fn collect_classes(items: &Vec<RawAsset>) -> Vec<ClassInfoClass> {
+            let mut classes_set: HashSet<ClassInfoClass> = HashSet::new();
+
+            for item in items {
+                classes_set.insert((item.appid, item.classid, item.instanceid));
+            }
+            
+            let classes: Vec<_> = classes_set.into_iter().collect();
+            
+            classes
         }
         
         let sid = u64::from(steamid.clone());
@@ -595,43 +607,61 @@ impl SteamTradeOfferAPI {
             responses.push(body);
             
             let mut inventory: Vec<Asset> = Vec::new();
-            
-            for body in responses {
-                let mut total_bytes: u32 = 0;
+            let items: Vec<RawAsset> = responses
+                .iter()
+                .map(|response| response.to_owned().assets)
+                .flatten()
+                .collect();
+            let classes = collect_classes(&items);
+            let _classinfos = self.get_asset_classinfos(&classes).await?;
+
+            for item in &items {
+                let class = (item.appid, item.classid, item.instanceid);
                 
-                for (_, classinfo) in &body.descriptions {
-                    total_bytes += classinfo.deep_size_of() as u32;
+                if let Some(classinfo) = self.classinfo_cache.get_classinfo(&class) {
+                    inventory.push(Asset {
+                        classinfo,
+                        appid: item.appid,
+                        contextid: item.contextid,
+                        assetid: item.assetid,
+                        amount: item.amount,
+                    });
+                } else {
+                    let instanceid = match item.instanceid {
+                        Some(instanceid) => instanceid,
+                        None => 0,
+                    };
                     
-                    println!("{}", classinfo.deep_size_of());
-                }
-                
-                println!("total {}", total_bytes);
-                
-                for item in &body.assets {
-                    if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
-                        inventory.push(Asset {
-                            classinfo: Arc::clone(classinfo),
-                            appid: item.appid,
-                            contextid: item.contextid,
-                            assetid: item.assetid,
-                            amount: item.amount,
-                        });
-                    } else {
-                        let instanceid = match item.instanceid {
-                            Some(instanceid) => instanceid,
-                            None => 0,
-                        };
-                        
-                        return Err(APIError::ResponseError(format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()));
-                    }
+                    return Err(APIError::ResponseError(format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()));
                 }
             }
+            
+            // for body in responses {
+            //     for item in &body.assets {
+            //         if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
+            //             inventory.push(Asset {
+            //                 classinfo: Arc::clone(classinfo),
+            //                 appid: item.appid,
+            //                 contextid: item.contextid,
+            //                 assetid: item.assetid,
+            //                 amount: item.amount,
+            //             });
+            //         } else {
+            //             let instanceid = match item.instanceid {
+            //                 Some(instanceid) => instanceid,
+            //                 None => 0,
+            //             };
+                        
+            //             return Err(APIError::ResponseError(format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()));
+            //         }
+            //     }
+            // }
             
             Ok(inventory)
         }
     }
     
-    pub async fn get_inventory(&self, steamid: &SteamID, appid: u32, contextid: u32, tradable_only: bool) -> Result<Inventory, APIError> {
+    pub async fn get_inventory(&mut self, steamid: &SteamID, appid: u32, contextid: u32, tradable_only: bool) -> Result<Inventory, APIError> {
         let responses = &mut Vec::new();
         let inventory: Vec<Asset> = self.get_inventory_request(responses, None, steamid, appid, contextid, tradable_only).await?;
         
