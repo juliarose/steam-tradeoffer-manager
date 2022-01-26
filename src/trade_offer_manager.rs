@@ -24,7 +24,7 @@ pub struct TradeOfferManager {
 
 impl TradeOfferManager {
 
-    fn new(key: String) -> Self {
+    pub fn new(key: String) -> Self {
         Self {
             api: SteamTradeOfferAPI::new(key),
             last_poll: None,
@@ -71,7 +71,7 @@ impl TradeOfferManager {
                 offers_since = 1;
                 self.last_poll_full_update = Some(time::get_server_time_now())
             }
-        } else if (full_update) {
+        } else if full_update {
             full_update = true;
             offers_since = 1;
             self.last_poll_full_update = Some(time::get_server_time_now())
