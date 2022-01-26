@@ -5,19 +5,22 @@ use crate::{
     classinfo_cache::ClassInfoCache,
     SteamTradeOfferAPI,
     APIError,
-    MissingClassInfoError
+    MissingClassInfoError,
+    types::TradeOfferId
 };
 use super::{
     Asset,
-    RawAsset,
-    RawTradeOffer
+    raw::{
+        RawAsset,
+        RawTradeOffer
+    }
 };
 use steamid_ng::SteamID;
 
 #[derive(Debug)]
 pub struct TradeOffer<'a> {
     pub api: &'a SteamTradeOfferAPI, 
-    pub tradeofferid: u64,
+    pub tradeofferid: TradeOfferId,
     pub partner: SteamID,
     pub message: Option<String>,
     pub items_to_receive: Vec<Asset>,
@@ -103,5 +106,17 @@ impl<'a> TradeOffer<'a> {
         }
         
         self.api.decline_offer(self.tradeofferid).await
+    }
+
+    pub async fn update(&'a mut self) -> Result<(), APIError> {
+        let offer = self.api.get_trade_offer(self.tradeofferid).await?;
+
+        self.trade_offer_state = offer.trade_offer_state;
+        self.time_updated = offer.time_updated;
+        self.expiration_time = offer.expiration_time;
+        self.escrow_end_date = offer.escrow_end_date;
+        self.confirmation_method = offer.confirmation_method;
+
+        Ok(())
     }
 }

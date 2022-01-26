@@ -1,8 +1,12 @@
-use crate::response::{
-    ClassInfo,
-    ClassInfoMap,
-    ClassInfoAppClass,
-    ClassInfoClass
+use crate::{
+    types::{
+        ClassInfoMap,
+        ClassInfoAppClass,
+        ClassInfoClass
+    },
+    response::{
+        ClassInfo
+    }
 };
 use std::{
     env,

@@ -1,20 +1,25 @@
 use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
-use std::sync::Arc;
-use super::deserializers::{
-    into_bool,
-    hashmap_or_vec,
-    from_fraudwarnings,
-    string_or_number
+use super::{
+    deserializers::{
+        into_bool,
+        hashmap_or_vec,
+        from_fraudwarnings,
+        string_or_number
+    }
 };
-use crate::serializers::{
-    string,
-    option_string,
-    option_string_0_as_none
+use crate::{
+    types::{
+        ClassId,
+        InstanceId
+    },
+    serializers::{
+        string,
+        option_string,
+        option_string_0_as_none
+    }
 };
-use deepsize::DeepSizeOf;
 
-#[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Description {
     pub value: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -31,7 +36,7 @@ impl Description {
     }
 }
 
-#[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Tag {
     pub internal_name: String,
     #[serde(alias = "localized_tag_name")]
@@ -44,13 +49,13 @@ pub struct Tag {
     pub category_name: Option<String>,
 }
 
-#[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Action {
     pub name: String,
     pub link: String,
 }
 
-#[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AppData {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -66,7 +71,7 @@ pub struct AppData {
     pub quality: Option<u8>,
 }
 
-#[derive(DeepSizeOf, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ClassInfo {
     #[serde(with = "string")]
     pub classid: ClassId,
@@ -114,12 +119,4 @@ pub struct ClassInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub app_data: Option<AppData>,
 }
-
-pub type AppId = u32;
-pub type ClassId = u64;
-pub type InstanceId = Option<u64>;
-pub type ClassInfoAppClass = (ClassId, InstanceId);
-pub type ClassInfoClass = (AppId, ClassId, InstanceId);
-pub type ClassInfoMap = HashMap<ClassInfoClass, Arc<ClassInfo>>;
-pub type ClassInfoAppMap = HashMap<ClassInfoAppClass, Arc<ClassInfo>>;
 

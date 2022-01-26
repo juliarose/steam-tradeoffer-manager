@@ -1,10 +1,13 @@
 use serde::{Serialize, Deserialize};
-use crate::serializers::string;
+use crate::{
+    types::TradeOfferId,
+    serializers::string
+};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SentOffer {
     #[serde(with = "string")]
-    pub tradeofferid: u64,
+    pub tradeofferid: TradeOfferId,
     #[serde(default)]
     pub needs_mobile_confirmation: bool,
     #[serde(default)]

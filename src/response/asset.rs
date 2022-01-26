@@ -1,12 +1,17 @@
-use super::ClassInfo;
 use std::sync::Arc;
-use deepsize::DeepSizeOf;
+use super::ClassInfo;
+use crate::types::{
+    AppId,
+    ContextId,
+    AssetId,
+    Amount
+};
 
-#[derive(DeepSizeOf, Debug)]
+#[derive(Debug)]
 pub struct Asset {
-    pub appid: u32,
-    pub contextid: u32,
-    pub assetid: u64,
-    pub amount: u32,
+    pub appid: AppId,
+    pub contextid: ContextId,
+    pub assetid: AssetId,
+    pub amount: Amount,
     pub classinfo: Arc<ClassInfo>,
 }

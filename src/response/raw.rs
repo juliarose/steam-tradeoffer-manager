@@ -7,13 +7,22 @@ use crate::{
     serializers::{
         string,
         option_string_0_as_none
+    },
+    types::{
+        AppId,
+        ContextId,
+        AssetId,
+        Amount,
+        ClassId,
+        InstanceId,
+        TradeOfferId
     }
 };
 
 #[derive(Deserialize, Debug)]
 pub struct RawTradeOffer {
     #[serde(with = "string")]
-    pub tradeofferid: u64,
+    pub tradeofferid: TradeOfferId,
     pub accountid_other: u32,
     pub message: Option<String>,
     #[serde(default)]
@@ -39,27 +48,27 @@ pub struct RawTradeOffer {
 
 #[derive(Deserialize, Debug)]
 pub struct RawAsset {
-    pub appid: u32,
+    pub appid: AppId,
     #[serde(with = "string")]
-    pub contextid: u32,
+    pub contextid: ContextId,
     #[serde(with = "string")]
-    pub assetid: u64,
+    pub assetid: AssetId,
     #[serde(with = "string")]
-    pub classid: u64,
+    pub classid: ClassId,
     #[serde(with = "option_string_0_as_none")]
-    pub instanceid: Option<u64>,
+    pub instanceid: InstanceId,
     #[serde(with = "string")]
-    pub amount: u32,
+    pub amount: Amount,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct RawAssetOld {
     #[serde(with = "string", rename = "id")]
-    pub assetid: u64,
+    pub assetid: AssetId,
     #[serde(with = "string")]
-    pub classid: u64,
+    pub classid: ClassId,
     #[serde(with = "option_string_0_as_none")]
-    pub instanceid: Option<u64>,
+    pub instanceid: InstanceId,
     #[serde(with = "string")]
-    pub amount: u32,
+    pub amount: Amount,
 }

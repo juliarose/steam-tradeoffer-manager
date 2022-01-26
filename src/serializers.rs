@@ -1,8 +1,13 @@
-
+use std::{
+    fmt::Display,
+    str::FromStr
+};
 use steamid_ng::SteamID;
-use std::fmt::Display;
-use std::str::FromStr;
-use serde::{de::{self, Unexpected}, Serializer, Deserialize, Deserializer};
+use serde::{
+    Serializer,
+    Deserialize,
+    Deserializer
+};
 
 pub mod string {
     use std::fmt::Display;
@@ -30,7 +35,7 @@ pub mod string {
 pub mod option_string {
     use std::fmt::Display;
     use std::str::FromStr;
-    use serde::{de, Serializer, Deserialize, Deserializer};
+    use serde::{Serializer, Deserialize, Deserializer};
     
     pub fn serialize<T, S>(value: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -63,8 +68,7 @@ pub mod option_string {
 pub mod option_string_0_as_none {
     use std::fmt::Display;
     use std::str::FromStr;
-    use serde::{de, Serializer, Deserialize, Deserializer};
-    use num::Integer;
+    use serde::{Serializer, Deserialize, Deserializer};
     
     pub fn serialize<T, S>(value: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -135,19 +139,5 @@ where
         s.serialize_str(&v.to_string())
     } else {
         s.serialize_none()
-    }
-}
-
-pub fn bool_from_string<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    match &*String::deserialize(deserializer)? {
-        "0" => Ok(false),
-        "1" => Ok(true),
-        other => Err(de::Error::invalid_value(
-            Unexpected::Str(other),
-            &"zero or one",
-        )),
     }
 }

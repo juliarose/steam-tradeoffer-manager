@@ -1,16 +1,16 @@
 use std::fmt;
-use reqwest;
+use reqwest::{
+    self,
+    StatusCode
+};
 use reqwest_middleware;
 use anyhow;
 use serde_qs;
-use reqwest::StatusCode;
-use crate::response::{
+use crate::types::{
     AppId,
     ClassId,
     InstanceId
 };
-
-pub const RESPONSE_UNSUCCESSFUL_MESSAGE: &str = "Empty response";
 
 #[derive(Debug)]
 pub struct MissingClassInfoError {
@@ -33,7 +33,6 @@ pub enum APIError {
     ResponseError(String),
     ReqwestError(reqwest::Error),
     ReqwestMiddlewareError(anyhow::Error),
-    StatusError(reqwest::StatusCode),
     QueryParameterError(serde_qs::Error),
     ParseError(serde_json::Error),
     HttpError(StatusCode),
@@ -49,7 +48,6 @@ impl fmt::Display for APIError {
             APIError::ResponseError(s) => write!(f, "{}", s),
             APIError::ReqwestError(e) => write!(f, "{}", e),
             APIError::ReqwestMiddlewareError(e) => write!(f, "{}", e),
-            APIError::StatusError(e) => write!(f, "{}", e),
             APIError::QueryParameterError(e) => write!(f, "{}", e),
             APIError::ParseError(e) => write!(f, "{}", e),
             APIError::HttpError(e) => write!(f, "{}", e),

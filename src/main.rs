@@ -3,7 +3,6 @@ extern crate dotenv_codegen;
 
 use dotenv::dotenv;
 use steam_tradeoffers::{
-    Item,
     SteamTradeOfferAPI,
     response as offers_response,
     request as offers_request
@@ -81,7 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //             // match api.send_offer(&offers_request::CreateTradeOffer {
     //             //     id: None,
     //             //     items_to_receive: vec![
-    //             //         Item {
+    //             //         offers_request::CreateTradeOfferItem {
     //             //             appid: 440,
     //             //             contextid: 2,
     //             //             amount: 1,

@@ -1,31 +1,30 @@
 #[macro_use]
 extern crate dotenv_codegen;
 
-mod trade_offer;
-mod trade_offer_state;
-mod confirmation_method;
-mod offer_filter;
-mod trade_status;
-mod eresult;
-pub mod api;
-mod api_error;
-mod item;
+mod enums;
 mod currency;
+mod trade_offer_manager;
 pub mod classinfo_cache;
+pub mod api;
+pub mod types;
 pub mod time;
-pub mod api_helpers;
 pub mod response;
 pub mod request;
 pub mod serializers;
 
 pub use time::ServerTime;
-pub use item::Item;
 pub use currency::Currency;
-pub use api::SteamTradeOfferAPI;
+pub use trade_offer_manager::TradeOfferManager;
+pub use api::{
+    SteamTradeOfferAPI,
+    APIError,
+    MissingClassInfoError
+};
 pub use response::TradeOffer;
-pub use api_error::{APIError, MissingClassInfoError};
-pub use trade_offer_state::TradeOfferState;
-pub use offer_filter::OfferFilter;
-pub use trade_status::TradeStatus;
-pub use confirmation_method::ConfirmationMethod;
-pub use eresult::EResult;
+pub use enums::{
+    TradeOfferState,
+    OfferFilter,
+    TradeStatus,
+    ConfirmationMethod,
+    EResult
+};

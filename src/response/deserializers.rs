@@ -1,3 +1,13 @@
+use std::{
+    collections::HashMap,
+    str::FromStr,
+    sync::Arc,
+    marker::PhantomData,
+    fmt::{
+        self,
+        Display
+    }
+};
 use serde::{
     Deserialize,
     de::{
@@ -10,22 +20,16 @@ use serde::{
         IntoDeserializer
     }
 };
-use std::collections::HashMap;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::fmt;
-use std::marker::PhantomData;
-use std::fmt::Display;
+use serde_json::value::RawValue;
 use lazy_regex::{
     regex_is_match,
     regex_captures
 };
-use super::classinfo::{
-    ClassInfo,
+use super::ClassInfo;
+use crate::types::{
     ClassInfoAppClass,
     ClassInfoAppMap
 };
-use serde_json::value::RawValue;
 
 pub fn string_or_number<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
@@ -60,8 +64,6 @@ where
         where
             E: de::Error,
         {
-            // v.try_into().map_err(de::Error::custom)
-            // T::try_from(v).map_err(de::Error::custom)
             match T::try_from(v) {
                 Ok(c) => {
                     Ok(c)
