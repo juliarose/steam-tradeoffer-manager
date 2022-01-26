@@ -2,6 +2,7 @@ use steamid_ng::SteamID;
 use serde::{Serialize, Deserialize};
 use crate::{
     SteamTradeOfferAPI,
+    APIError,
     serializers::string,
     response::{
         SentOffer,
@@ -13,7 +14,7 @@ use crate::{
         AssetId,
         Amount,
         TradeOfferId
-    }, APIError
+    }
 };
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

@@ -7,6 +7,7 @@ use crate::{
         ClassInfoCache,
         save_classinfos
     },
+    time::get_system_time,
     types::{
         ClassInfoMap,
         ClassInfoAppClass,
@@ -48,11 +49,7 @@ use std::{
         HashSet
     },
     sync::Arc,
-    time::{
-        Duration,
-        SystemTime,
-        UNIX_EPOCH
-    }
+    time::Duration
 };
 use async_std::task::sleep;
 use serde::{Deserialize, Serialize};
@@ -227,9 +224,9 @@ impl SteamTradeOfferAPI {
         Ok(body)
     }
     
-    pub async fn get_trade_offers<'a>(&'a mut self) -> Result<Vec<response::TradeOffer<'a>>, APIError> {
+    pub async fn get_trade_offers<'a>(&'a mut self, filter: &OfferFilter, historical_cutoff: &Option<ServerTime>) -> Result<Vec<response::TradeOffer<'a>>, APIError> {
         let mut responses = Vec::new();
-        let offers = self.get_trade_offers_request(&mut responses, &OfferFilter::ActiveOnly, &None, None).await?;
+        let offers = self.get_trade_offers_request(&mut responses, filter, historical_cutoff, None).await?;
         
         Ok(offers)
     }
@@ -333,13 +330,7 @@ impl SteamTradeOfferAPI {
 
         let time_historical_cutoff: u64 = match historical_cutoff {
             Some(cutoff) => cutoff.timestamp() as u64,
-            None => {
-                match SystemTime::now().duration_since(UNIX_EPOCH) {
-                    Ok(n) => n.as_secs() + ONE_YEAR_SECS,
-                    // should never occur
-                    Err(_) => 0,
-                }
-            }
+            None => get_system_time() + ONE_YEAR_SECS,
         };
         let uri = self.get_api_url("IEconService", "GetTradeOffers", 1);
         let response = self.client.get(&uri)
