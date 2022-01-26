@@ -119,7 +119,7 @@ impl SteamTradeOfferAPI {
         }
     }
 
-    pub async fn send_offer<'a, 'b>(&self, offer: &'b request::CreateTradeOffer) -> Result<response::SentOffer, APIError> {
+    pub async fn send_offer<'a, 'b>(&self, offer: &'b request::CreateTradeOffer<'a>) -> Result<response::SentOffer, APIError> {
         #[derive(Serialize, Debug)]
         struct OfferFormUser<'b> {
             assets: &'b Vec<request::CreateTradeOfferItem>,

@@ -3,7 +3,7 @@ extern crate dotenv_codegen;
 
 use dotenv::dotenv;
 use steam_tradeoffers::{
-    SteamTradeOfferAPI,
+    TradeOfferManager,
     response as offers_response,
     request as offers_request
 };
@@ -15,7 +15,6 @@ use std::{
     collections::HashMap,
 };
 use steamid_ng::SteamID;
-use deepsize::DeepSizeOf;
 
 fn is_key(classinfo: &offers_response::ClassInfo) -> bool {
     classinfo.market_hash_name == "Mann Co. Supply Crate Key"
@@ -40,12 +39,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let steam_api_key: String = dotenv!("STEAM_API_KEY").to_string();
     let cookies_json_path: String = dotenv!("COOKIES_JSON_PATH").to_string();
-    let mut api = SteamTradeOfferAPI::new(steam_api_key);
+    let mut manager = TradeOfferManager::new(steam_api_key);
     let hostname = "steamcommunity.com";
     let cookies = get_cookies(hostname, &cookies_json_path)?;
     let url = format!("https://{}", hostname);
     
-    api.set_cookies(&cookies);
+    manager.set_cookies(&cookies);
     
     let steamid = SteamID::from(76561198080179568);
     
@@ -102,7 +101,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     Err(err) => println!("{}", err),
     // }
     
-    match api.get_trade_offers().await {
+    match manager.get_trade_offers().await {
         Ok(offers) => {
             println!("{:?}", offers);
         },
