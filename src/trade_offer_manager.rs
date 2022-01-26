@@ -1,4 +1,3 @@
-use std::time::SystemTime;
 use crate::{
     SteamTradeOfferAPI,
     APIError,
