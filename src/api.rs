@@ -3,8 +3,6 @@ use crate::{
     Item,
     Currency,
     OfferFilter,
-    TradeOfferState,
-    ConfirmationMethod,
     ServerTime,
     classinfo_cache::{
         ClassInfoCache,
@@ -21,10 +19,15 @@ use crate::{
         UserDetails,
         Asset,
         Inventory,
+        RawAsset,
+        RawAssetOld,
+        RawTradeOffer,
         deserializers::{
             from_int_to_bool,
             to_classinfo_map,
-            deserialize_classinfo_map_raw
+            option_str_to_number,
+            deserialize_classinfo_map_raw,
+            deserialize_classinfo_map
         }
     },
     request,
@@ -33,13 +36,9 @@ use crate::{
         parses_response
     },
     serializers::{
-        string,
-        option_string,
-        option_str_to_number,
         steamid_as_string
     }
 };
-use chrono::serde::ts_seconds;
 use async_recursion::async_recursion;
 use deepsize::DeepSizeOf;
 use std::collections::{HashMap, HashSet};
@@ -58,12 +57,13 @@ use itertools::Itertools;
 const HOSTNAME: &'static str = "https://steamcommunity.com";
 const API_HOSTNAME: &'static str = "https://api.steampowered.com";
 
+#[derive(Debug)]
 pub struct SteamTradeOfferAPI {
-    key: String,
-    cookies: Arc<Jar>,
+    pub key: String,
+    pub cookies: Arc<Jar>,
     client: ClientWithMiddleware,
-    sessionid: Option<String>,
-    classinfo_cache: ClassInfoCache,
+    pub sessionid: Option<String>,
+    pub classinfo_cache: ClassInfoCache,
 }
 
 impl SteamTradeOfferAPI {
@@ -213,7 +213,7 @@ impl SteamTradeOfferAPI {
         Ok(body)
     }
     
-    pub async fn get_trade_offers(&mut self) -> Result<Vec<TradeOffer>, APIError> {
+    pub async fn get_trade_offers<'a>(&'a mut self) -> Result<Vec<TradeOffer<'a>>, APIError> {
         let mut responses = Vec::new();
         let offers = self.get_trade_offers_request(&mut responses, &OfferFilter::ActiveOnly, &None, None).await?;
         
@@ -303,7 +303,7 @@ impl SteamTradeOfferAPI {
     }
 
     #[async_recursion]
-    async fn get_trade_offers_request<'a, 'b>(&'a mut self, responses: &'b mut Vec<GetTradeOffersResponseBody>, filter: &OfferFilter, historical_cutoff: &Option<ServerTime>, cursor: Option<u32>) -> Result<Vec<TradeOffer>, APIError> {
+    async fn get_trade_offers_request<'a, 'b>(&'a mut self, responses: &'b mut Vec<GetTradeOffersResponseBody>, filter: &OfferFilter, historical_cutoff: &Option<ServerTime>, cursor: Option<u32>) -> Result<Vec<TradeOffer<'a>>, APIError> {
         #[derive(Serialize, Debug)]
         struct Form<'a, 'b> {
             key: &'a str,
@@ -331,40 +331,6 @@ impl SteamTradeOfferAPI {
             .send()
             .await?;
         let body: GetTradeOffersResponse = parses_response(response).await?;
-        
-        fn steamid_from_accountid(accountid: u32) -> SteamID {
-            SteamID::new(
-                accountid,
-                steamid_ng::Instance::Desktop,
-                steamid_ng::AccountType::Individual,
-                steamid_ng::Universe::Public
-            )
-        }
-        
-        fn collect_items(assets: Vec<RawAsset>, cache: &ClassInfoCache) -> Result<Vec<Asset>, APIError> {
-            let mut items = Vec::new();
-            
-            for asset in assets {
-                if let Some(classinfo) = cache.get_classinfo(&(asset.appid, asset.classid, asset.instanceid)) {
-                    items.push(Asset {
-                        classinfo,
-                        appid: asset.appid,
-                        contextid: asset.contextid,
-                        assetid: asset.assetid,
-                        amount: asset.amount,
-                    });
-                } else {
-                    let instanceid = match asset.instanceid {
-                        Some(instanceid) => instanceid,
-                        None => 0,
-                    };
-                    
-                    return Err(APIError::ResponseError(format!("Missing descriptions for item {}:{}", asset.classid, instanceid).into()));
-                }
-            }
-            
-            Ok(items)
-        }
 
         fn collect_classes(offers: &Vec<RawTradeOffer>) -> Vec<ClassInfoClass> {
             let mut classes_set: HashSet<ClassInfoClass> = HashSet::new();
@@ -403,27 +369,10 @@ impl SteamTradeOfferAPI {
 
             let classes = collect_classes(&response_offers);
             let _classinfos = self.get_asset_classinfos(&classes).await?;
-
-            for offer in response_offers {
-                let items_to_give = collect_items(offer.items_to_give, &self.classinfo_cache)?;
-                let items_to_receive = collect_items(offer.items_to_receive, &self.classinfo_cache)?;
-                
-                offers.push(TradeOffer {
-                    tradeofferid: offer.tradeofferid,
-                    trade_offer_state: offer.trade_offer_state,
-                    partner: steamid_from_accountid(offer.accountid_other),
-                    message: offer.message,
-                    items_to_give,
-                    items_to_receive,
-                    is_our_offer: offer.is_our_offer,
-                    from_real_time_trade: offer.from_real_time_trade,
-                    expiration_time: offer.expiration_time,
-                    time_updated: offer.time_updated,
-                    time_created: offer.time_created,
-                    escrow_end_date: offer.escrow_end_date,
-                    confirmation_method: offer.confirmation_method,
-                });
-            }
+            let offers = response_offers
+                .into_iter()
+                .map(|offer| TradeOffer::from(self, offer))
+                .collect::<Result<Vec<TradeOffer>, _>>()?;
             
             Ok(offers)
         }
@@ -556,24 +505,76 @@ impl SteamTradeOfferAPI {
     }
     
     #[async_recursion]
+    async fn get_inventory_old_request(&mut self, responses: &mut Vec<GetInventoryOldResponse>, start_assetid: Option<u64>, steamid: &SteamID, appid: u32, contextid: u32, tradable_only: bool) -> Result<Inventory, APIError> { 
+        #[derive(Serialize, Debug)]
+        struct Query<'a> {
+            l: &'a str,
+            start: Option<u64>,
+        }
+        
+        let sid = u64::from(steamid.clone());
+        let uri = self.get_uri(&format!("/profiles/{}/inventory/json/{}/{}", sid, appid, contextid));
+        let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
+        let language = "english";
+        let response = self.client.get(&uri)
+            .header(REFERER, referer)
+            .query(&Query {
+                l: language,
+                start: start_assetid,
+            })
+            .send()
+            .await?;
+        let body: GetInventoryOldResponse = parses_response(response).await?;
+        
+        if !body.success {
+            Err(APIError::ResponseError("Bad response".into()))
+        } else if body.more_items {
+            // shouldn't occur, but we wouldn't want to call this endlessly if it does...
+            if body.last_assetid == start_assetid {
+                return Err(APIError::ResponseError("Bad response".into()));
+            }
+            
+            // space out requests
+            sleep(Duration::from_secs(1)).await;
+            
+            Ok(self.get_inventory_old_request(responses, body.last_assetid, steamid, appid, contextid, tradable_only).await?)
+        } else {
+            responses.push(body);
+            
+            let mut inventory: Vec<Asset> = Vec::new();
+            
+            for body in responses {
+                for (_, item) in &body.assets {
+                    if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
+                        inventory.push(Asset {
+                            classinfo: Arc::clone(classinfo),
+                            appid: appid.clone(),
+                            contextid: contextid.clone(),
+                            assetid: item.assetid,
+                            amount: item.amount,
+                        });
+                    } else {
+                        let instanceid = match item.instanceid {
+                            Some(instanceid) => instanceid,
+                            None => 0,
+                        };
+                        
+                        return Err(APIError::ResponseError(format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()));
+                    }
+                }
+            }
+            
+            Ok(inventory)
+        }
+    }
+    
+    #[async_recursion]
     async fn get_inventory_request(&mut self, responses: &mut Vec<GetInventoryResponse>, start_assetid: Option<u64>, steamid: &SteamID, appid: u32, contextid: u32, tradable_only: bool) -> Result<Inventory, APIError> { 
         #[derive(Serialize, Debug)]
         struct Query<'a> {
             l: &'a str,
             count: u32,
             start_assetid: Option<u64>,
-        }
-
-        fn collect_classes(items: &Vec<RawAsset>) -> Vec<ClassInfoClass> {
-            let mut classes_set: HashSet<ClassInfoClass> = HashSet::new();
-
-            for item in items {
-                classes_set.insert((item.appid, item.classid, item.instanceid));
-            }
-            
-            let classes: Vec<_> = classes_set.into_iter().collect();
-            
-            classes
         }
         
         let sid = u64::from(steamid.clone());
@@ -607,58 +608,37 @@ impl SteamTradeOfferAPI {
             responses.push(body);
             
             let mut inventory: Vec<Asset> = Vec::new();
-            let items: Vec<RawAsset> = responses
-                .iter()
-                .map(|response| response.to_owned().assets)
-                .flatten()
-                .collect();
-            let classes = collect_classes(&items);
-            let _classinfos = self.get_asset_classinfos(&classes).await?;
-
-            for item in &items {
-                let class = (item.appid, item.classid, item.instanceid);
-                
-                if let Some(classinfo) = self.classinfo_cache.get_classinfo(&class) {
-                    inventory.push(Asset {
-                        classinfo,
-                        appid: item.appid,
-                        contextid: item.contextid,
-                        assetid: item.assetid,
-                        amount: item.amount,
-                    });
-                } else {
-                    let instanceid = match item.instanceid {
-                        Some(instanceid) => instanceid,
-                        None => 0,
-                    };
-                    
-                    return Err(APIError::ResponseError(format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()));
+            
+            for body in responses {
+                for item in &body.assets {
+                    if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
+                        inventory.push(Asset {
+                            classinfo: Arc::clone(classinfo),
+                            appid: item.appid,
+                            contextid: item.contextid,
+                            assetid: item.assetid,
+                            amount: item.amount,
+                        });
+                    } else {
+                        let instanceid = match item.instanceid {
+                            Some(instanceid) => instanceid,
+                            None => 0,
+                        };
+                        
+                        return Err(APIError::ResponseError(format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()));
+                    }
                 }
             }
             
-            // for body in responses {
-            //     for item in &body.assets {
-            //         if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
-            //             inventory.push(Asset {
-            //                 classinfo: Arc::clone(classinfo),
-            //                 appid: item.appid,
-            //                 contextid: item.contextid,
-            //                 assetid: item.assetid,
-            //                 amount: item.amount,
-            //             });
-            //         } else {
-            //             let instanceid = match item.instanceid {
-            //                 Some(instanceid) => instanceid,
-            //                 None => 0,
-            //             };
-                        
-            //             return Err(APIError::ResponseError(format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()));
-            //         }
-            //     }
-            // }
-            
             Ok(inventory)
         }
+    }
+    
+    pub async fn get_inventory_old(&mut self, steamid: &SteamID, appid: u32, contextid: u32, tradable_only: bool) -> Result<Inventory, APIError> {
+        let responses = &mut Vec::new();
+        let inventory: Vec<Asset> = self.get_inventory_old_request(responses, None, steamid, appid, contextid, tradable_only).await?;
+        
+        Ok(inventory)
     }
     
     pub async fn get_inventory(&mut self, steamid: &SteamID, appid: u32, contextid: u32, tradable_only: bool) -> Result<Inventory, APIError> {
@@ -684,45 +664,20 @@ struct GetTradeOffersResponse {
 }
 
 #[derive(Deserialize, Debug)]
-struct RawTradeOffer {
-    #[serde(with = "string")]
-    tradeofferid: u64,
-    accountid_other: u32,
-    message: Option<String>,
+struct GetInventoryOldResponse {
     #[serde(default)]
-    items_to_receive: Vec<RawAsset>,
+    success: bool,
     #[serde(default)]
-    items_to_give: Vec<RawAsset>,
+    #[serde(rename = "more")]
+    more_items: bool,
     #[serde(default)]
-    is_our_offer: bool,
+    #[serde(deserialize_with = "option_str_to_number", rename = "more_start")]
+    last_assetid: Option<u64>,
     #[serde(default)]
-    from_real_time_trade: bool,
-    #[serde(with = "ts_seconds")]
-    expiration_time: ServerTime,
-    #[serde(with = "ts_seconds")]
-    time_created: ServerTime,
-    #[serde(with = "ts_seconds")]
-    time_updated: ServerTime,
-    trade_offer_state: TradeOfferState,
-    // todo parse 0 responses as null
-    #[serde(with = "ts_seconds")]
-    escrow_end_date: ServerTime,
-    confirmation_method: ConfirmationMethod,
-}
-
-#[derive(Deserialize, Debug)]
-struct RawAsset {
-    appid: u32,
-    #[serde(with = "string")]
-    contextid: u32,
-    #[serde(with = "string")]
-    assetid: u64,
-    #[serde(with = "string")]
-    classid: u64,
-    #[serde(with = "option_string")]
-    instanceid: Option<u64>,
-    #[serde(with = "string")]
-    amount: u32,
+    #[serde(rename = "rgInventory")]
+    assets: HashMap<String, RawAssetOld>,
+    #[serde(deserialize_with = "deserialize_classinfo_map", rename = "rgDescriptions")]
+    descriptions: HashMap<ClassInfoAppClass, Arc<ClassInfo>>,
 }
 
 #[derive(Deserialize, Debug)]

@@ -412,3 +412,57 @@ where
     
     deserializer.deserialize_any(ClassInfoMapVisitor)
 }
+
+pub fn option_str_to_number<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: FromStr + Deserialize<'de>,
+    T::Err: Display,
+{
+    struct OptionVisitor<T> {
+        marker: PhantomData<Vec<T>>,
+    }
+    
+    impl<T> OptionVisitor<T> {
+        pub fn new() -> Self {
+            Self {
+                marker: PhantomData,
+            }
+        }
+    }
+
+    impl<'de, T> Visitor<'de> for OptionVisitor<T>
+    where
+        T: FromStr + Deserialize<'de>,
+        T::Err: Display,
+    {
+        type Value = Option<T>;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("a number string")
+        }
+
+        fn visit_none<E>(self) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(None)
+        }
+        
+        fn visit_bool<E>(self, _v: bool) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(None)
+        }
+    
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(Some(v.parse::<T>().map_err(de::Error::custom)?))
+        }
+    }
+
+    deserializer.deserialize_any(OptionVisitor::new())
+}

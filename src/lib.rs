@@ -23,7 +23,7 @@ pub use item::Item;
 pub use currency::Currency;
 pub use api::SteamTradeOfferAPI;
 pub use response::TradeOffer;
-pub use api_error::APIError;
+pub use api_error::{APIError, MissingClassInfoError};
 pub use trade_offer_state::TradeOfferState;
 pub use offer_filter::OfferFilter;
 pub use trade_status::TradeStatus;

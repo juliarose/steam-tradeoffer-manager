@@ -6,6 +6,9 @@ use std::sync::Arc;
 use lazy_regex::{regex_is_match, regex_captures};
 use crate::APIError;
 
+use std::fs::File;
+use std::io::prelude::*;
+
 const USER_AGENT_STRING: &'static str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
 
 pub fn get_default_middleware<T>(cookie_store: Arc<T>) -> ClientWithMiddleware
@@ -87,6 +90,8 @@ where
                     // unexpected response
                     let html = String::from_utf8_lossy(body);
                     
+                    println!("{}", html);
+                    
                     if regex_is_match!(r#"<h1>Sorry!</h1>"#, &html) {
                         if let Some((_, message)) = regex_captures!("<h3>(.+)</h3>", &html) {
                             Err(APIError::ResponseError(message.into()))
@@ -98,6 +103,9 @@ where
                     } else if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
                         Err(APIError::TradeError(message.into()))
                     } else {
+                        let mut f = File::create("/home/colors/response.txt").unwrap();
+                        let _ = f.write_all(body);
+                        
                         // println!("{}", String::from_utf8_lossy(&body));
                         Err(APIError::ParseError(parse_error))
                     }

@@ -16,6 +16,7 @@ use futures::future::join_all;
 use std::fmt;
 use tokio::task::JoinHandle;
 
+#[derive(Debug)]
 pub struct ClassInfoCache {
     map: HashMap<ClassInfoClass, Arc<ClassInfo>>,
 }
@@ -49,8 +50,8 @@ impl ClassInfoCache {
         for ((classid, instanceid), classinfo_string) in classinfos {
             let classinfo = serde_json::from_str(classinfo_string)?;
             let classinfo = Arc::new(classinfo);
-            let class = (appid.clone(), *classid, *instanceid);
-
+            let class = (appid.clone(), classid.clone(), instanceid.clone());
+            
             self.map.insert(class, Arc::clone(&classinfo));
             map.insert(class, Arc::clone(&classinfo));
         }
@@ -156,11 +157,22 @@ fn get_classinfo_file_path(class: &ClassInfoClass) -> Option<String> {
 async fn save_classinfo(class: ClassInfoClass, classinfo: String) -> Result<(), FileError> {
     match get_classinfo_file_path(&class) {
         Some(filepath) => {
-            let mut file = File::create(filepath).await?;
-            let data = serde_json::to_string(&classinfo)?;
-            let _ = file.write_all(data.as_bytes()).await?;
+            let mut file = File::create(&filepath).await?;
+            // let data = serde_json::to_string(&classinfo)?;
             
-            Ok(())
+            match file.write_all(classinfo.as_bytes()).await {
+                Ok(_) => {
+                    file.flush().await?;
+            
+                    Ok(())
+                },
+                Err(error) => {
+                    // something went wrong writing to this file...
+                    async_fs::remove_file(&filepath).await?;
+                    
+                    Err(error.into())
+                }
+            }
         },
         None => Err(FileError::PathError),
     }

@@ -72,11 +72,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // }
     // thread::sleep(time::Duration::from_secs(10));
     
-    // match api.get_inventory(&steamid, 440, 2, true).await {
+    // match api.get_inventory_old(&steamid, 440, 2, true).await {
     //     Ok(items) => {
     //         // println!("{}", items.capacity() * std::mem::size_of::<offers_response::Asset>());
     //         // println!("{}", std::mem::size_of::<offers_response::ClassInfo>());
-    //         println!("{}", items.deep_size_of());
+    //         println!("{:?}", items);
     //         if let Some(item) = items.iter().find(|item| is_key(&*item.classinfo)) {
     //             // match api.send_offer(&offers_request::CreateTradeOffer {
     //             //     id: None,

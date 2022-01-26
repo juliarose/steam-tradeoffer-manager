@@ -3,6 +3,7 @@ mod sent_offer;
 mod classinfo;
 mod asset;
 mod user_details;
+mod raw;
 pub mod deserializers;
 
 pub use user_details::UserDetails;
@@ -21,6 +22,11 @@ pub use classinfo::{
     ClassInfoAppMap,
     ClassInfoClass,
     ClassInfoAppClass
+};
+pub use raw::{
+    RawAsset,
+    RawAssetOld,
+    RawTradeOffer
 };
 
 pub type Inventory = Vec<Asset>;

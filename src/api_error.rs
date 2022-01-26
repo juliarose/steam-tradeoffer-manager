@@ -4,8 +4,28 @@ use reqwest_middleware;
 use anyhow;
 use serde_qs;
 use reqwest::StatusCode;
+use crate::response::{
+    AppId,
+    ClassId,
+    InstanceId
+};
 
 pub const RESPONSE_UNSUCCESSFUL_MESSAGE: &str = "Empty response";
+
+#[derive(Debug)]
+pub struct MissingClassInfoError {
+    pub appid: AppId,
+    pub classid: ClassId,
+    pub instanceid: InstanceId,
+}
+
+impl fmt::Display for MissingClassInfoError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Missing description for {}:{}:{:?})", self.appid, self.classid, self.instanceid)
+    }
+}
+
+impl std::error::Error for MissingClassInfoError {}
 
 #[derive(Debug)]
 pub enum APIError {
@@ -19,6 +39,7 @@ pub enum APIError {
     HttpError(StatusCode),
     NotLoggedIn,
     TradeError(String),
+    MissingClassInfo(MissingClassInfoError),
 }
 
 impl fmt::Display for APIError {
@@ -34,6 +55,7 @@ impl fmt::Display for APIError {
             APIError::HttpError(e) => write!(f, "{}", e),
             APIError::NotLoggedIn => write!(f, "Not logged in"),
             APIError::TradeError(e) => write!(f, "{}", e),
+            APIError::MissingClassInfo(e) => write!(f, "{}", e),
         }
     }
 }
@@ -48,6 +70,12 @@ impl From<reqwest_middleware::Error> for APIError {
                 APIError::ReqwestMiddlewareError(e)
             },
         }
+    }
+}
+
+impl From<MissingClassInfoError> for APIError {
+    fn from(error: MissingClassInfoError) -> APIError {
+        APIError::MissingClassInfo(error)
     }
 }
 

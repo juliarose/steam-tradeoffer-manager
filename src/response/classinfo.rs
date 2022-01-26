@@ -9,7 +9,8 @@ use super::deserializers::{
 };
 use crate::serializers::{
     string,
-    option_string
+    option_string,
+    option_string_0_as_none
 };
 use deepsize::DeepSizeOf;
 
@@ -71,7 +72,7 @@ pub struct ClassInfo {
     pub classid: ClassId,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "option_string")]
+    #[serde(with = "option_string_0_as_none")]
     pub instanceid: InstanceId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
