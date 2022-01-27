@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate dotenv_codegen;
-
 mod enums;
 mod currency;
 mod trade_offer_manager;

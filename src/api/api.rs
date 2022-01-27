@@ -59,7 +59,6 @@ use reqwest_middleware::ClientWithMiddleware;
 use reqwest::header::REFERER;
 use steamid_ng::SteamID;
 use lazy_regex::{regex_captures, regex_is_match};
-use itertools::Itertools;
 
 const HOSTNAME: &'static str = "https://steamcommunity.com";
 const API_HOSTNAME: &'static str = "https://api.steampowered.com";
