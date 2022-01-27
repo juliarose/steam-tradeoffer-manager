@@ -1,6 +1,6 @@
-mod create_trade_offer;
+mod new_trade_offer;
 
-pub use create_trade_offer::{
+pub use new_trade_offer::{
     NewTradeOffer,
     NewTradeOfferItem
 };

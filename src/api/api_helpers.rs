@@ -80,50 +80,33 @@ pub async fn parses_response<D>(response: reqwest::Response) -> Result<D, APIErr
 where
     D: DeserializeOwned
 {
-    let status = &response.status();
-    
-    match status.as_u16() {
-        300..=399 if is_login(response.headers().get("location")) => {
-            Err(APIError::NotLoggedIn)
-        },
-        400..=499 => {
-            Err(APIError::HttpError(*status))
-        },
-        500..=599 => {
-            Err(APIError::HttpError(*status))
-        },
-        _ => {
-            let body = &response
-                .bytes()
-                .await?;
+    let body = check_response(response).await?;
             
-            match serde_json::from_slice::<D>(body) {
-                Ok(body) => Ok(body),
-                Err(parse_error) => {
-                    // unexpected response
-                    let html = String::from_utf8_lossy(body);
-                    
-                    println!("{}", html);
-                    
-                    if regex_is_match!(r#"<h1>Sorry!</h1>"#, &html) {
-                        if let Some((_, message)) = regex_captures!("<h3>(.+)</h3>", &html) {
-                            Err(APIError::ResponseError(message.into()))
-                        } else {
-                            Err(APIError::ResponseError("Unexpected error".into()))
-                        }
-                    } else if regex_is_match!(r#"<h1>Sign In</h1>"#, &html) && regex_is_match!(r#"g_steamID = false;"#, &html) {
-                        Err(APIError::NotLoggedIn)
-                    } else if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
-                        Err(APIError::TradeError(message.into()))
-                    } else {
-                        // TODO for testing - remove this eventually
-                        let mut f = File::create("/home/colors/response.txt").unwrap();
-                        let _ = f.write_all(body);
-                        
-                        // println!("{}", String::from_utf8_lossy(&body));
-                        Err(APIError::ParseError(parse_error))
-                    }
+    match serde_json::from_slice::<D>(&body) {
+        Ok(body) => Ok(body),
+        Err(parse_error) => {
+            // unexpected response
+            let html = String::from_utf8_lossy(&body);
+            
+            println!("{}", html);
+            
+            if regex_is_match!(r#"<h1>Sorry!</h1>"#, &html) {
+                if let Some((_, message)) = regex_captures!("<h3>(.+)</h3>", &html) {
+                    Err(APIError::ResponseError(message.into()))
+                } else {
+                    Err(APIError::ResponseError("Unexpected error".into()))
                 }
+            } else if regex_is_match!(r#"<h1>Sign In</h1>"#, &html) && regex_is_match!(r#"g_steamID = false;"#, &html) {
+                Err(APIError::NotLoggedIn)
+            } else if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
+                Err(APIError::TradeError(message.into()))
+            } else {
+                // TODO for testing - remove this eventually
+                let mut f = File::create("/home/colors/response.txt").unwrap();
+                let _ = f.write_all(&body);
+                
+                // println!("{}", String::from_utf8_lossy(&body));
+                Err(APIError::ParseError(parse_error))
             }
         }
     }
