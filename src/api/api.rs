@@ -663,10 +663,10 @@ impl SteamTradeOfferAPI {
 
 #[derive(Deserialize, Debug)]
 struct GetTradeOffersResponseBody {
+    #[serde(default)]
     trade_offers_sent: Vec<RawTradeOffer>,
+    #[serde(default)]
     trade_offers_received: Vec<RawTradeOffer>,
-    // #[serde(deserialize_with = "to_classinfo_map")]
-    // descriptions: HashMap<(u64, u64), Arc<ClassInfo>>,
     next_cursor: u32,
 }
 
