@@ -35,8 +35,8 @@ impl TradeOfferManager {
         self.api.set_cookies(cookies);
     }
 
-    pub fn create_offer(&self, partner: SteamID, token: Option<String>, message: Option<String>) -> request::CreateTradeOffer {
-        request::CreateTradeOffer {
+    pub fn create_offer(&self, partner: SteamID, token: Option<String>, message: Option<String>) -> request::NewTradeOffer {
+        request::NewTradeOffer {
             api: &self.api,
             id: None,
             partner,
@@ -59,27 +59,25 @@ impl TradeOfferManager {
         self.api.get_inventory(steamid, appid, contextid, tradable_only).await
     }
 
-    pub async fn do_poll<'a>(&'a mut self, mut full_update: bool) -> Result<Vec<response::TradeOffer<'a>>, APIError> {
+    pub async fn do_poll<'a>(&'a mut self, full_update: bool) -> Result<Vec<response::TradeOffer<'a>>, APIError> {
+        fn last_poll_outdated(last_poll_update: Option<ServerTime>) -> bool {
+            match last_poll_update {
+                Some(last_poll_full_update) => last_poll_full_update.timestamp()  >= 120000,
+                None => true,
+            }
+        }
+        
         let mut offers_since: u64 = 0;
+        let mut filter = OfferFilter::ActiveOnly;
 
         self.last_poll = Some(time::get_server_time_now());
-
-        if let Some(last_poll_full_update) = self.last_poll_full_update {
-            if last_poll_full_update.timestamp() >= 120000 {
-                full_update = true;
-                offers_since = 1;
-                self.last_poll_full_update = Some(time::get_server_time_now())
-            }
-        } else if full_update {
-            full_update = true;
+        
+        if full_update || last_poll_outdated(self.last_poll_full_update) {
+            filter = OfferFilter::All;
             offers_since = 1;
             self.last_poll_full_update = Some(time::get_server_time_now())
         }
-
-        let filter = match full_update {
-            true => OfferFilter::All,
-            false => OfferFilter::ActiveOnly,
-        };
+        
         let historical_cutoff = time::timestamp_to_server_time(offers_since);
 
         self.api.get_trade_offers(&filter, &Some(historical_cutoff)).await

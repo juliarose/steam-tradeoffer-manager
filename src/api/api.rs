@@ -116,10 +116,10 @@ impl SteamTradeOfferAPI {
         }
     }
 
-    pub async fn send_offer<'a, 'b>(&self, offer: &'b request::CreateTradeOffer<'a>) -> Result<response::SentOffer, APIError> {
+    pub async fn send_offer<'a, 'b>(&self, offer: &'b request::NewTradeOffer<'a>) -> Result<response::SentOffer, APIError> {
         #[derive(Serialize, Debug)]
         struct OfferFormUser<'b> {
-            assets: &'b Vec<request::CreateTradeOfferItem>,
+            assets: &'b Vec<request::NewTradeOfferItem>,
             currency: Vec<Currency>,
             ready: bool,
         }
@@ -677,23 +677,6 @@ struct GetTradeOffersResponse {
 }
 
 #[derive(Deserialize, Debug)]
-struct GetInventoryOldResponse {
-    #[serde(default)]
-    success: bool,
-    #[serde(default)]
-    #[serde(rename = "more")]
-    more_items: bool,
-    #[serde(default)]
-    #[serde(deserialize_with = "option_str_to_number", rename = "more_start")]
-    last_assetid: Option<u64>,
-    #[serde(default)]
-    #[serde(rename = "rgInventory")]
-    assets: HashMap<String, RawAssetOld>,
-    #[serde(deserialize_with = "deserialize_classinfo_map", rename = "rgDescriptions")]
-    descriptions: HashMap<ClassInfoAppClass, Arc<ClassInfo>>,
-}
-
-#[derive(Deserialize, Debug)]
 struct GetInventoryResponse {
     #[serde(default)]
     #[serde(deserialize_with = "from_int_to_bool")]
@@ -708,6 +691,23 @@ struct GetInventoryResponse {
     #[serde(default)]
     #[serde(deserialize_with = "option_str_to_number")]
     last_assetid: Option<u64>,
+}
+
+#[derive(Deserialize, Debug)]
+struct GetInventoryOldResponse {
+    #[serde(default)]
+    success: bool,
+    #[serde(default)]
+    #[serde(rename = "more")]
+    more_items: bool,
+    #[serde(default)]
+    #[serde(deserialize_with = "option_str_to_number", rename = "more_start")]
+    last_assetid: Option<u64>,
+    #[serde(default)]
+    #[serde(rename = "rgInventory")]
+    assets: HashMap<String, RawAssetOld>,
+    #[serde(deserialize_with = "deserialize_classinfo_map", rename = "rgDescriptions")]
+    descriptions: HashMap<ClassInfoAppClass, Arc<ClassInfo>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -749,5 +749,21 @@ mod tests {
         let parsed = serde_json::from_str::<ClassInfo>(classinfo_string).unwrap();
 
         assert_eq!(parsed.market_hash_name, String::from("Mann Co. Supply Crate Key"));
+    }
+    
+    #[test]
+    fn parses_get_trade_offers_response() {
+        let response: GetTradeOffersResponse = tests::read_and_parse_file("get_trade_offers.json").unwrap();
+        let offer = response.response.trade_offers_sent.first().unwrap();
+
+        assert_eq!(offer.message, Some(String::from("give me that key")));
+    }
+    
+    #[test]
+    fn parses_get_inventory_response() {
+        let response: GetInventoryResponse = tests::read_and_parse_file("inventory.json").unwrap();
+        let asset = response.assets.first().unwrap();
+
+        assert_eq!(asset.assetid, 11152148507);
     }
 }

@@ -116,6 +116,7 @@ where
                     } else if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
                         Err(APIError::TradeError(message.into()))
                     } else {
+                        // TODO for testing - remove this eventually
                         let mut f = File::create("/home/colors/response.txt").unwrap();
                         let _ = f.write_all(body);
                         
