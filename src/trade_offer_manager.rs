@@ -76,7 +76,7 @@ impl<'o> TradeOfferManager<'o> {
             }
         }
         
-        let mut offers_since: u64 = 0;
+        let mut offers_since = 0;
         let mut filter = OfferFilter::ActiveOnly;
 
         self.last_poll = Some(time::get_server_time_now());
@@ -85,9 +85,13 @@ impl<'o> TradeOfferManager<'o> {
             filter = OfferFilter::All;
             offers_since = 1;
             self.last_poll_full_update = Some(time::get_server_time_now())
+        } else if let Some(poll_offers_since) = self.offers_since {
+            // It looks like sometimes Steam can be dumb and backdate a modified offer. We need to handle this.
+            // Let's add a 30-minute buffer.
+            offers_since = poll_offers_since.timestamp() + 1800;
         }
-        
-        let historical_cutoff = time::timestamp_to_server_time(offers_since);
+
+        let historical_cutoff = time::timestamp_to_server_time(offers_since as u64);
         let offers = self.api.get_trade_offers(&filter, &Some(historical_cutoff)).await?;
 
         let mut poll = Poll {
