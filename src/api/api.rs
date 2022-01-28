@@ -35,6 +35,7 @@ use crate::{
     },
     request,
     serializers::{
+        string,
         steamid_as_string
     }
 };
@@ -476,6 +477,41 @@ impl SteamTradeOfferAPI {
         } else {
             Err(APIError::ResponseError("Malformed response".into()))
         }
+    }
+
+    pub async fn accept_offer<'a>(&self, tradeofferid: TradeOfferId, partner: &SteamID) -> Result<response::AcceptedOffer, APIError> {
+        #[derive(Serialize, Debug)]
+        struct AcceptOfferParams<'a, 'b> {
+            sessionid: &'a String,
+            serverid: u32,
+            #[serde(with = "string")]
+            tradeofferid: TradeOfferId,
+            captcha: &'static str,
+            #[serde(serialize_with = "steamid_as_string")]
+            partner: &'b SteamID,
+        }
+        
+        let sessionid = match &self.sessionid {
+            Some(sessionid) => sessionid,
+            None => return Err(APIError::NotLoggedIn),
+        };
+        let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid.to_string()));
+        let params = AcceptOfferParams {
+            sessionid,
+            tradeofferid,
+            partner,
+            serverid: 1,
+            captcha: "",
+        };
+        let uri = self.get_uri(&format!("/tradeoffer/{}/accept", tradeofferid));
+        let response = self.client.post(&uri)
+            .header(REFERER, referer)
+            .form(&params)
+            .send()
+            .await?;
+        let body: response::AcceptedOffer = parses_response(response).await?;
+        
+        Ok(body)
     }
 
     pub async fn decline_offer<'a>(&self, tradeofferid: TradeOfferId) -> Result<(), APIError> {

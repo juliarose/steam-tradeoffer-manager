@@ -6,7 +6,8 @@ use crate::{
     SteamTradeOfferAPI,
     APIError,
     MissingClassInfoError,
-    types::TradeOfferId
+    types::TradeOfferId,
+    response
 };
 use super::{
     Asset,
@@ -94,7 +95,17 @@ impl<'a> TradeOffer<'a> {
             escrow_end_date: offer.escrow_end_date,
             confirmation_method: offer.confirmation_method,
         })
-    } 
+    }
+
+    pub async fn accept(&'a self) -> Result<response::AcceptedOffer, APIError> {
+        if self.is_our_offer {
+            return Err(APIError::ParameterError("Cannot accept an offer that is ours"));
+        } else if self.trade_offer_state != TradeOfferState::Active {
+            return Err(APIError::ParameterError("Cannot accept an offer that is not active"));
+        }
+
+        self.api.accept_offer(self.tradeofferid, &self.partner).await
+    }
     
     pub async fn cancel(&'a self) -> Result<(), APIError> {
         if !self.is_our_offer {

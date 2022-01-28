@@ -3,9 +3,11 @@ mod sent_offer;
 mod classinfo;
 mod asset;
 mod user_details;
+mod accepted_offer;
 pub mod raw;
 pub mod deserializers;
 
+pub use accepted_offer::AcceptedOffer;
 pub use user_details::UserDetails;
 pub use asset::Asset;
 pub use trade_offer::TradeOffer;
