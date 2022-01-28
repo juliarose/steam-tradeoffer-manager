@@ -1,17 +1,10 @@
+use std::cmp;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct UserDetails {
     pub them_escrow: u32,
     pub my_escrow: u32,
-}
-
-fn get_max(a: u32, b: u32) -> u32 {
-    if a > b {
-        a
-    } else {
-        b
-    }
 }
 
 impl UserDetails {
@@ -21,7 +14,7 @@ impl UserDetails {
     }
     
     pub fn hold_duration_days(&self) -> u32 {
-        get_max(self.them_escrow, self.my_escrow)
+        cmp::max(self.them_escrow, self.my_escrow)
     }
 }
 

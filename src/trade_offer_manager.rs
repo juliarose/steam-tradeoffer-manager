@@ -1,4 +1,5 @@
 use std::{
+    cmp,
     sync::Arc,
     collections::HashMap
 };
@@ -75,6 +76,15 @@ impl<'o> TradeOfferManager<'o> {
                 None => true,
             }
         }
+
+        if let Some(last_poll) = self.last_poll {
+            let seconds_since_last_poll = time::get_server_time_now().timestamp() - last_poll.timestamp();
+                
+            if seconds_since_last_poll <= 2 {
+                // We last polled less than a second ago... we shouldn't spam the API
+                return Err(APIError::ParameterError("Poll called too soon after last poll"))
+            }            
+        }
         
         let mut offers_since = 0;
         let mut filter = OfferFilter::ActiveOnly;
@@ -93,15 +103,14 @@ impl<'o> TradeOfferManager<'o> {
 
         let historical_cutoff = time::timestamp_to_server_time(offers_since as u64);
         let offers = self.api.get_trade_offers(&filter, &Some(historical_cutoff)).await?;
-
+        let mut offers_since: i64 = 0;
         let mut poll = Poll {
             new: Vec::new(),
             changed: Vec::new(),
         };
-        let mut offers_since: i64 = 0;
 
         for offer in offers {
-            offers_since = get_max(offers_since, offer.time_updated.timestamp());
+            offers_since = cmp::max(offers_since, offer.time_updated.timestamp());
 
             match self.poll_data.get(&offer.tradeofferid) {
                 Some(poll_offer) => {
@@ -130,14 +139,6 @@ impl<'o> TradeOfferManager<'o> {
         self.offers_since = Some(time::timestamp_to_server_time(offers_since as u64));
 
         Ok(poll)
-    }
-}
-
-fn get_max(a: i64, b: i64) -> i64 {
-    if a > b {
-        a
-    } else {
-        b
     }
 }
 
