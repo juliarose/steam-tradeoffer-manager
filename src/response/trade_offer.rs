@@ -36,6 +36,10 @@ pub struct TradeOffer<'a> {
 }
 
 impl<'a> TradeOffer<'a> {
+    pub fn is_glitched(&self) -> bool {
+        self.items_to_receive.len() == 0 && self.items_to_receive.len() == 0
+    }
+
     pub fn from(api: &'a SteamTradeOfferAPI, offer: RawTradeOffer) -> Result<Self, MissingClassInfoError> {
         fn collect_items(assets: Vec<RawAsset>, cache: &ClassInfoCache) -> Result<Vec<Asset>, MissingClassInfoError> {
             let mut items = Vec::new();

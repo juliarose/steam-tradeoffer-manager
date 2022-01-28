@@ -22,6 +22,7 @@ use steamid_ng::SteamID;
 #[derive(Debug)]
 pub struct TradeOfferManager<'o> {
     api: SteamTradeOfferAPI,
+    offers_since: Option<ServerTime>,
     last_poll: Option<ServerTime>,
     last_poll_full_update: Option<ServerTime>,
     poll_data: HashMap<TradeOfferId, Arc<response::TradeOffer<'o>>>,
@@ -32,6 +33,7 @@ impl<'o> TradeOfferManager<'o> {
     pub fn new(key: String) -> Self {
         Self {
             api: SteamTradeOfferAPI::new(key),
+            offers_since: None,
             last_poll: None,
             last_poll_full_update: None,
             poll_data: HashMap::new(),
@@ -92,8 +94,11 @@ impl<'o> TradeOfferManager<'o> {
             new: Vec::new(),
             changed: Vec::new(),
         };
+        let mut offers_since: i64 = 0;
 
         for offer in offers {
+            offers_since = get_max(offers_since, offer.time_updated.timestamp());
+
             match self.poll_data.get(&offer.tradeofferid) {
                 Some(poll_offer) => {
                     if poll_offer.trade_offer_state != offer.trade_offer_state {
@@ -118,7 +123,17 @@ impl<'o> TradeOfferManager<'o> {
             }
         }
 
+        self.offers_since = Some(time::timestamp_to_server_time(offers_since as u64));
+
         Ok(poll)
+    }
+}
+
+fn get_max(a: i64, b: i64) -> i64 {
+    if a > b {
+        a
+    } else {
+        b
     }
 }
 
