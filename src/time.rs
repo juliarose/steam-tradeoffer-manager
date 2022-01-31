@@ -6,8 +6,8 @@ use chrono::{NaiveDateTime, DateTime, Utc};
 
 pub type ServerTime = DateTime<Utc>;
 
-pub fn timestamp_to_server_time(timestamp: u64) -> ServerTime {
-    let naive_data_time = NaiveDateTime::from_timestamp(timestamp as i64, 0);
+pub fn timestamp_to_server_time(timestamp: i64) -> ServerTime {
+    let naive_data_time = NaiveDateTime::from_timestamp(timestamp, 0);
     let time: ServerTime = DateTime::from_utc(naive_data_time, Utc);
 
     time

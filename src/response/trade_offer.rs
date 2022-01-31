@@ -3,11 +3,8 @@ use crate::{
     TradeOfferState,
     ConfirmationMethod,
     classinfo_cache::ClassInfoCache,
-    SteamTradeOfferAPI,
-    APIError,
     MissingClassInfoError,
-    types::TradeOfferId,
-    response
+    types::TradeOfferId
 };
 use super::{
     Asset,
@@ -19,8 +16,7 @@ use super::{
 use steamid_ng::SteamID;
 
 #[derive(Debug)]
-pub struct TradeOffer<'a> {
-    pub api: &'a SteamTradeOfferAPI, 
+pub struct TradeOffer {
     pub tradeofferid: TradeOfferId,
     pub partner: SteamID,
     pub message: Option<String>,
@@ -36,12 +32,12 @@ pub struct TradeOffer<'a> {
     pub confirmation_method: ConfirmationMethod,
 }
 
-impl<'a> TradeOffer<'a> {
+impl TradeOffer {
     pub fn is_glitched(&self) -> bool {
         self.items_to_receive.len() == 0 && self.items_to_receive.len() == 0
     }
 
-    pub fn from(api: &'a SteamTradeOfferAPI, offer: RawTradeOffer) -> Result<Self, MissingClassInfoError> {
+    pub fn from(offer: RawTradeOffer, cache: &ClassInfoCache) -> Result<Self, MissingClassInfoError> {
         fn collect_items(assets: Vec<RawAsset>, cache: &ClassInfoCache) -> Result<Vec<Asset>, MissingClassInfoError> {
             let mut items = Vec::new();
             
@@ -76,11 +72,10 @@ impl<'a> TradeOffer<'a> {
             )
         }
         
-        let items_to_give = collect_items(offer.items_to_give, &api.classinfo_cache)?;
-        let items_to_receive = collect_items(offer.items_to_receive, &api.classinfo_cache)?;
+        let items_to_give = collect_items(offer.items_to_give, cache)?;
+        let items_to_receive = collect_items(offer.items_to_receive, cache)?;
         
         Ok(Self {
-            api,
             items_to_give,
             items_to_receive,
             tradeofferid: offer.tradeofferid,
@@ -97,41 +92,41 @@ impl<'a> TradeOffer<'a> {
         })
     }
 
-    pub async fn accept(&'a self) -> Result<response::AcceptedOffer, APIError> {
-        if self.is_our_offer {
-            return Err(APIError::ParameterError("Cannot accept an offer that is ours"));
-        } else if self.trade_offer_state != TradeOfferState::Active {
-            return Err(APIError::ParameterError("Cannot accept an offer that is not active"));
-        }
+    // pub async fn accept(&'a self) -> Result<response::AcceptedOffer, APIError> {
+    //     if self.is_our_offer {
+    //         return Err(APIError::ParameterError("Cannot accept an offer that is ours"));
+    //     } else if self.trade_offer_state != TradeOfferState::Active {
+    //         return Err(APIError::ParameterError("Cannot accept an offer that is not active"));
+    //     }
 
-        self.api.accept_offer(self.tradeofferid, &self.partner).await
-    }
+    //     self.api.accept_offer(self.tradeofferid, &self.partner).await
+    // }
     
-    pub async fn cancel(&'a self) -> Result<(), APIError> {
-        if !self.is_our_offer {
-            return Err(APIError::ParameterError("Cannot cancel an offer we did not create"));
-        }
+    // pub async fn cancel(&'a self) -> Result<(), APIError> {
+    //     if !self.is_our_offer {
+    //         return Err(APIError::ParameterError("Cannot cancel an offer we did not create"));
+    //     }
         
-        self.api.cancel_offer(self.tradeofferid).await
-    }
+    //     self.api.cancel_offer(self.tradeofferid).await
+    // }
     
-    pub async fn decline(&'a self) -> Result<(), APIError> {
-        if self.is_our_offer {
-            return Err(APIError::ParameterError("Cannot decline an offer we created"));
-        }
+    // pub async fn decline(&'a self) -> Result<(), APIError> {
+    //     if self.is_our_offer {
+    //         return Err(APIError::ParameterError("Cannot decline an offer we created"));
+    //     }
         
-        self.api.decline_offer(self.tradeofferid).await
-    }
+    //     self.api.decline_offer(self.tradeofferid).await
+    // }
 
-    pub async fn update(&'a mut self) -> Result<(), APIError> {
-        let offer = self.api.get_trade_offer(self.tradeofferid).await?;
+    // pub async fn update(&'a mut self) -> Result<(), APIError> {
+    //     let offer = self.api.get_trade_offer(self.tradeofferid).await?;
 
-        self.trade_offer_state = offer.trade_offer_state;
-        self.time_updated = offer.time_updated;
-        self.expiration_time = offer.expiration_time;
-        self.escrow_end_date = offer.escrow_end_date;
-        self.confirmation_method = offer.confirmation_method;
+    //     self.trade_offer_state = offer.trade_offer_state;
+    //     self.time_updated = offer.time_updated;
+    //     self.expiration_time = offer.expiration_time;
+    //     self.escrow_end_date = offer.escrow_end_date;
+    //     self.confirmation_method = offer.confirmation_method;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 }

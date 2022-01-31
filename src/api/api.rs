@@ -116,7 +116,7 @@ impl SteamTradeOfferAPI {
         }
     }
 
-    pub async fn send_offer<'a, 'b>(&self, offer: &'b request::NewTradeOffer<'a>) -> Result<response::SentOffer, APIError> {
+    pub async fn send_offer<'a, 'b>(&self, offer: &'b request::NewTradeOffer) -> Result<response::SentOffer, APIError> {
         #[derive(Serialize, Debug)]
         struct OfferFormUser<'b> {
             assets: &'b Vec<request::NewTradeOfferItem>,
@@ -224,7 +224,7 @@ impl SteamTradeOfferAPI {
         Ok(body)
     }
     
-    pub async fn get_trade_offers<'a>(&'a mut self, filter: &OfferFilter, historical_cutoff: &Option<ServerTime>) -> Result<Vec<response::TradeOffer<'a>>, APIError> {
+    pub async fn get_trade_offers(&mut self, filter: &OfferFilter, historical_cutoff: &Option<ServerTime>) -> Result<Vec<response::TradeOffer>, APIError> {
         let mut responses = Vec::new();
         let offers = self.get_trade_offers_request(&mut responses, filter, historical_cutoff, None).await?;
         
@@ -314,7 +314,7 @@ impl SteamTradeOfferAPI {
     }
 
     #[async_recursion]
-    async fn get_trade_offers_request<'a, 'b>(&'a mut self, responses: &'b mut Vec<GetTradeOffersResponseBody>, filter: &OfferFilter, historical_cutoff: &Option<ServerTime>, cursor: Option<u32>) -> Result<Vec<response::TradeOffer<'a>>, APIError> {
+    async fn get_trade_offers_request<'a, 'b>(&'a mut self, responses: &'b mut Vec<GetTradeOffersResponseBody>, filter: &OfferFilter, historical_cutoff: &Option<ServerTime>, cursor: Option<u32>) -> Result<Vec<response::TradeOffer>, APIError> {
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -387,7 +387,7 @@ impl SteamTradeOfferAPI {
             let _ = self.get_asset_classinfos(&classes).await?;
             let offers = response_offers
                 .into_iter()
-                .map(|offer| response::TradeOffer::from(self, offer))
+                .map(|offer| response::TradeOffer::from(offer, &self.classinfo_cache))
                 .collect::<Result<Vec<_>, _>>()?;
             
             Ok(offers)

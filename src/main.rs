@@ -5,7 +5,7 @@ use dotenv::dotenv;
 use steam_tradeoffers::{
     TradeOfferManager,
     response as offers_response,
-    request as offers_request
+    request as offers_request,
 };
 use std::{
     fs::File,
@@ -15,10 +15,7 @@ use std::{
     collections::HashMap,
 };
 use steamid_ng::SteamID;
-
-fn is_key(classinfo: &offers_response::ClassInfo) -> bool {
-    classinfo.market_hash_name == "Mann Co. Supply Crate Key"
-}
+use async_std::task::sleep;
 
 fn get_cookies(hostname: &str, filepath: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let mut file = File::open(filepath).unwrap();
@@ -30,6 +27,24 @@ fn get_cookies(hostname: &str, filepath: &str) -> Result<Vec<String>, Box<dyn st
     let values = json.get(hostname).expect("No cookies for hostname");
     
     Ok(values.to_owned())
+}
+
+fn is_key(item: &offers_response::Asset) -> bool {
+    item.appid == 440 && item.classinfo.market_hash_name == "Mann Co. Supply Crate Key"
+}
+
+fn metal_value(item: &offers_response::Asset) -> Option<u32> {
+    match item.appid {
+        440 => {
+            match &*item.classinfo.market_hash_name {
+                "Refined Metal" => Some(18),
+                "Reclaimed Metal" => Some(6),
+                "Scrap Metal" => Some(2),
+                _ => None,
+            }
+        },
+        _ => None,
+    }
 }
 
 #[allow(unused_variables)]
@@ -108,6 +123,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(err) => println!("{}", err),
     }
     
+    
     // match api.get_asset_classinfos(&vec![(440, 101785959, 11040578)]).await {
     //     Ok(response) => {
     //         println!("{:?}", response);
@@ -115,7 +131,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     Err(err) => println!("{}", err),
     // }
 
-    // thread::sleep(time::Duration::from_secs(10));
+    loop {
+        match &mut manager.do_poll(false).await {
+            Ok(poll) => {
+                println!("{:?}", poll);
+                for _offer in &poll.new {
+                    
+                }
+            },
+            Err(err) => println!("{}", err),
+        }
         
+        sleep(time::Duration::from_secs(30)).await;
+    }
+    
     Ok(())
 }

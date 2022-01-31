@@ -39,19 +39,11 @@ impl From<Asset> for NewTradeOfferItem {
     }
 }
 
-pub struct NewTradeOffer<'a> {
-    pub api: &'a SteamTradeOfferAPI,
+pub struct NewTradeOffer {
     pub id: Option<TradeOfferId>,
     pub partner: SteamID,
     pub items_to_give: Vec<NewTradeOfferItem>,
     pub items_to_receive: Vec<NewTradeOfferItem>,
     pub message: Option<String>,
     pub token: Option<String>,
-}
-
-impl<'a> NewTradeOffer<'a> {
-
-    pub async fn send(&'a self) -> Result<SentOffer, APIError> {
-        self.api.send_offer(self).await
-    }
 }
