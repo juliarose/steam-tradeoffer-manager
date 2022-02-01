@@ -4,6 +4,7 @@ extern crate dotenv_codegen;
 use dotenv::dotenv;
 use steam_tradeoffers::{
     TradeOfferManager,
+    TradeOfferState,
     response as offers_response,
     request as offers_request,
 };
@@ -123,7 +124,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(err) => println!("{}", err),
     }
     
-    
     // match api.get_asset_classinfos(&vec![(440, 101785959, 11040578)]).await {
     //     Ok(response) => {
     //         println!("{:?}", response);
@@ -132,11 +132,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // }
 
     loop {
-        match &mut manager.do_poll(false).await {
+        match manager.do_poll(false).await {
             Ok(poll) => {
                 println!("{:?}", poll);
-                for _offer in &poll.new {
-                    
+                for offer in &poll.new {
+                    match offer.trade_offer_state {
+                        TradeOfferState::Active => {
+                            println!("New offer: {}", offer);
+                        },
+                        _ => {
+                            // ignore it...
+                        }
+                    }
                 }
             },
             Err(err) => println!("{}", err),

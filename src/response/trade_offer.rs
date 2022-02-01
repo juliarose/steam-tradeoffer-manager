@@ -1,3 +1,4 @@
+use std::fmt;
 use crate::{
     time::ServerTime,
     TradeOfferState,
@@ -30,6 +31,12 @@ pub struct TradeOffer {
     pub trade_offer_state: TradeOfferState,
     pub escrow_end_date: ServerTime,
     pub confirmation_method: ConfirmationMethod,
+}
+
+impl fmt::Display for TradeOffer {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{}:{}]", u64::from(self.partner), self.tradeofferid)
+    }
 }
 
 impl TradeOffer {
