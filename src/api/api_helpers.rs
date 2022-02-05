@@ -105,7 +105,7 @@ where
                 let mut f = File::create("/home/colors/response.txt").unwrap();
                 let _ = f.write_all(&body);
                 
-                // println!("{}", String::from_utf8_lossy(&body));
+                println!("{}", String::from_utf8_lossy(&body));
                 Err(APIError::ParseError(parse_error))
             }
         }

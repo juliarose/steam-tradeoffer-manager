@@ -173,6 +173,19 @@ where
 
             Ok(Some(items))
         }
+        
+        fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
+        where
+            M: MapAccess<'de>,
+        {
+            let mut items = Vec::new();
+            
+            while let Some((_key, v)) = access.next_entry::<String, String>()? {
+                items.push(v);
+            }
+            
+            Ok(Some(items))
+        }
     }
 
     deserializer.deserialize_any(FraudWarningsVisitor)

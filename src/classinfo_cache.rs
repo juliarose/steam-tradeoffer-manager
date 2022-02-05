@@ -52,6 +52,7 @@ impl ClassInfoCache {
         let mut map = HashMap::new();
         
         for ((classid, instanceid), classinfo_string) in classinfos {
+            println!("{}", classinfo_string);
             let classinfo = serde_json::from_str(classinfo_string)?;
             let classinfo = Arc::new(classinfo);
             let class = (appid.clone(), classid.clone(), instanceid.clone());
