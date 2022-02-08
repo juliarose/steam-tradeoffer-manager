@@ -3,9 +3,9 @@ use crate::{
     time::ServerTime,
     TradeOfferState,
     ConfirmationMethod,
-    classinfo_cache::ClassInfoCache,
     MissingClassInfoError,
-    types::TradeOfferId
+    types::TradeOfferId,
+    classinfo_cache::ClassInfoCache
 };
 use super::{
     Asset,
@@ -44,8 +44,8 @@ impl TradeOffer {
         self.items_to_receive.len() == 0 && self.items_to_receive.len() == 0
     }
 
-    pub fn from(offer: RawTradeOffer, cache: &ClassInfoCache) -> Result<Self, MissingClassInfoError> {
-        fn collect_items(assets: Vec<RawAsset>, cache: &ClassInfoCache) -> Result<Vec<Asset>, MissingClassInfoError> {
+    pub fn from(offer: RawTradeOffer, cache: &mut ClassInfoCache) -> Result<Self, MissingClassInfoError> {
+        fn collect_items(assets: Vec<RawAsset>, cache: &mut ClassInfoCache) -> Result<Vec<Asset>, MissingClassInfoError> {
             let mut items = Vec::new();
             
             for asset in assets {
@@ -101,9 +101,9 @@ impl TradeOffer {
 
     // pub async fn accept(&'a self) -> Result<response::AcceptedOffer, APIError> {
     //     if self.is_our_offer {
-    //         return Err(APIError::ParameterError("Cannot accept an offer that is ours"));
+    //         return Err(APIError::Parameter("Cannot accept an offer that is ours"));
     //     } else if self.trade_offer_state != TradeOfferState::Active {
-    //         return Err(APIError::ParameterError("Cannot accept an offer that is not active"));
+    //         return Err(APIError::Parameter("Cannot accept an offer that is not active"));
     //     }
 
     //     self.api.accept_offer(self.tradeofferid, &self.partner).await
@@ -111,7 +111,7 @@ impl TradeOffer {
     
     // pub async fn cancel(&'a self) -> Result<(), APIError> {
     //     if !self.is_our_offer {
-    //         return Err(APIError::ParameterError("Cannot cancel an offer we did not create"));
+    //         return Err(APIError::Parameter("Cannot cancel an offer we did not create"));
     //     }
         
     //     self.api.cancel_offer(self.tradeofferid).await
@@ -119,7 +119,7 @@ impl TradeOffer {
     
     // pub async fn decline(&'a self) -> Result<(), APIError> {
     //     if self.is_our_offer {
-    //         return Err(APIError::ParameterError("Cannot decline an offer we created"));
+    //         return Err(APIError::Parameter("Cannot decline an offer we created"));
     //     }
         
     //     self.api.decline_offer(self.tradeofferid).await

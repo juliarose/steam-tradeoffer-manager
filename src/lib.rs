@@ -1,19 +1,23 @@
 mod enums;
 mod currency;
-mod trade_offer_manager;
-pub mod classinfo_cache;
-pub mod api;
+mod manager;
+mod api;
+mod serializers;
+mod classinfo_cache;
+
 pub mod types;
 pub mod time;
 pub mod response;
 pub mod request;
-pub mod serializers;
 
 pub use time::ServerTime;
 pub use currency::Currency;
-pub use trade_offer_manager::TradeOfferManager;
+pub use manager::{
+    TradeOfferManager,
+    Poll,
+    PollChange
+};
 pub use api::{
-    SteamTradeOfferAPI,
     APIError,
     MissingClassInfoError
 };

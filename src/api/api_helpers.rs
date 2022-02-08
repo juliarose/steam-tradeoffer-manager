@@ -65,10 +65,10 @@ pub async fn check_response(response: reqwest::Response) -> Result<bytes::Bytes,
             Err(APIError::NotLoggedIn)
         },
         400..=499 => {
-            Err(APIError::HttpError(*status))
+            Err(APIError::Http(*status))
         },
         500..=599 => {
-            Err(APIError::HttpError(*status))
+            Err(APIError::Http(*status))
         },
         _ => {
             Ok(response.bytes().await?)
@@ -92,21 +92,21 @@ where
             
             if regex_is_match!(r#"<h1>Sorry!</h1>"#, &html) {
                 if let Some((_, message)) = regex_captures!("<h3>(.+)</h3>", &html) {
-                    Err(APIError::ResponseError(message.into()))
+                    Err(APIError::Response(message.into()))
                 } else {
-                    Err(APIError::ResponseError("Unexpected error".into()))
+                    Err(APIError::Response("Unexpected error".into()))
                 }
             } else if regex_is_match!(r#"<h1>Sign In</h1>"#, &html) && regex_is_match!(r#"g_steamID = false;"#, &html) {
                 Err(APIError::NotLoggedIn)
             } else if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
-                Err(APIError::TradeError(message.into()))
+                Err(APIError::Trade(message.into()))
             } else {
                 // TODO for testing - remove this eventually
                 let mut f = File::create("/home/colors/response.txt").unwrap();
                 let _ = f.write_all(&body);
                 
                 println!("{}", String::from_utf8_lossy(&body));
-                Err(APIError::ParseError(parse_error))
+                Err(APIError::Parse(parse_error))
             }
         }
     }

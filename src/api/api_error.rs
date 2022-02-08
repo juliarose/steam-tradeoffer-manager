@@ -29,30 +29,30 @@ impl std::error::Error for MissingClassInfoError {}
 
 #[derive(Debug)]
 pub enum APIError {
-    ParameterError(&'static str),
-    ResponseError(String),
-    ReqwestError(reqwest::Error),
-    ReqwestMiddlewareError(anyhow::Error),
-    QueryParameterError(serde_qs::Error),
-    ParseError(serde_json::Error),
-    HttpError(StatusCode),
+    Parameter(&'static str),
+    Response(String),
+    Reqwest(reqwest::Error),
+    ReqwestMiddleware(anyhow::Error),
+    QueryParameter(serde_qs::Error),
+    Parse(serde_json::Error),
+    Http(StatusCode),
     NotLoggedIn,
-    TradeError(String),
+    Trade(String),
     MissingClassInfo(MissingClassInfoError),
 }
 
 impl fmt::Display for APIError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            APIError::ParameterError(s) => write!(f, "{}", s),
-            APIError::ResponseError(s) => write!(f, "{}", s),
-            APIError::ReqwestError(e) => write!(f, "{}", e),
-            APIError::ReqwestMiddlewareError(e) => write!(f, "{}", e),
-            APIError::QueryParameterError(e) => write!(f, "{}", e),
-            APIError::ParseError(e) => write!(f, "{}", e),
-            APIError::HttpError(e) => write!(f, "{}", e),
+            APIError::Parameter(s) => write!(f, "{}", s),
+            APIError::Response(s) => write!(f, "{}", s),
+            APIError::Reqwest(e) => write!(f, "{}", e),
+            APIError::ReqwestMiddleware(e) => write!(f, "{}", e),
+            APIError::QueryParameter(e) => write!(f, "{}", e),
+            APIError::Parse(e) => write!(f, "{}", e),
+            APIError::Http(e) => write!(f, "{}", e),
             APIError::NotLoggedIn => write!(f, "Not logged in"),
-            APIError::TradeError(e) => write!(f, "{}", e),
+            APIError::Trade(e) => write!(f, "{}", e),
             APIError::MissingClassInfo(e) => write!(f, "{}", e),
         }
     }
@@ -62,10 +62,10 @@ impl From<reqwest_middleware::Error> for APIError {
     fn from(error: reqwest_middleware::Error) -> APIError {
         match error {
             reqwest_middleware::Error::Reqwest(e) => {
-                APIError::ReqwestError(e)
+                APIError::Reqwest(e)
             },
             reqwest_middleware::Error::Middleware(e) => {
-                APIError::ReqwestMiddlewareError(e)
+                APIError::ReqwestMiddleware(e)
             },
         }
     }
@@ -79,18 +79,18 @@ impl From<MissingClassInfoError> for APIError {
 
 impl From<serde_json::Error> for APIError {
     fn from(error: serde_json::Error) -> APIError {
-        APIError::ParseError(error)
+        APIError::Parse(error)
     }
 }
 
 impl From<serde_qs::Error> for APIError {
     fn from(error: serde_qs::Error) -> APIError {
-        APIError::QueryParameterError(error)
+        APIError::QueryParameter(error)
     }
 }
 
 impl From<reqwest::Error> for APIError {
     fn from(error: reqwest::Error) -> APIError {
-        APIError::ReqwestError(error)
+        APIError::Reqwest(error)
     }
 }

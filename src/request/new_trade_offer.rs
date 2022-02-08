@@ -1,13 +1,8 @@
 use steamid_ng::SteamID;
 use serde::{Serialize, Deserialize};
 use crate::{
-    SteamTradeOfferAPI,
-    APIError,
+    response::Asset,
     serializers::string,
-    response::{
-        SentOffer,
-        Asset
-    },
     types::{
         AppId,
         ContextId,

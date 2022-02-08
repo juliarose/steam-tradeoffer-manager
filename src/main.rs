@@ -11,14 +11,16 @@ use steam_tradeoffers::{
 use std::{
     fs::File,
     io::Read,
-    thread,
     time,
+    sync::Arc,
     collections::HashMap,
 };
 use steamid_ng::SteamID;
+use lazy_regex::regex_captures;
 use async_std::task::sleep;
 
-fn get_cookies(hostname: &str, filepath: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+fn get_cookies(filepath: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    let hostname = "steamcommunity.com";
     let mut file = File::open(filepath).unwrap();
     let mut data = String::new();
     
@@ -30,10 +32,12 @@ fn get_cookies(hostname: &str, filepath: &str) -> Result<Vec<String>, Box<dyn st
     Ok(values.to_owned())
 }
 
+#[allow(dead_code)]
 fn is_key(item: &offers_response::Asset) -> bool {
     item.appid == 440 && item.classinfo.market_hash_name == "Mann Co. Supply Crate Key"
 }
 
+#[allow(dead_code)]
 fn metal_value(item: &offers_response::Asset) -> Option<u32> {
     match item.appid {
         440 => {
@@ -55,12 +59,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let steam_api_key: String = dotenv!("STEAM_API_KEY").to_string();
     let cookies_json_path: String = dotenv!("COOKIES_JSON_PATH").to_string();
-    let mut manager = TradeOfferManager::new(steam_api_key);
-    let hostname = "steamcommunity.com";
-    let cookies = get_cookies(hostname, &cookies_json_path)?;
-    let url = format!("https://{}", hostname);
+    let manager = Arc::new(TradeOfferManager::new(steam_api_key));
+    let cookies = get_cookies(&cookies_json_path)?;
     
-    manager.set_cookies(&cookies);
+    for cookie_str in &cookies {
+        if let Some((_, sessionid)) = regex_captures!(r#"sessionid=([A-z0-9]+)"#, cookie_str) {
+            let _ = manager.set_session(sessionid.to_string(), &cookies);
+            break;
+        }
+    }
     
     let steamid = SteamID::from(76561198080179568);
     
@@ -117,6 +124,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     Err(err) => println!("{}", err),
     // }
     
+    let thread_manager = Arc::clone(&manager);
+    let handle = tokio::spawn(async move {
+        loop {
+            match thread_manager.do_poll(false).await {
+                Ok(poll) => {
+                    println!("{:?}", poll);
+                    for offer in &poll.new {
+                        match offer.trade_offer_state {
+                            TradeOfferState::Active => {
+                                println!("New offer: {}", offer);
+                            },
+                            _ => {
+                                // ignore it...
+                            }
+                        }
+                    }
+                },
+                Err(err) => println!("{}", err),
+            }
+            
+            sleep(time::Duration::from_secs(30)).await;
+        }
+    });
+    
     match manager.get_trade_offers().await {
         Ok(offers) => {
             println!("{:?}", offers);
@@ -124,33 +155,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(err) => println!("{}", err),
     }
     
+    handle.await?;
+    
     // match api.get_asset_classinfos(&vec![(440, 101785959, 11040578)]).await {
     //     Ok(response) => {
     //         println!("{:?}", response);
     //     },
     //     Err(err) => println!("{}", err),
     // }
-
-    loop {
-        match manager.do_poll(false).await {
-            Ok(poll) => {
-                println!("{:?}", poll);
-                for offer in &poll.new {
-                    match offer.trade_offer_state {
-                        TradeOfferState::Active => {
-                            println!("New offer: {}", offer);
-                        },
-                        _ => {
-                            // ignore it...
-                        }
-                    }
-                }
-            },
-            Err(err) => println!("{}", err),
-        }
-        
-        sleep(time::Duration::from_secs(30)).await;
-    }
     
     Ok(())
 }
