@@ -34,6 +34,18 @@ impl From<Asset> for NewTradeOfferItem {
     }
 }
 
+impl From<&Asset> for NewTradeOfferItem {
+    
+    fn from(asset: &Asset) -> NewTradeOfferItem {
+        NewTradeOfferItem {
+            appid: asset.appid,
+            contextid: asset.contextid,
+            assetid: asset.assetid,
+            amount: asset.amount,
+        }
+    }
+}
+
 pub struct NewTradeOffer {
     pub id: Option<TradeOfferId>,
     pub partner: SteamID,

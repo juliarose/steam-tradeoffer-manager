@@ -57,19 +57,19 @@ fn metal_value(item: &offers_response::Asset) -> Option<u32> {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
     
+    let steamid = SteamID::from(76561198130682435);
     let steam_api_key: String = dotenv!("STEAM_API_KEY").to_string();
     let cookies_json_path: String = dotenv!("COOKIES_JSON_PATH").to_string();
-    let manager = Arc::new(TradeOfferManager::new(steam_api_key));
+    let identity_secret: String = dotenv!("IDENTITY_SECRET").to_string();
+    let manager = Arc::new(TradeOfferManager::new(&steamid, &steam_api_key, Some(identity_secret)));
     let cookies = get_cookies(&cookies_json_path)?;
     
     for cookie_str in &cookies {
         if let Some((_, sessionid)) = regex_captures!(r#"sessionid=([A-z0-9]+)"#, cookie_str) {
-            let _ = manager.set_session(sessionid.to_string(), &cookies);
+            let _ = manager.set_session(sessionid, &cookies);
             break;
         }
     }
-    
-    let steamid = SteamID::from(76561198080179568);
     
     // match api.send_offer(&offers_request::CreateTradeOffer {
     //     id: None,
@@ -124,38 +124,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     Err(err) => println!("{}", err),
     // }
     
-    let thread_manager = Arc::clone(&manager);
-    let handle = tokio::spawn(async move {
-        loop {
-            match thread_manager.do_poll(false).await {
-                Ok(poll) => {
-                    println!("{:?}", poll);
-                    for offer in &poll.new {
-                        match offer.trade_offer_state {
-                            TradeOfferState::Active => {
-                                println!("New offer: {}", offer);
-                            },
-                            _ => {
-                                // ignore it...
-                            }
-                        }
-                    }
-                },
-                Err(err) => println!("{}", err),
-            }
+    // let thread_manager = Arc::clone(&manager);
+    // let handle = tokio::spawn(async move {
+    //     loop {
+    //         match thread_manager.do_poll(false).await {
+    //             Ok(poll) => {
+    //                 println!("{:?}", poll);
+    //                 for offer in &poll.new {
+    //                     match offer.trade_offer_state {
+    //                         TradeOfferState::Active => {
+    //                             println!("New offer: {}", offer);
+    //                         },
+    //                         _ => {
+    //                             // ignore it...
+    //                         }
+    //                     }
+    //                 }
+    //             },
+    //             Err(err) => println!("{}", err),
+    //         }
             
-            sleep(time::Duration::from_secs(30)).await;
-        }
-    });
+    //         sleep(time::Duration::from_secs(30)).await;
+    //     }
+    // });
     
-    match manager.get_trade_offers().await {
+    match manager.get_trade_confirmations().await {
         Ok(offers) => {
             println!("{:?}", offers);
         },
         Err(err) => println!("{}", err),
     }
     
-    handle.await?;
+    // handle.await?;
     
     // match api.get_asset_classinfos(&vec![(440, 101785959, 11040578)]).await {
     //     Ok(response) => {

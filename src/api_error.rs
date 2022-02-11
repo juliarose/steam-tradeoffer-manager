@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, num::ParseIntError};
 use reqwest::{
     self,
     StatusCode
@@ -37,8 +37,35 @@ pub enum APIError {
     Parse(serde_json::Error),
     Http(StatusCode),
     NotLoggedIn,
+    Html(ParseHtmlError),
     Trade(String),
     MissingClassInfo(MissingClassInfoError),
+}
+
+#[derive(Debug)]
+pub enum ParseHtmlError {
+    Malformed(&'static str),
+    Response(String),
+    ParseInt(ParseIntError),
+}
+
+impl std::error::Error for ParseHtmlError {}
+
+impl fmt::Display for ParseHtmlError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ParseHtmlError::Malformed(s) => write!(f, "{}", s),
+            ParseHtmlError::Response(s) => write!(f, "{}", s),
+            ParseHtmlError::ParseInt(s) => write!(f, "{}", s),
+        }
+    }
+}
+
+impl From<ParseIntError> for ParseHtmlError {
+    
+    fn from(error: ParseIntError) -> ParseHtmlError {
+        ParseHtmlError::ParseInt(error)
+    }
 }
 
 impl fmt::Display for APIError {
@@ -54,7 +81,14 @@ impl fmt::Display for APIError {
             APIError::NotLoggedIn => write!(f, "Not logged in"),
             APIError::Trade(e) => write!(f, "{}", e),
             APIError::MissingClassInfo(e) => write!(f, "{}", e),
+            APIError::Html(e) => write!(f, "{}", e),
         }
+    }
+}
+
+impl From<ParseHtmlError> for APIError {
+    fn from(error: ParseHtmlError) -> APIError {
+        APIError::Html(error)
     }
 }
 

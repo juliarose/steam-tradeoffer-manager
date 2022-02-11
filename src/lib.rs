@@ -4,6 +4,9 @@ mod manager;
 mod api;
 mod serializers;
 mod classinfo_cache;
+mod api_helpers;
+mod api_error;
+mod mobile_api;
 
 pub mod types;
 pub mod time;
@@ -17,8 +20,9 @@ pub use manager::{
     Poll,
     PollChange
 };
-pub use api::{
+pub use api_error::{
     APIError,
+    ParseHtmlError,
     MissingClassInfoError
 };
 pub use response::TradeOffer;

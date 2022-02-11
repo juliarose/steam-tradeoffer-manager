@@ -42,11 +42,11 @@ use crate::{
     },
     serializers::{
         string
+    },
+    api_helpers::{
+        get_default_middleware,
+        parses_response
     }
-};
-use super::api_helpers::{
-    get_default_middleware,
-    parses_response
 };
 use async_recursion::async_recursion;
 use std::{
@@ -72,30 +72,35 @@ use lazy_regex::{regex_captures, regex_is_match};
 
 const HOSTNAME: &'static str = "https://steamcommunity.com";
 const API_HOSTNAME: &'static str = "https://api.steampowered.com";
+const USER_AGENT_STRING: &'static str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
 const ONE_YEAR_SECS: u64 = 31536000;
 
 #[derive(Debug)]
 pub struct SteamTradeOfferAPI {
+    client: ClientWithMiddleware,
     pub key: String,
     pub cookies: Arc<Jar>,
     pub language: String,
-    client: ClientWithMiddleware,
+    pub steamid: SteamID,
+    pub identity_secret: Option<String>,
     pub sessionid: Arc<RwLock<Option<String>>>,
     pub classinfo_cache: Arc<RwLock<ClassInfoCache>>,
 }
 
 impl SteamTradeOfferAPI {
     
-    pub fn new(key: String) -> Self {
+    pub fn new(steamid: &SteamID, key: &str, identity_secret: Option<String>) -> Self {
         let cookies = Arc::new(Jar::default());
 
         Self {
-            key,
+            client: get_default_middleware(Arc::clone(&cookies), USER_AGENT_STRING),
+            key: key.to_string(),
+            steamid: steamid.clone(),
+            identity_secret,
             language: String::from("english"),
             cookies: Arc::clone(&cookies),
             sessionid: Arc::new(RwLock::new(None)),
             classinfo_cache: Arc::new(RwLock::new(ClassInfoCache::new())),
-            client: get_default_middleware(Arc::clone(&cookies)),
         }
     }
     
@@ -127,7 +132,7 @@ impl SteamTradeOfferAPI {
         
         Ok(())
     }
-
+    
     pub async fn send_offer<'a, 'b>(&self, offer: &'b request::NewTradeOffer) -> Result<response::SentOffer, APIError> {
         #[derive(Serialize, Debug)]
         struct OfferFormUser<'b> {

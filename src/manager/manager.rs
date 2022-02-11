@@ -12,6 +12,7 @@ use crate::{
     response,
     request,
     api::SteamTradeOfferAPI,
+    mobile_api::{MobileAPI, Confirmation},
     types::{
         AppId,
         ContextId,
@@ -34,6 +35,7 @@ struct PollData {
 pub struct TradeOfferManager {
     // manager facades api
     api: SteamTradeOfferAPI,
+    mobile_api: MobileAPI,
     poll_data: Arc<RwLock<PollData>>,
 }
 
@@ -51,23 +53,25 @@ impl PollData {
 
 impl TradeOfferManager {
 
-    pub fn new(key: String) -> Self {
+    pub fn new(steamid: &SteamID, key: &str, identity_secret: Option<String>) -> Self {
         Self {
-            api: SteamTradeOfferAPI::new(key),
+            api: SteamTradeOfferAPI::new(steamid, key, identity_secret.clone()),
+            mobile_api: MobileAPI::new(steamid, identity_secret),
             poll_data: Arc::new(RwLock::new(PollData::new())),
         }
     }
     
     pub fn set_session(&self, sessionid: &str, cookies: &Vec<String>) -> Result<(), ParseError> {
         self.api.set_session(sessionid, cookies)?;
+        self.mobile_api.set_session(sessionid, cookies)?;
         
         Ok(())
     }
 
-    pub fn create_offer(&self, partner: SteamID, token: Option<String>, message: Option<String>) -> request::NewTradeOffer {
+    pub fn create_offer(&self, partner: &SteamID, message: Option<String>, token: Option<String>) -> request::NewTradeOffer {
         request::NewTradeOffer {
             id: None,
-            partner,
+            partner: partner.clone(),
             token,
             message,
             items_to_give: Vec::new(),
@@ -164,8 +168,6 @@ impl TradeOfferManager {
 
         let historical_cutoff = time::timestamp_to_server_time(offers_since);
         
-        println!("{:?}", offers_since);
-        println!("{:?}", historical_cutoff);
         let offers = self.api.get_trade_offers(&filter, &Some(historical_cutoff)).await?;
         let mut offers_since: i64 = 0;
         let mut poll = Poll {
@@ -209,5 +211,17 @@ impl TradeOfferManager {
         }
 
         Ok(poll)
+    }
+    
+    pub async fn get_trade_confirmations(&self) -> Result<Vec<Confirmation>, APIError> {
+        self.mobile_api.get_trade_confirmations().await
+    }
+    
+    pub async fn accept_confirmation(&self, confirmaton: &Confirmation) -> Result<(), APIError> {
+        self.mobile_api.accept_confirmation(confirmaton).await
+    }
+    
+    pub async fn deny_confirmation(&self, confirmaton: &Confirmation) -> Result<(), APIError> {
+        self.mobile_api.deny_confirmation(confirmaton).await
     }
 }
