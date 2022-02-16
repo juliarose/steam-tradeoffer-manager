@@ -3,10 +3,7 @@ use std::{
     str::FromStr,
     sync::Arc,
     marker::PhantomData,
-    fmt::{
-        self,
-        Display
-    }
+    fmt::{self, Display}
 };
 use serde::{
     Deserialize,
@@ -21,11 +18,8 @@ use serde::{
     }
 };
 use serde_json::value::RawValue;
-use lazy_regex::{
-    regex_is_match,
-    regex_captures
-};
-use super::ClassInfo;
+use lazy_regex::{regex_is_match, regex_captures};
+use super::classinfo::ClassInfo;
 use crate::types::{
     ClassInfoAppClass,
     ClassInfoAppMap

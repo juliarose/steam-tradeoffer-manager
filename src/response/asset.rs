@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use super::ClassInfo;
+use super::classinfo::ClassInfo;
 use crate::types::{
     AppId,
     ContextId,

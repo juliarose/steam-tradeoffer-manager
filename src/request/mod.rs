@@ -1,7 +1,3 @@
-mod new_trade_offer;
-pub mod serializers;
+pub mod new_trade_offer;
 
-pub use new_trade_offer::{
-    NewTradeOffer,
-    NewTradeOfferItem
-};
+pub mod serializers;

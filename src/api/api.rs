@@ -1,9 +1,13 @@
+use std::{
+    collections::{HashMap, HashSet},
+    sync::{Arc, RwLock},
+    time::Duration
+};
 use crate::{
     APIError,
     Currency,
     OfferFilter,
-    ServerTime,
-    time::get_system_time,
+    time::{ServerTime, get_system_time},
     classinfo_cache::{
         ClassInfoCache,
         helpers::{
@@ -20,22 +24,7 @@ use crate::{
         AppId,
         ContextId
     },
-    response::{
-        self,
-        ClassInfo,
-        raw::{
-            RawAsset,
-            RawAssetOld,
-            RawTradeOffer
-        },
-        deserializers::{
-            from_int_to_bool,
-            to_classinfo_map,
-            option_str_to_number,
-            deserialize_classinfo_map_raw,
-            deserialize_classinfo_map
-        }
-    },
+    response,
     request::{
         self,
         serializers::steamid_as_string
@@ -43,23 +32,23 @@ use crate::{
     serializers::{
         string
     },
-    api_helpers::{
+    helpers::{
         get_default_middleware,
         parses_response
     }
 };
-use async_recursion::async_recursion;
-use std::{
-    collections::{
-        HashMap,
-        HashSet
-    },
-    sync::{
-        Arc,
-        RwLock
-    },
-    time::Duration
+use super::{
+    raw,
+    helpers::from_raw_trade_offer,
+    response::{
+        GetTradeOffersResponseBody,
+        GetTradeOffersResponse,
+        GetInventoryResponse,
+        GetInventoryOldResponse,
+        GetAssetClassInfoResponse
+    }
 };
+use async_recursion::async_recursion;
 use async_std::task::sleep;
 use serde::{Deserialize, Serialize};
 use serde_qs;
@@ -89,7 +78,11 @@ pub struct SteamTradeOfferAPI {
 
 impl SteamTradeOfferAPI {
     
-    pub fn new(steamid: &SteamID, key: &str, identity_secret: Option<String>) -> Self {
+    pub fn new(
+        steamid: &SteamID,
+        key: &str,
+        identity_secret: Option<String>,
+    ) -> Self {
         let cookies = Arc::new(Jar::default());
 
         Self {
@@ -104,15 +97,22 @@ impl SteamTradeOfferAPI {
         }
     }
     
-    fn get_uri(&self, pathname: &str) -> String {
+    fn get_uri(
+        &self,
+        pathname: &str,
+    ) -> String {
         format!("{}{}", HOSTNAME, pathname)
     }
 
-    fn get_api_url(&self, interface: &str, method: &str, version: usize) -> String {
+    fn get_api_url(
+        &self,
+        interface: &str,
+        method: &str,
+        version: usize,
+    ) -> String {
         format!("{}/{}/{}/v{}", API_HOSTNAME, interface, method, version)
     }
     
-    // probably would never fail
     fn set_cookies(&self, cookies: &Vec<String>) -> Result<(), ParseError> {
         let url = HOSTNAME.parse::<Url>()?;
         
@@ -123,7 +123,11 @@ impl SteamTradeOfferAPI {
         Ok(())
     }
     
-    pub fn set_session(&self, sessionid: &str, cookies: &Vec<String>) -> Result<(), ParseError> {
+    pub fn set_session(
+        &self,
+        sessionid: &str,
+        cookies: &Vec<String>,
+    ) -> Result<(), ParseError> {
         let mut sessionid_write = self.sessionid.write().unwrap();
         
         *sessionid_write = Some(sessionid.to_string());
@@ -133,10 +137,13 @@ impl SteamTradeOfferAPI {
         Ok(())
     }
     
-    pub async fn send_offer<'a, 'b>(&self, offer: &'b request::NewTradeOffer) -> Result<response::SentOffer, APIError> {
+    pub async fn send_offer(
+        &self,
+        offer: &request::new_trade_offer::NewTradeOffer,
+    ) -> Result<response::sent_offer::SentOffer, APIError> {
         #[derive(Serialize, Debug)]
         struct OfferFormUser<'b> {
-            assets: &'b Vec<request::NewTradeOfferItem>,
+            assets: &'b Vec<request::new_trade_offer::NewTradeOfferItem>,
             currency: Vec<Currency>,
             ready: bool,
         }
@@ -239,19 +246,27 @@ impl SteamTradeOfferAPI {
             .form(&params)
             .send()
             .await?;
-        let body: response::SentOffer = parses_response(response).await?;
+        let body: response::sent_offer::SentOffer = parses_response(response).await?;
         
         Ok(body)
     }
     
-    pub async fn get_trade_offers(&self, filter: &OfferFilter, historical_cutoff: &Option<ServerTime>) -> Result<Vec<response::TradeOffer>, APIError> {
+    pub async fn get_trade_offers(
+        &self,
+        filter: &OfferFilter,
+        historical_cutoff: &Option<ServerTime>,
+    ) -> Result<Vec<response::trade_offer::TradeOffer>, APIError> {
         let mut responses = Vec::new();
         let offers = self.get_trade_offers_request(&mut responses, filter, historical_cutoff, None).await?;
         
         Ok(offers)
     }
     
-    pub async fn get_app_asset_classinfos_chunk(&self, appid: AppId, classes: &Vec<ClassInfoAppClass>) -> Result<ClassInfoMap, APIError> {
+    pub async fn get_app_asset_classinfos_chunk(
+        &self,
+        appid: AppId,
+        classes: &Vec<ClassInfoAppClass>,
+    ) -> Result<ClassInfoMap, APIError> {
         let query = {
             let mut query = Vec::new();
             
@@ -289,7 +304,11 @@ impl SteamTradeOfferAPI {
         Ok(inserted)
     }
     
-    async fn get_app_asset_classinfos(&self, appid: AppId, classes: Vec<ClassInfoAppClass>) -> Result<Vec<ClassInfoMap>, APIError> {
+    async fn get_app_asset_classinfos(
+        &self,
+        appid: AppId,
+        classes: Vec<ClassInfoAppClass>,
+    ) -> Result<Vec<ClassInfoMap>, APIError> {
         let mut maps = Vec::new();
         
         for chunk in classes.chunks(100) {
@@ -299,7 +318,10 @@ impl SteamTradeOfferAPI {
         Ok(maps)
     }
     
-    pub async fn get_asset_classinfos(&self, classes: &Vec<ClassInfoClass>) -> Result<ClassInfoMap, APIError> {
+    pub async fn get_asset_classinfos(
+        &self,
+        classes: &Vec<ClassInfoClass>,
+    ) -> Result<ClassInfoMap, APIError> {
         let mut apps: HashMap<AppId, Vec<ClassInfoAppClass>> = HashMap::new();
         let mut map = HashMap::new();
         
@@ -350,7 +372,13 @@ impl SteamTradeOfferAPI {
     }
 
     #[async_recursion]
-    async fn get_trade_offers_request<'a, 'b>(&'a self, responses: &'b mut Vec<GetTradeOffersResponseBody>, filter: &OfferFilter, historical_cutoff: &Option<ServerTime>, cursor: Option<u32>) -> Result<Vec<response::TradeOffer>, APIError> {
+    async fn get_trade_offers_request<'a, 'b>(
+        &'a self,
+        responses: &'b mut Vec<GetTradeOffersResponseBody>,
+        filter: &OfferFilter,
+        historical_cutoff: &Option<ServerTime>,
+        cursor: Option<u32>,
+    ) -> Result<Vec<response::trade_offer::TradeOffer>, APIError> {
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -362,6 +390,22 @@ impl SteamTradeOfferAPI {
             get_descriptions: bool,
             time_historical_cutoff: u64,
             cursor: Option<u32>,
+        }
+
+        fn collect_classes(offers: &Vec<raw::RawTradeOffer>) -> Vec<ClassInfoClass> {
+            let mut classes_set: HashSet<ClassInfoClass> = HashSet::new();
+
+            for offer in offers {
+                for item in &offer.items_to_give {
+                    classes_set.insert((item.appid, item.classid, item.instanceid));
+                }
+
+                for item in &offer.items_to_receive {
+                    classes_set.insert((item.appid, item.classid, item.instanceid));
+                }
+            }
+            
+            classes_set.into_iter().collect()
         }
 
         let time_historical_cutoff: u64 = match historical_cutoff {
@@ -384,25 +428,6 @@ impl SteamTradeOfferAPI {
             .send()
             .await?;
         let body: GetTradeOffersResponse = parses_response(response).await?;
-
-        fn collect_classes(offers: &Vec<RawTradeOffer>) -> Vec<ClassInfoClass> {
-            let mut classes_set: HashSet<ClassInfoClass> = HashSet::new();
-
-            for offer in offers {
-                for item in &offer.items_to_give {
-                    classes_set.insert((item.appid, item.classid, item.instanceid));
-                }
-
-                for item in &offer.items_to_receive {
-                    classes_set.insert((item.appid, item.classid, item.instanceid));
-                }
-            }
-            
-            let classes: Vec<_> = classes_set.into_iter().collect();
-            
-            classes
-        }
-        
         let next_cursor = body.response.next_cursor;
 
         if next_cursor > 0 {
@@ -424,14 +449,17 @@ impl SteamTradeOfferAPI {
             let mut classinfo_cache = self.classinfo_cache.write().unwrap();
             let offers = response_offers
                 .into_iter()
-                .map(|offer| response::TradeOffer::from(offer, &mut classinfo_cache))
+                .map(|offer| from_raw_trade_offer(offer, &mut classinfo_cache))
                 .collect::<Result<Vec<_>, _>>()?;
             
             Ok(offers)
         }
     }
 
-    pub async fn get_trade_offer<'a>(&self, tradeofferid: TradeOfferId) -> Result<RawTradeOffer, APIError> {
+    pub async fn get_trade_offer(
+        &self,
+        tradeofferid: TradeOfferId,
+    ) -> Result<raw::RawTradeOffer, APIError> {
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -440,7 +468,7 @@ impl SteamTradeOfferAPI {
 
         #[derive(Deserialize, Debug)]
         struct Body {
-            offer: RawTradeOffer,
+            offer: raw::RawTradeOffer,
         }
 
         #[derive(Deserialize, Debug)]
@@ -461,7 +489,12 @@ impl SteamTradeOfferAPI {
         Ok(body.response.offer)
     }
 
-    pub async fn get_user_details<'a, 'b>(&'a self, tradeofferid: Option<TradeOfferId>, partner: &'b SteamID, token: &'b Option<String>) -> Result<response::UserDetails, APIError> {
+    pub async fn get_user_details(
+        &self,
+        tradeofferid: &Option<TradeOfferId>,
+        partner: &SteamID,
+        token: &Option<String>,
+    ) -> Result<response::user_details::UserDetails, APIError> {
         #[derive(Serialize, Debug)]
         struct Params<'b> {
             partner: u32,
@@ -507,7 +540,7 @@ impl SteamTradeOfferAPI {
             let my_escrow = get_days(regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, &body));
             let them_escrow = get_days(regex_captures!(r#"var g_daysTheirEscrow = (\d+);"#, &body));
 
-            Ok(response::UserDetails {
+            Ok(response::user_details::UserDetails {
                 my_escrow,
                 them_escrow,
             })
@@ -516,7 +549,11 @@ impl SteamTradeOfferAPI {
         }
     }
 
-    pub async fn accept_offer<'a>(&self, tradeofferid: TradeOfferId, partner: &SteamID) -> Result<response::AcceptedOffer, APIError> {
+    pub async fn accept_offer(
+        &self,
+        tradeofferid: TradeOfferId,
+        partner: &SteamID,
+    ) -> Result<response::accepted_offer::AcceptedOffer, APIError> {
         #[derive(Serialize, Debug)]
         struct AcceptOfferParams<'a, 'b> {
             sessionid: &'a String,
@@ -527,7 +564,6 @@ impl SteamTradeOfferAPI {
             #[serde(serialize_with = "steamid_as_string")]
             partner: &'b SteamID,
         }
-        
         
         let sessionid = self.sessionid.read().unwrap().clone();
         
@@ -549,12 +585,15 @@ impl SteamTradeOfferAPI {
             .form(&params)
             .send()
             .await?;
-        let body: response::AcceptedOffer = parses_response(response).await?;
+        let body: response::accepted_offer::AcceptedOffer = parses_response(response).await?;
         
         Ok(body)
     }
 
-    pub async fn decline_offer<'a>(&self, tradeofferid: TradeOfferId) -> Result<(), APIError> {
+    pub async fn decline_offer(
+        &self,
+        tradeofferid: TradeOfferId,
+    ) -> Result<(), APIError> {
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -574,7 +613,10 @@ impl SteamTradeOfferAPI {
         Ok(())
     }
     
-    pub async fn cancel_offer<'a>(&self, tradeofferid: TradeOfferId) -> Result<(), APIError> {
+    pub async fn cancel_offer(
+        &self,
+        tradeofferid: TradeOfferId,
+    ) -> Result<(), APIError> {
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -595,7 +637,15 @@ impl SteamTradeOfferAPI {
     }
     
     #[async_recursion]
-    async fn get_inventory_old_request(&self, responses: &mut Vec<GetInventoryOldResponse>, start_assetid: Option<u64>, steamid: &SteamID, appid: u32, contextid: u32, tradable_only: bool) -> Result<Inventory, APIError> { 
+    async fn get_inventory_old_request(
+        &self,
+        responses: &mut Vec<GetInventoryOldResponse>,
+        start_assetid: Option<u64>,
+        steamid: &SteamID,
+        appid: u32,
+        contextid: u32,
+        tradable_only: bool,
+    ) -> Result<Inventory, APIError> { 
         #[derive(Serialize, Debug)]
         struct Query<'a> {
             l: &'a str,
@@ -635,7 +685,7 @@ impl SteamTradeOfferAPI {
             for body in responses {
                 for (_, item) in &body.assets {
                     if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
-                        inventory.push(response::Asset {
+                        inventory.push(response::asset::Asset {
                             classinfo: Arc::clone(classinfo),
                             appid: appid.clone(),
                             contextid: contextid.clone(),
@@ -648,7 +698,9 @@ impl SteamTradeOfferAPI {
                             None => 0,
                         };
                         
-                        return Err(APIError::Response(format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()));
+                        return Err(APIError::Response(
+                            format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()
+                        ));
                     }
                 }
             }
@@ -658,7 +710,15 @@ impl SteamTradeOfferAPI {
     }
     
     #[async_recursion]
-    async fn get_inventory_request(&self, responses: &mut Vec<GetInventoryResponse>, start_assetid: Option<u64>, steamid: &SteamID, appid: u32, contextid: u32, tradable_only: bool) -> Result<Inventory, APIError> { 
+    async fn get_inventory_request(
+        &self,
+        responses: &mut Vec<GetInventoryResponse>,
+        start_assetid: Option<u64>,
+        steamid: &SteamID,
+        appid: u32,
+        contextid: u32,
+        tradable_only: bool,
+    ) -> Result<Inventory, APIError> { 
         #[derive(Serialize, Debug)]
         struct Query<'a> {
             l: &'a str,
@@ -700,7 +760,7 @@ impl SteamTradeOfferAPI {
             for body in responses {
                 for item in &body.assets {
                     if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
-                        inventory.push(response::Asset {
+                        inventory.push(response::asset::Asset {
                             classinfo: Arc::clone(classinfo),
                             appid: item.appid,
                             contextid: item.contextid,
@@ -713,7 +773,9 @@ impl SteamTradeOfferAPI {
                             None => 0,
                         };
                         
-                        return Err(APIError::Response(format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()));
+                        return Err(APIError::Response(
+                            format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()
+                        ));
                     }
                 }
             }
@@ -722,123 +784,43 @@ impl SteamTradeOfferAPI {
         }
     }
     
-    pub async fn get_inventory_old(&self, steamid: &SteamID, appid: AppId, contextid: ContextId, tradable_only: bool) -> Result<Inventory, APIError> {
+    pub async fn get_inventory_old(
+        &self,
+        steamid: &SteamID,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+    ) -> Result<Inventory, APIError> {
         let responses = &mut Vec::new();
-        let inventory = self.get_inventory_old_request(responses, None, steamid, appid, contextid, tradable_only).await?;
+        let inventory = self.get_inventory_old_request(
+            responses,
+            None,
+            steamid,
+            appid,
+            contextid,
+            tradable_only
+        ).await?;
         
         Ok(inventory)
     }
     
-    pub async fn get_inventory(&self, steamid: &SteamID, appid: AppId, contextid: ContextId, tradable_only: bool) -> Result<Inventory, APIError> {
+    pub async fn get_inventory(
+        &self,
+        steamid: &SteamID,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+    ) -> Result<Inventory, APIError> {
         let responses = &mut Vec::new();
-        let inventory = self.get_inventory_request(responses, None, steamid, appid, contextid, tradable_only).await?;
+        let inventory = self.get_inventory_request(
+            responses,
+            None,
+            steamid,
+            appid,
+            contextid,
+            tradable_only
+        ).await?;
         
         Ok(inventory)
-    }
-}
-
-#[derive(Deserialize, Debug)]
-struct GetTradeOffersResponseBody {
-    #[serde(default)]
-    trade_offers_sent: Vec<RawTradeOffer>,
-    #[serde(default)]
-    trade_offers_received: Vec<RawTradeOffer>,
-    next_cursor: u32,
-}
-
-#[derive(Deserialize, Debug)]
-struct GetTradeOffersResponse {
-    response: GetTradeOffersResponseBody,
-}
-
-#[derive(Deserialize, Debug)]
-struct GetInventoryResponse {
-    #[serde(default)]
-    #[serde(deserialize_with = "from_int_to_bool")]
-    success: bool,
-    #[serde(default)]
-    #[serde(deserialize_with = "from_int_to_bool")]
-    more_items: bool,
-    #[serde(default)]
-    assets: Vec<RawAsset>,
-    #[serde(deserialize_with = "to_classinfo_map")]
-    descriptions: HashMap<ClassInfoAppClass, Arc<ClassInfo>>,
-    #[serde(default)]
-    #[serde(deserialize_with = "option_str_to_number")]
-    last_assetid: Option<u64>,
-}
-
-#[derive(Deserialize, Debug)]
-struct GetInventoryOldResponse {
-    #[serde(default)]
-    success: bool,
-    #[serde(default)]
-    #[serde(rename = "more")]
-    more_items: bool,
-    #[serde(default)]
-    #[serde(deserialize_with = "option_str_to_number", rename = "more_start")]
-    last_assetid: Option<u64>,
-    #[serde(default)]
-    #[serde(rename = "rgInventory")]
-    assets: HashMap<String, RawAssetOld>,
-    #[serde(deserialize_with = "deserialize_classinfo_map", rename = "rgDescriptions")]
-    descriptions: HashMap<ClassInfoAppClass, Arc<ClassInfo>>,
-}
-
-#[derive(Deserialize, Debug)]
-struct GetAssetClassInfoResponse {
-    #[serde(deserialize_with = "deserialize_classinfo_map_raw")]
-    result: HashMap<ClassInfoAppClass, String>,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::env;
-    use std::fs;
-    use std::path::Path;
-    use serde::de::DeserializeOwned;
-
-    fn read_file(filename: &str) -> std::io::Result<String> {
-        let rootdir = env!("CARGO_MANIFEST_DIR");
-        let filepath = Path::new(rootdir).join(format!("tests/json/{}", filename));
-        
-        fs::read_to_string(filepath)
-    }
-    
-    fn read_and_parse_file<D>(filename: &str) -> Result<D, &str>
-    where
-        D: DeserializeOwned
-    {
-        let contents = tests::read_file(filename)
-            .expect("Something went wrong reading the file");
-        let response: D = serde_json::from_str(&contents).unwrap();
-        
-        Ok(response)
-    }
-    
-    #[test]
-    fn parses_get_asset_classinfo_response() {
-        let response: GetAssetClassInfoResponse = tests::read_and_parse_file("get_asset_classinfo.json").unwrap();
-        let classinfo_string = response.result.get(&(101785959, Some(11040578))).unwrap();
-        let parsed = serde_json::from_str::<ClassInfo>(classinfo_string).unwrap();
-
-        assert_eq!(parsed.market_hash_name, String::from("Mann Co. Supply Crate Key"));
-    }
-    
-    #[test]
-    fn parses_get_trade_offers_response() {
-        let response: GetTradeOffersResponse = tests::read_and_parse_file("get_trade_offers.json").unwrap();
-        let offer = response.response.trade_offers_sent.first().unwrap();
-
-        assert_eq!(offer.message, Some(String::from("give me that key")));
-    }
-    
-    #[test]
-    fn parses_get_inventory_response() {
-        let response: GetInventoryResponse = tests::read_and_parse_file("inventory.json").unwrap();
-        let asset = response.assets.first().unwrap();
-
-        assert_eq!(asset.assetid, 11152148507);
     }
 }

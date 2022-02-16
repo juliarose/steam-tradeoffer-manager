@@ -13,7 +13,7 @@ use crate::{
     ParseHtmlError,
     time,
     serializers::string,
-    api_helpers::{
+    helpers::{
         get_default_middleware,
         parses_response
     }

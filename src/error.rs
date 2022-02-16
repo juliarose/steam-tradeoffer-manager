@@ -11,23 +11,39 @@ use crate::types::{
     ClassId,
     InstanceId
 };
+use thiserror::Error;
 
-#[derive(Debug)]
-pub struct MissingClassInfoError {
-    pub appid: AppId,
-    pub classid: ClassId,
-    pub instanceid: InstanceId,
+pub enum FileError {
+    FileSystem(std::io::Error),
+    Parse(serde_json::Error),
+    JoinError,
+    PathError,
 }
 
-impl fmt::Display for MissingClassInfoError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Missing description for {}:{}:{:?})", self.appid, self.classid, self.instanceid)
+impl From<serde_json::Error> for FileError {
+    fn from(error: serde_json::Error) -> FileError {
+        FileError::Parse(error)
     }
 }
 
-impl std::error::Error for MissingClassInfoError {}
+impl From<std::io::Error> for FileError {
+    fn from(error: std::io::Error) -> FileError {
+        FileError::FileSystem(error)
+    }
+}
 
-#[derive(Debug)]
+impl fmt::Display for FileError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            FileError::FileSystem(s) => write!(f, "{}", s),
+            FileError::Parse(s) => write!(f, "{}", s),
+            FileError::PathError => write!(f, "Path conversion to string failed"),
+            FileError::JoinError => write!(f, "Join error"),
+        }
+    }
+}
+
+#[derive(Debug, Error)]
 pub enum APIError {
     Parameter(&'static str),
     Response(String),
@@ -40,32 +56,6 @@ pub enum APIError {
     Html(ParseHtmlError),
     Trade(String),
     MissingClassInfo(MissingClassInfoError),
-}
-
-#[derive(Debug)]
-pub enum ParseHtmlError {
-    Malformed(&'static str),
-    Response(String),
-    ParseInt(ParseIntError),
-}
-
-impl std::error::Error for ParseHtmlError {}
-
-impl fmt::Display for ParseHtmlError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ParseHtmlError::Malformed(s) => write!(f, "{}", s),
-            ParseHtmlError::Response(s) => write!(f, "{}", s),
-            ParseHtmlError::ParseInt(s) => write!(f, "{}", s),
-        }
-    }
-}
-
-impl From<ParseIntError> for ParseHtmlError {
-    
-    fn from(error: ParseIntError) -> ParseHtmlError {
-        ParseHtmlError::ParseInt(error)
-    }
 }
 
 impl fmt::Display for APIError {
@@ -126,5 +116,42 @@ impl From<serde_qs::Error> for APIError {
 impl From<reqwest::Error> for APIError {
     fn from(error: reqwest::Error) -> APIError {
         APIError::Reqwest(error)
+    }
+}
+
+#[derive(Debug, Error)]
+pub struct MissingClassInfoError {
+    pub appid: AppId,
+    pub classid: ClassId,
+    pub instanceid: InstanceId,
+}
+
+impl fmt::Display for MissingClassInfoError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Missing description for {}:{}:{:?})", self.appid, self.classid, self.instanceid)
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum ParseHtmlError {
+    Malformed(&'static str),
+    Response(String),
+    ParseInt(ParseIntError),
+}
+
+impl fmt::Display for ParseHtmlError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ParseHtmlError::Malformed(s) => write!(f, "{}", s),
+            ParseHtmlError::Response(s) => write!(f, "{}", s),
+            ParseHtmlError::ParseInt(s) => write!(f, "{}", s),
+        }
+    }
+}
+
+impl From<ParseIntError> for ParseHtmlError {
+    
+    fn from(error: ParseIntError) -> ParseHtmlError {
+        ParseHtmlError::ParseInt(error)
     }
 }

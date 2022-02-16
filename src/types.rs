@@ -1,10 +1,7 @@
-use std::{
-    sync::Arc,
-    collections::HashMap
-};
+use std::{sync::Arc, collections::HashMap};
 use crate::response::{
-    Asset,
-    ClassInfo
+    asset::Asset,
+    classinfo::ClassInfo
 };
 
 pub type Inventory = Vec<Asset>;

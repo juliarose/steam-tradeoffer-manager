@@ -1,7 +1,7 @@
 use steamid_ng::SteamID;
 use serde::{Serialize, Deserialize};
 use crate::{
-    response::Asset,
+    response,
     serializers::string,
     types::{
         AppId,
@@ -22,9 +22,9 @@ pub struct NewTradeOfferItem {
     pub amount: Amount,
 }
 
-impl From<Asset> for NewTradeOfferItem {
+impl From<response::asset::Asset> for NewTradeOfferItem {
     
-    fn from(asset: Asset) -> NewTradeOfferItem {
+    fn from(asset: response::asset::Asset) -> NewTradeOfferItem {
         NewTradeOfferItem {
             appid: asset.appid,
             contextid: asset.contextid,
@@ -34,9 +34,9 @@ impl From<Asset> for NewTradeOfferItem {
     }
 }
 
-impl From<&Asset> for NewTradeOfferItem {
+impl From<&response::asset::Asset> for NewTradeOfferItem {
     
-    fn from(asset: &Asset) -> NewTradeOfferItem {
+    fn from(asset: &response::asset::Asset) -> NewTradeOfferItem {
         NewTradeOfferItem {
             appid: asset.appid,
             contextid: asset.contextid,

@@ -2,8 +2,13 @@
 name = "steam-tradeoffers"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "Crate for steam trade offers."
+authors = ["Julia"]
+homepage = "https://github.com/juliarose/rust-steam-tradeoffers"
+repository = "https://github.com/juliarose/rust-steam-tradeoffers"
+license = "MIT"
+keywords = ["tf2", "steam"]
+readme = "README.md"
 
 [dependencies]
 reqwest = { version = "0.11.7", features = ["json", "cookies"] }
@@ -39,3 +44,4 @@ base64 = "0.13.0"
 hmac-sha1 = "^0.1"
 sha-1 = "0.10.0"
 scraper = "0.12.0"
+thiserror = "^1.0.30"

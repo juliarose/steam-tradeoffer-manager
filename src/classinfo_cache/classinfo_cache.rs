@@ -1,5 +1,5 @@
 use crate::{
-    response::ClassInfo,
+    response::classinfo::ClassInfo,
     types::{
         ClassInfoMap,
         ClassInfoAppClass,

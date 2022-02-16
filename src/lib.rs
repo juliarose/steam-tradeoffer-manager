@@ -4,15 +4,22 @@ mod manager;
 mod api;
 mod serializers;
 mod classinfo_cache;
-mod api_helpers;
-mod api_error;
 mod mobile_api;
+mod error;
+mod helpers;
+mod response;
 
 pub mod types;
 pub mod time;
-pub mod response;
 pub mod request;
-
+pub use response::{
+    trade_offer::TradeOffer,
+    asset::Asset,
+    classinfo::ClassInfo,
+    accepted_offer::AcceptedOffer,
+    sent_offer::SentOffer,
+    user_details::UserDetails,
+};
 pub use time::ServerTime;
 pub use currency::Currency;
 pub use manager::{
@@ -20,12 +27,11 @@ pub use manager::{
     Poll,
     PollChange
 };
-pub use api_error::{
+pub use error::{
     APIError,
     ParseHtmlError,
     MissingClassInfoError
 };
-pub use response::TradeOffer;
 pub use enums::{
     TradeOfferState,
     OfferFilter,

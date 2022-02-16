@@ -53,7 +53,11 @@ impl PollData {
 
 impl TradeOfferManager {
 
-    pub fn new(steamid: &SteamID, key: &str, identity_secret: Option<String>) -> Self {
+    pub fn new(
+        steamid: &SteamID,
+        key: &str,
+        identity_secret: Option<String>,
+    ) -> Self {
         Self {
             api: SteamTradeOfferAPI::new(steamid, key, identity_secret.clone()),
             mobile_api: MobileAPI::new(steamid, identity_secret),
@@ -61,15 +65,24 @@ impl TradeOfferManager {
         }
     }
     
-    pub fn set_session(&self, sessionid: &str, cookies: &Vec<String>) -> Result<(), ParseError> {
+    pub fn set_session(
+        &self,
+        sessionid: &str,
+        cookies: &Vec<String>,
+    ) -> Result<(), ParseError> {
         self.api.set_session(sessionid, cookies)?;
         self.mobile_api.set_session(sessionid, cookies)?;
         
         Ok(())
     }
 
-    pub fn create_offer(&self, partner: &SteamID, message: Option<String>, token: Option<String>) -> request::NewTradeOffer {
-        request::NewTradeOffer {
+    pub fn create_offer(
+        &self,
+        partner: &SteamID,
+        message: Option<String>,
+        token: Option<String>,
+    ) -> request::new_trade_offer::NewTradeOffer {
+        request::new_trade_offer::NewTradeOffer {
             id: None,
             partner: partner.clone(),
             token,
@@ -79,11 +92,17 @@ impl TradeOfferManager {
         }
     }
     
-    pub async fn send_offer(&self, offer: &request::NewTradeOffer) -> Result<response::SentOffer, APIError> {
+    pub async fn send_offer(
+        &self,
+        offer: &request::new_trade_offer::NewTradeOffer,
+    ) -> Result<response::sent_offer::SentOffer, APIError> {
         self.api.send_offer(offer).await
     }
     
-    pub async fn accept_offer(&self, offer: &response::TradeOffer) -> Result<response::AcceptedOffer, APIError> {
+    pub async fn accept_offer(
+        &self,
+        offer: &response::trade_offer::TradeOffer,
+    ) -> Result<response::accepted_offer::AcceptedOffer, APIError> {
         if offer.is_our_offer {
             return Err(APIError::Parameter("Cannot accept an offer that is ours"));
         } else if offer.trade_offer_state != TradeOfferState::Active {
@@ -93,7 +112,10 @@ impl TradeOfferManager {
         self.api.accept_offer(offer.tradeofferid, &offer.partner).await
     }
     
-    pub async fn cancel_offer(&self, offer: &response::TradeOffer) -> Result<(), APIError> {
+    pub async fn cancel_offer(
+        &self,
+        offer: &response::trade_offer::TradeOffer,
+    ) -> Result<(), APIError> {
         if !offer.is_our_offer {
             return Err(APIError::Parameter("Cannot cancel an offer we did not create"));
         }
@@ -101,7 +123,10 @@ impl TradeOfferManager {
         self.api.cancel_offer(offer.tradeofferid).await
     }
     
-    pub async fn decline_offer(&self, offer: &response::TradeOffer) -> Result<(), APIError> {
+    pub async fn decline_offer(
+        &self,
+        offer: &response::trade_offer::TradeOffer,
+    ) -> Result<(), APIError> {
         if offer.is_our_offer {
             return Err(APIError::Parameter("Cannot decline an offer we created"));
         }
@@ -109,19 +134,36 @@ impl TradeOfferManager {
         self.api.decline_offer(offer.tradeofferid).await
     }
 
-    pub async fn get_trade_offers(&self) -> Result<Vec<response::TradeOffer>, APIError> {
+    pub async fn get_trade_offers(
+        &self
+    ) -> Result<Vec<response::trade_offer::TradeOffer>, APIError> {
         self.api.get_trade_offers(&OfferFilter::ActiveOnly, &None).await
     }
 
-    pub async fn get_inventory_old(&self, steamid: &SteamID, appid: AppId, contextid: ContextId, tradable_only: bool) -> Result<Inventory, APIError> {
+    pub async fn get_inventory_old(
+        &self,
+        steamid: &SteamID,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+    ) -> Result<Inventory, APIError> {
         self.api.get_inventory_old(steamid, appid, contextid, tradable_only).await
     }
     
-    pub async fn get_inventory(&self, steamid: &SteamID, appid: AppId, contextid: ContextId, tradable_only: bool) -> Result<Inventory, APIError> {
+    pub async fn get_inventory(
+        &self,
+        steamid: &SteamID,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+    ) -> Result<Inventory, APIError> {
         self.api.get_inventory(steamid, appid, contextid, tradable_only).await
     }
 
-    pub async fn do_poll(&self, full_update: bool) -> Result<Poll, APIError> {
+    pub async fn do_poll(
+        &self,
+        full_update: bool,
+    ) -> Result<Poll, APIError> {
         fn date_difference_from_now(date: &ServerTime) -> i64 {
             let current_timestamp = time::get_server_time_now().timestamp();
             
@@ -167,14 +209,12 @@ impl TradeOfferManager {
         }
 
         let historical_cutoff = time::timestamp_to_server_time(offers_since);
-        
         let offers = self.api.get_trade_offers(&filter, &Some(historical_cutoff)).await?;
         let mut offers_since: i64 = 0;
         let mut poll = Poll {
             new: Vec::new(),
             changed: Vec::new(),
         };
-        // println!("{:?}", offers);
         
         {
             let mut poll_data = self.poll_data.write().unwrap();
@@ -213,15 +253,32 @@ impl TradeOfferManager {
         Ok(poll)
     }
     
-    pub async fn get_trade_confirmations(&self) -> Result<Vec<Confirmation>, APIError> {
+    pub async fn get_user_details(
+        &self,
+        tradeofferid: &Option<TradeOfferId>,
+        partner: &SteamID,
+        token: &Option<String>,
+    ) -> Result<response::user_details::UserDetails, APIError> {
+        self.api.get_user_details(tradeofferid, partner, token).await
+    }
+    
+    pub async fn get_trade_confirmations(
+        &self,
+    ) -> Result<Vec<Confirmation>, APIError> {
         self.mobile_api.get_trade_confirmations().await
     }
     
-    pub async fn accept_confirmation(&self, confirmaton: &Confirmation) -> Result<(), APIError> {
+    pub async fn accept_confirmation(
+        &self,
+        confirmaton: &Confirmation,
+    ) -> Result<(), APIError> {
         self.mobile_api.accept_confirmation(confirmaton).await
     }
     
-    pub async fn deny_confirmation(&self, confirmaton: &Confirmation) -> Result<(), APIError> {
+    pub async fn deny_confirmation(
+        &self,
+        confirmaton: &Confirmation,
+    ) -> Result<(), APIError> {
         self.mobile_api.deny_confirmation(confirmaton).await
     }
 }

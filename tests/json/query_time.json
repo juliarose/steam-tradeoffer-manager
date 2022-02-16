@@ -1,1 +1,0 @@
-{"response":{"server_time":"1644323205","skew_tolerance_seconds":"60","large_time_jink":"86400","probe_frequency_seconds":3600,"adjusted_time_probe_frequency_seconds":300,"hint_probe_frequency_seconds":60,"sync_timeout":60,"try_again_seconds":900,"max_attempts":3}}

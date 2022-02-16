@@ -1,5 +1,6 @@
 use crate::{
-    response::ClassInfo,
+    response::classinfo::ClassInfo,
+    error::FileError,
     types::{
         ClassInfoClass,
         ClassInfoAppClass
@@ -7,7 +8,6 @@ use crate::{
 };
 use super::{
     types::ClassInfoFile,
-    file_error::FileError
 };
 use futures::future::join_all;
 use tokio::task::JoinHandle;
