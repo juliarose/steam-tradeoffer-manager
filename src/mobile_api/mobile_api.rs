@@ -232,7 +232,7 @@ impl MobileAPI {
         // let body: SendConfirmationResponse = parses_response(response).await?;
         let body = response.text().await?;
         
-        println!("{}", body);
+        println!("Send confirmation {}", body);
         
 		Ok(())
 	}

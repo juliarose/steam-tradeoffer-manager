@@ -19,7 +19,7 @@ pub struct ClassInfoCache {
 
 impl ClassInfoCache {
     pub fn new() -> Self {
-        let map: LfuCache<ClassInfoClass, Arc<ClassInfo>> = LfuCache::with_capacity(1000);
+        let map: LfuCache<ClassInfoClass, Arc<ClassInfo>> = LfuCache::with_capacity(500);
         
         Self {
             map
@@ -42,7 +42,7 @@ impl ClassInfoCache {
         let mut map = HashMap::new();
         
         for ((classid, instanceid), classinfo_string) in classinfos {
-            println!("{}", classinfo_string);
+            println!("Insert classinfo {}", classinfo_string);
             let classinfo = serde_json::from_str(classinfo_string)?;
             let classinfo = Arc::new(classinfo);
             let class = (appid.clone(), classid.clone(), instanceid.clone());

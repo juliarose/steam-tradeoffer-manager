@@ -12,27 +12,27 @@ use crate::{
     response,
     request,
     api::SteamTradeOfferAPI,
+    error::FileError,
     mobile_api::{MobileAPI, Confirmation},
     types::{
         AppId,
         ContextId,
-        Inventory, TradeOfferId
+        Inventory,
+        TradeOfferId
     }
 };
 use steamid_ng::SteamID;
 use url::ParseError;
-use super::{Poll, PollChange};
-
-#[derive(Debug)]
-struct PollData {
-    offers_since: Option<ServerTime>,
-    last_poll: Option<ServerTime>,
-    last_poll_full_update: Option<ServerTime>,
-    state_map: HashMap<TradeOfferId, TradeOfferState>,
-}
+use super::{
+    Poll,
+    PollChange,
+    file,
+    poll_data::PollData
+};
 
 #[derive(Debug)]
 pub struct TradeOfferManager {
+    steamid: SteamID,
     // manager facades api
     api: SteamTradeOfferAPI,
     mobile_api: MobileAPI,
@@ -59,9 +59,25 @@ impl TradeOfferManager {
         identity_secret: Option<String>,
     ) -> Self {
         Self {
+            steamid: steamid.clone(),
             api: SteamTradeOfferAPI::new(steamid, key, identity_secret.clone()),
             mobile_api: MobileAPI::new(steamid, identity_secret),
             poll_data: Arc::new(RwLock::new(PollData::new())),
+        }
+    }
+    
+    pub fn new_with_poll_data(
+        steamid: &SteamID,
+        key: &str,
+        identity_secret: Option<String>,
+    ) -> Self {
+        let poll_data = file::load_poll_data(steamid).unwrap_or_else(|_| PollData::new());
+        
+        Self {
+            steamid: steamid.clone(),
+            api: SteamTradeOfferAPI::new(steamid, key, identity_secret.clone()),
+            mobile_api: MobileAPI::new(steamid, identity_secret),
+            poll_data: Arc::new(RwLock::new(poll_data)),
         }
     }
     
@@ -159,98 +175,13 @@ impl TradeOfferManager {
     ) -> Result<Inventory, APIError> {
         self.api.get_inventory(steamid, appid, contextid, tradable_only).await
     }
-
-    pub async fn do_poll(
-        &self,
-        full_update: bool,
-    ) -> Result<Poll, APIError> {
-        fn date_difference_from_now(date: &ServerTime) -> i64 {
-            let current_timestamp = time::get_server_time_now().timestamp();
-            
-            current_timestamp - date.timestamp()
-        }
+    
+    async fn save_poll_data(&self) -> Result<(), FileError> {
+        // we clone this so we don't hold it across an await
+        let poll_data = self.poll_data.read().unwrap().clone();
+        let data = serde_json::to_string(&poll_data)?;
         
-        fn last_poll_full_outdated(last_poll_full_update: Option<ServerTime>) -> bool {
-            match last_poll_full_update {
-                Some(last_poll_full_update) => {
-                    println!("{}", date_difference_from_now(&last_poll_full_update));
-                    date_difference_from_now(&last_poll_full_update) >= 120
-                },
-                None => true,
-            }
-        }
-        
-        let mut offers_since = 0;
-        let mut filter = OfferFilter::ActiveOnly;
-        
-        {
-            let mut poll_data = self.poll_data.write().unwrap();
-
-            if let Some(last_poll) = poll_data.last_poll {
-                let seconds_since_last_poll = date_difference_from_now(&last_poll);
-                    
-                if seconds_since_last_poll <= 2 {
-                    // We last polled less than a second ago... we shouldn't spam the API
-                    return Err(APIError::Parameter("Poll called too soon after last poll"));
-                }            
-            }
-            
-            poll_data.last_poll = Some(time::get_server_time_now());
-        
-            if full_update || last_poll_full_outdated(poll_data.last_poll_full_update) {
-                filter = OfferFilter::All;
-                offers_since = 1;
-                poll_data.last_poll_full_update = Some(time::get_server_time_now())
-            } else if let Some(poll_offers_since) = poll_data.offers_since {
-                // It looks like sometimes Steam can be dumb and backdate a modified offer. We need to handle this.
-                // Let's add a 30-minute buffer.
-                offers_since = poll_offers_since.timestamp() + 1800;
-            }
-        }
-
-        let historical_cutoff = time::timestamp_to_server_time(offers_since);
-        let offers = self.api.get_trade_offers(&filter, &Some(historical_cutoff)).await?;
-        let mut offers_since: i64 = 0;
-        let mut poll = Poll {
-            new: Vec::new(),
-            changed: Vec::new(),
-        };
-        
-        {
-            let mut poll_data = self.poll_data.write().unwrap();
-                
-            for offer in offers {
-                offers_since = cmp::max(offers_since, offer.time_updated.timestamp());
-
-                match poll_data.state_map.get(&offer.tradeofferid) {
-                    Some(poll_trade_offer_state) => {
-                        if poll_trade_offer_state != &offer.trade_offer_state {
-                            let tradeofferid = offer.tradeofferid;
-                            let new_state = offer.trade_offer_state.clone();
-                            
-                            poll.changed.push(PollChange {
-                                old_state: poll_trade_offer_state.clone(),
-                                new_state: offer.trade_offer_state.clone(),
-                                offer,
-                            });
-                            
-                            poll_data.state_map.insert(tradeofferid, new_state);
-                        }
-                    },
-                    None => {
-                        poll_data.state_map.insert(offer.tradeofferid, offer.trade_offer_state.clone());
-                        
-                        poll.new.push(offer);
-                    },
-                }
-            }
-            
-            if offers_since > 0 {
-                poll_data.offers_since = Some(time::timestamp_to_server_time(offers_since));
-            }
-        }
-
-        Ok(poll)
+        file::save_poll_data(&self.steamid, &data).await
     }
     
     pub async fn get_user_details(
@@ -280,5 +211,93 @@ impl TradeOfferManager {
         confirmaton: &Confirmation,
     ) -> Result<(), APIError> {
         self.mobile_api.deny_confirmation(confirmaton).await
+    }
+
+    pub async fn do_poll(
+        &self,
+        full_update: bool,
+    ) -> Result<Poll, APIError> {
+        fn date_difference_from_now(date: &ServerTime) -> i64 {
+            let current_timestamp = time::get_server_time_now().timestamp();
+            
+            current_timestamp - date.timestamp()
+        }
+        
+        fn last_poll_full_outdated(last_poll_full_update: Option<ServerTime>) -> bool {
+            match last_poll_full_update {
+                Some(last_poll_full_update) => {
+                    date_difference_from_now(&last_poll_full_update) >= 120
+                },
+                None => true,
+            }
+        }
+        
+        let mut offers_since = 0;
+        let mut filter = OfferFilter::ActiveOnly;
+        
+        {
+            let mut poll_data = self.poll_data.write().unwrap();
+
+            if let Some(last_poll) = poll_data.last_poll {
+                let seconds_since_last_poll = date_difference_from_now(&last_poll);
+                    
+                if seconds_since_last_poll <= 1 {
+                    // We last polled less than a second ago... we shouldn't spam the API
+                    return Err(APIError::Parameter("Poll called too soon after last poll"));
+                }            
+            }
+            
+            poll_data.last_poll = Some(time::get_server_time_now());
+        
+            if full_update || last_poll_full_outdated(poll_data.last_poll_full_update) {
+                filter = OfferFilter::All;
+                offers_since = 1;
+                poll_data.last_poll_full_update = Some(time::get_server_time_now())
+            } else if let Some(poll_offers_since) = poll_data.offers_since {
+                // It looks like sometimes Steam can be dumb and backdate a modified offer. We need to handle this.
+                // Let's add a 30-minute buffer.
+                offers_since = poll_offers_since.timestamp() + 1800;
+            }
+        }
+
+        let historical_cutoff = time::timestamp_to_server_time(offers_since);
+        let offers = self.api.get_trade_offers(&filter, &Some(historical_cutoff)).await?;
+        let mut offers_since: i64 = 0;
+        let mut poll: Poll = Vec::new();
+        
+        {
+            let mut poll_data = self.poll_data.write().unwrap();
+                
+            for offer in offers {
+                offers_since = cmp::max(offers_since, offer.time_updated.timestamp());
+
+                match poll_data.state_map.get(&offer.tradeofferid) {
+                    Some(poll_trade_offer_state) => {
+                        if poll_trade_offer_state != &offer.trade_offer_state {
+                            let tradeofferid = offer.tradeofferid;
+                            let new_state = offer.trade_offer_state.clone();
+                            
+                            poll.push((offer, Some(poll_trade_offer_state.clone())));
+                            
+                            poll_data.state_map.insert(tradeofferid, new_state);
+                        }
+                    },
+                    None => {
+                        poll_data.state_map.insert(offer.tradeofferid, offer.trade_offer_state.clone());
+                        
+                        poll.push((offer, None));
+                    },
+                }
+            }
+            
+            if offers_since > 0 {
+                poll_data.offers_since = Some(time::timestamp_to_server_time(offers_since));
+            }
+            
+        }
+        
+        let _ = self.save_poll_data().await;
+        
+        Ok(poll)
     }
 }

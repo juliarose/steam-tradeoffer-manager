@@ -680,7 +680,7 @@ impl SteamTradeOfferAPI {
         } else {
             responses.push(body);
             
-            let mut inventory: Vec<_> = Vec::new();
+            let mut inventory: Inventory = Vec::new();
             
             for body in responses {
                 for (_, item) in &body.assets {
@@ -755,7 +755,7 @@ impl SteamTradeOfferAPI {
         } else {
             responses.push(body);
             
-            let mut inventory: Vec<_> = Vec::new();
+            let mut inventory: Inventory = Vec::new();
             
             for body in responses {
                 for item in &body.assets {
