@@ -46,4 +46,4 @@ sha-1 = "0.10.0"
 scraper = "0.12.0"
 thiserror = "^1.0.30"
 hashbrown = "0.12.0"
-tf2-price = { version = "0.3.0", path = "../tf2-price" }
+tf2-price = { version = "0.3.0" }
