@@ -1,3 +1,4 @@
+use serde::{Serialize, Deserialize};
 use std::sync::Arc;
 use super::classinfo::ClassInfo;
 use crate::types::{
@@ -7,7 +8,7 @@ use crate::types::{
     Amount
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Asset {
     pub appid: AppId,
     pub contextid: ContextId,

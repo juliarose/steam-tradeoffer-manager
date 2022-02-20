@@ -7,6 +7,7 @@ use crate::{
     APIError,
     Currency,
     OfferFilter,
+    ItemCollection,
     time::{ServerTime, get_system_time},
     classinfo_cache::{
         ClassInfoCache,
@@ -645,7 +646,7 @@ impl SteamTradeOfferAPI {
         appid: u32,
         contextid: u32,
         tradable_only: bool,
-    ) -> Result<Inventory, APIError> { 
+    ) -> Result<Vec<response::asset::Asset>, APIError> { 
         #[derive(Serialize, Debug)]
         struct Query<'a> {
             l: &'a str,
@@ -718,7 +719,7 @@ impl SteamTradeOfferAPI {
         appid: u32,
         contextid: u32,
         tradable_only: bool,
-    ) -> Result<Inventory, APIError> { 
+    ) -> Result<Vec<response::asset::Asset>, APIError> { 
         #[derive(Serialize, Debug)]
         struct Query<'a> {
             l: &'a str,
@@ -790,7 +791,7 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Inventory, APIError> {
+    ) -> Result<ItemCollection, APIError> {
         let responses = &mut Vec::new();
         let inventory = self.get_inventory_old_request(
             responses,
@@ -801,7 +802,7 @@ impl SteamTradeOfferAPI {
             tradable_only
         ).await?;
         
-        Ok(inventory)
+        Ok(ItemCollection::from(inventory))
     }
     
     pub async fn get_inventory(
@@ -810,7 +811,7 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Inventory, APIError> {
+    ) -> Result<ItemCollection, APIError> {
         let responses = &mut Vec::new();
         let inventory = self.get_inventory_request(
             responses,
@@ -821,6 +822,6 @@ impl SteamTradeOfferAPI {
             tradable_only
         ).await?;
         
-        Ok(inventory)
+        Ok(ItemCollection::from(inventory))
     }
 }

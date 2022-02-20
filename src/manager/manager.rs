@@ -8,6 +8,7 @@ use crate::{
     ServerTime,
     OfferFilter,
     TradeOfferState,
+    ItemCollection,
     time,
     response,
     request,
@@ -162,7 +163,7 @@ impl TradeOfferManager {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Inventory, APIError> {
+    ) -> Result<ItemCollection, APIError> {
         self.api.get_inventory_old(steamid, appid, contextid, tradable_only).await
     }
     
@@ -172,7 +173,7 @@ impl TradeOfferManager {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Inventory, APIError> {
+    ) -> Result<ItemCollection, APIError> {
         self.api.get_inventory(steamid, appid, contextid, tradable_only).await
     }
     

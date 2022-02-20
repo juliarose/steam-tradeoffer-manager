@@ -8,7 +8,9 @@ mod mobile_api;
 mod error;
 mod helpers;
 mod response;
+mod item_collection;
 
+pub use item_collection::ItemCollection;
 pub mod types;
 pub mod time;
 pub mod request;
