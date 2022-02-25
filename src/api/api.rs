@@ -7,7 +7,6 @@ use crate::{
     APIError,
     Currency,
     OfferFilter,
-    ItemCollection,
     time::{ServerTime, get_system_time},
     classinfo_cache::{
         ClassInfoCache,
@@ -762,11 +761,11 @@ impl SteamTradeOfferAPI {
                 for item in &body.assets {
                     if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
                         inventory.push(response::asset::Asset {
-                            classinfo: Arc::clone(classinfo),
                             appid: item.appid,
                             contextid: item.contextid,
                             assetid: item.assetid,
                             amount: item.amount,
+                            classinfo: Arc::clone(classinfo),
                         });
                     } else {
                         let instanceid = match item.instanceid {
@@ -791,7 +790,7 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<ItemCollection, APIError> {
+    ) -> Result<Vec<response::asset::Asset>, APIError> {
         let responses = &mut Vec::new();
         let inventory = self.get_inventory_old_request(
             responses,
@@ -802,7 +801,7 @@ impl SteamTradeOfferAPI {
             tradable_only
         ).await?;
         
-        Ok(ItemCollection::from(inventory))
+        Ok(inventory)
     }
     
     pub async fn get_inventory(
@@ -811,7 +810,7 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<ItemCollection, APIError> {
+    ) -> Result<Vec<response::asset::Asset>, APIError> {
         let responses = &mut Vec::new();
         let inventory = self.get_inventory_request(
             responses,
@@ -822,6 +821,6 @@ impl SteamTradeOfferAPI {
             tradable_only
         ).await?;
         
-        Ok(ItemCollection::from(inventory))
+        Ok(inventory)
     }
 }

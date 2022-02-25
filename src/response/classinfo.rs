@@ -29,7 +29,7 @@ pub struct Description {
 impl Description {
     pub fn is_color(&self, color: &str) -> bool {
         if let Some(description_color) = &self.color {
-            description_color.as_str().eq_ignore_ascii_case(color)
+            description_color.eq_ignore_ascii_case(color)
         } else {
             false
         }

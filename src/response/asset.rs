@@ -5,7 +5,8 @@ use crate::types::{
     AppId,
     ContextId,
     AssetId,
-    Amount
+    Amount,
+    ClassInfoClass
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -15,4 +16,11 @@ pub struct Asset {
     pub assetid: AssetId,
     pub amount: Amount,
     pub classinfo: Arc<ClassInfo>,
+}
+
+impl Asset {
+    
+    pub fn key(&self) -> ClassInfoClass {
+        (self.appid, self.classinfo.classid, self.classinfo.instanceid)
+    }
 }
