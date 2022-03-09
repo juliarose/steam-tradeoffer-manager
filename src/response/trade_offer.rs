@@ -3,7 +3,7 @@ use crate::{
     time::ServerTime,
     TradeOfferState,
     ConfirmationMethod,
-    types::TradeOfferId,
+    types::{TradeId, TradeOfferId},
 };
 use super::asset::Asset;
 use steamid_ng::SteamID;
@@ -11,6 +11,7 @@ use steamid_ng::SteamID;
 #[derive(Debug)]
 pub struct TradeOffer {
     pub tradeofferid: TradeOfferId,
+    pub tradeid: Option<TradeId>,
     pub partner: SteamID,
     pub message: Option<String>,
     pub items_to_receive: Vec<Asset>,

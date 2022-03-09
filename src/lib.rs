@@ -9,7 +9,6 @@ mod error;
 mod helpers;
 mod response;
 
-pub use tf2_price;
 pub mod types;
 pub mod time;
 pub mod request;

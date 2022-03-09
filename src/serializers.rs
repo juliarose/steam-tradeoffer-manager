@@ -1,5 +1,4 @@
 
-
 pub mod string {
     use std::fmt::Display;
     use std::str::FromStr;
@@ -37,7 +36,6 @@ pub mod option_string {
             Some(string) => serializer.collect_str(string),
             None => serializer.serialize_none()
         }
-        
     }
     
     pub fn deserialize<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>

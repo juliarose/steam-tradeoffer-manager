@@ -212,6 +212,31 @@ impl TradeOfferManager {
     ) -> Result<(), APIError> {
         self.mobile_api.deny_confirmation(confirmaton).await
     }
+    
+    pub async fn get_receipt(&self, offer: &response::trade_offer::TradeOffer) -> Result<Vec<response::asset::Asset>, APIError> {
+        if offer.items_to_receive.is_empty() {
+            Ok(Vec::new())
+        } else if let Some(tradeid) = offer.tradeid {
+            self.api.get_receipt(&tradeid).await
+        } else {
+            Err(APIError::Parameter("Missing tradeid".into()))
+        }
+    }
+    
+    pub async fn update_offer(&self, offer: &mut response::trade_offer::TradeOffer) -> Result<(), APIError> {
+        let updated = self.api.get_trade_offer(offer.tradeofferid).await?;
+        
+        offer.tradeofferid = updated.tradeofferid;
+        offer.tradeid = updated.tradeid;
+        offer.trade_offer_state = updated.trade_offer_state;
+        offer.confirmation_method = updated.confirmation_method;
+        offer.escrow_end_date = updated.escrow_end_date;
+        offer.time_created = updated.time_created;
+        offer.time_updated = updated.time_updated;
+        offer.expiration_time = updated.expiration_time;
+        
+        Ok(())
+    }
 
     pub async fn do_poll(
         &self,

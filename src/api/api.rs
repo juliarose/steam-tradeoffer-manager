@@ -12,7 +12,7 @@ use crate::{
         ClassInfoCache,
         helpers::{
             save_classinfos,
-            load_classinfos
+            load_classinfos,
         }
     },
     types::{
@@ -22,30 +22,35 @@ use crate::{
         Inventory,
         TradeOfferId,
         AppId,
-        ContextId
+        ContextId,
+        TradeId,
     },
     response,
     request::{
         self,
-        serializers::steamid_as_string
+        serializers::steamid_as_string,
     },
     serializers::{
         string
     },
     helpers::{
         get_default_middleware,
-        parses_response
+        parses_response,
     }
 };
 use super::{
     raw,
-    helpers::from_raw_trade_offer,
+    helpers::{
+        parse_receipt_script,
+        from_raw_trade_offer,
+        from_raw_receipt_asset,
+    },
     response::{
         GetTradeOffersResponseBody,
         GetTradeOffersResponse,
         GetInventoryResponse,
         GetInventoryOldResponse,
-        GetAssetClassInfoResponse
+        GetAssetClassInfoResponse,
     }
 };
 use async_recursion::async_recursion;
@@ -260,6 +265,52 @@ impl SteamTradeOfferAPI {
         let offers = self.get_trade_offers_request(&mut responses, filter, historical_cutoff, None).await?;
         
         Ok(offers)
+    }
+    
+    pub async fn get_receipt(
+        &self,
+        trade_id: &TradeId,
+    ) -> Result<Vec<response::asset::Asset>, APIError> {
+        fn collect_classes(raw_assets: &Vec<raw::RawReceiptAsset>) -> Vec<ClassInfoClass> {
+            let mut classes_set: HashSet<ClassInfoClass> = HashSet::new();
+
+            for item in raw_assets {
+                classes_set.insert((item.appid, item.classid, item.instanceid));
+            }
+            
+            classes_set.into_iter().collect()
+        }
+        
+        let uri = self.get_uri(&format!("/trade/{}/receipt", trade_id));
+        let response = self.client.get(&uri)
+            .send()
+            .await?;
+        let body = response.text().await?;
+        
+        if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &body) {
+           Err(APIError::Response(message.trim().into()))
+        } else if let Some((_, script)) = regex_captures!(r#"(var oItem;[\s\S]*)</script>"#, &body) {
+            match parse_receipt_script(script) {
+                Ok(raw_assets) => {
+                    let classes = collect_classes(&raw_assets);
+                    let _ = self.get_asset_classinfos(&classes).await?;
+                    let mut classinfo_cache = self.classinfo_cache.write().unwrap();
+                    let assets = raw_assets
+                        .into_iter()
+                        .map(|asset| from_raw_receipt_asset(asset, &mut classinfo_cache))
+                        .collect::<Result<Vec<_>, _>>()?;
+                    
+                    Ok(assets)
+                },
+                Err(error) => {
+                    Err(APIError::Response(error.into()))
+                }
+            }
+        } else if regex_is_match!(r#"\{"success": ?false\}"#, &body) {
+            Err(APIError::NotLoggedIn)
+        } else {
+            Err(APIError::Response("Unexpected response".into()))
+        }
     }
     
     pub async fn get_app_asset_classinfos_chunk(
