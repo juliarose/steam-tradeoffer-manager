@@ -83,7 +83,7 @@ pub fn from_raw_trade_offer(offer: raw::RawTradeOffer, cache: &mut ClassInfoCach
 }
 
 pub fn parse_receipt_script(script: &str) -> Result<Vec<raw::RawReceiptAsset>, &'static str> {
-    let re = Regex::new(r#"oItem *= *(\{.*\}); *\n"#).map_err(|_| "Invalid regexp")?;
+    let re = Regex::new(r#"oItem\s*=\s*(\{.*\});\s*\n"#).map_err(|_| "Invalid regexp")?;
     
     re.captures_iter(script)
         // try to parse the string matches as i64 (inferred from fn type signature)

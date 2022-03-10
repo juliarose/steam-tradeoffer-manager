@@ -17,7 +17,6 @@ use crate::{
     types::{
         AppId,
         ContextId,
-        Inventory,
         TradeOfferId
     }
 };
@@ -206,7 +205,7 @@ impl TradeOfferManager {
         self.mobile_api.accept_confirmation(confirmaton).await
     }
     
-    pub async fn deny_confirmation(
+    pub async fn decline_confirmation(
         &self,
         confirmaton: &Confirmation,
     ) -> Result<(), APIError> {

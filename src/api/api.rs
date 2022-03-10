@@ -360,9 +360,11 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         classes: Vec<ClassInfoAppClass>,
     ) -> Result<Vec<ClassInfoMap>, APIError> {
-        let mut maps = Vec::new();
+        let chuck_size = 100;
+        let chunks = classes.chunks(chuck_size);
+        let mut maps = Vec::with_capacity(chunks.len());
         
-        for chunk in classes.chunks(100) {
+        for chunk in chunks {
             maps.push(self.get_app_asset_classinfos_chunk(appid, &chunk.to_vec()).await?);
         }
         
