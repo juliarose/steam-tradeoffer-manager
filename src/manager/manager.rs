@@ -22,12 +22,7 @@ use crate::{
 };
 use steamid_ng::SteamID;
 use url::ParseError;
-use super::{
-    Poll,
-    PollChange,
-    file,
-    poll_data::PollData
-};
+use super::{Poll, file, poll_data::PollData};
 
 #[derive(Debug)]
 pub struct TradeOfferManager {
@@ -90,26 +85,10 @@ impl TradeOfferManager {
         
         Ok(())
     }
-
-    pub fn create_offer(
-        &self,
-        partner: &SteamID,
-        message: Option<String>,
-        token: Option<String>,
-    ) -> request::new_trade_offer::NewTradeOffer {
-        request::new_trade_offer::NewTradeOffer {
-            id: None,
-            partner: partner.clone(),
-            token,
-            message,
-            items_to_give: Vec::new(),
-            items_to_receive: Vec::new(),
-        }
-    }
     
     pub async fn send_offer(
         &self,
-        offer: &request::new_trade_offer::NewTradeOffer,
+        offer: &request::trade_offer::NewTradeOffer,
     ) -> Result<response::sent_offer::SentOffer, APIError> {
         self.api.send_offer(offer).await
     }

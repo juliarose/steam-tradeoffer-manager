@@ -19,20 +19,27 @@ use crate::{
     }
 };
 
+pub type Color = String;
+
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct Description {
     pub value: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub color: Option<String>,
+    pub color: Option<Color>,
 }
 
 impl Description {
+    
     pub fn is_color(&self, color: &str) -> bool {
         if let Some(description_color) = &self.color {
             description_color.eq_ignore_ascii_case(color)
         } else {
             false
         }
+    }
+    
+    pub fn is_color_str(&self, color: &str) -> bool {
+        self.is_color(color)
     }
 }
 

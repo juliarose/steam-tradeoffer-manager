@@ -10,10 +10,7 @@ use crate::{
     time::{ServerTime, get_system_time},
     classinfo_cache::{
         ClassInfoCache,
-        helpers::{
-            save_classinfos,
-            load_classinfos,
-        }
+        helpers as classinfo_cache_helpers,
     },
     types::{
         ClassInfoMap,
@@ -26,13 +23,8 @@ use crate::{
         TradeId,
     },
     response,
-    request::{
-        self,
-        serializers::steamid_as_string,
-    },
-    serializers::{
-        string
-    },
+    request::{self, serializers::steamid_as_string},
+    serializers::string,
     helpers::{
         get_default_middleware,
         parses_response,
@@ -144,11 +136,11 @@ impl SteamTradeOfferAPI {
     
     pub async fn send_offer(
         &self,
-        offer: &request::new_trade_offer::NewTradeOffer,
+        offer: &request::trade_offer::NewTradeOffer,
     ) -> Result<response::sent_offer::SentOffer, APIError> {
         #[derive(Serialize, Debug)]
         struct OfferFormUser<'b> {
-            assets: &'b Vec<request::new_trade_offer::NewTradeOfferItem>,
+            assets: &'b Vec<request::trade_offer::Item>,
             currency: Vec<Currency>,
             ready: bool,
         }
@@ -345,7 +337,7 @@ impl SteamTradeOfferAPI {
         let body: GetAssetClassInfoResponse = parses_response(response).await?;
         let classinfos = body.result;
         
-        save_classinfos(appid, &classinfos).await;
+        classinfo_cache_helpers::save_classinfos(appid, &classinfos).await;
         
         let inserted = self.classinfo_cache
             .write()
@@ -379,7 +371,7 @@ impl SteamTradeOfferAPI {
         let mut map = HashMap::new();
         
         {
-            let results = load_classinfos(classes).await;
+            let results = classinfo_cache_helpers::load_classinfos(classes).await;
             let mut classinfo_cache = self.classinfo_cache.write().unwrap();
             
             for result in results {
