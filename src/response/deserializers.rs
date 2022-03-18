@@ -14,7 +14,6 @@ use serde::{
         SeqAccess,
         Deserializer,
         Unexpected,
-        IntoDeserializer
     }
 };
 use serde_json::value::RawValue;
@@ -93,30 +92,31 @@ where
     }
 }
 
-pub fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
-where
-    T: FromStr,
-    T::Err: std::fmt::Display,
-    D: Deserializer<'de>
-{
-    let s = String::deserialize(deserializer)?;
+// use serde::de::IntoDeserializer;
+// pub fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+// where
+//     T: FromStr,
+//     T::Err: std::fmt::Display,
+//     D: Deserializer<'de>
+// {
+//     let s = String::deserialize(deserializer)?;
     
-    T::from_str(&s).map_err(de::Error::custom)
-}
+//     T::from_str(&s).map_err(de::Error::custom)
+// }
 
-pub fn empty_string_as_none<'de, D, T>(de: D) -> Result<Option<T>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-    T: serde::Deserialize<'de>,
-{
-    let opt = Option::<String>::deserialize(de)?;
-    let opt = opt.as_ref().map(String::as_str);
+// pub fn empty_string_as_none<'de, D, T>(de: D) -> Result<Option<T>, D::Error>
+// where
+//     D: serde::Deserializer<'de>,
+//     T: serde::Deserialize<'de>,
+// {
+//     let opt = Option::<String>::deserialize(de)?;
+//     let opt = opt.as_ref().map(String::as_str);
     
-    match opt {
-        None | Some("") => Ok(None),
-        Some(s) => T::deserialize(s.into_deserializer()).map(Some)
-    }
-}
+//     match opt {
+//         None | Some("") => Ok(None),
+//         Some(s) => T::deserialize(s.into_deserializer()).map(Some)
+//     }
+// }
 
 pub fn from_fraudwarnings<'de, D>(deserializer: D) -> Result<Option<Vec<String>>, D::Error>
 where

@@ -4,4 +4,4 @@ mod poll_data;
 mod file;
 
 pub use manager::TradeOfferManager;
-pub use poll::{Poll, PollChange};
+pub use poll::Poll;

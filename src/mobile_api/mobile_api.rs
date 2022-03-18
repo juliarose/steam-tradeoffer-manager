@@ -12,7 +12,6 @@ use crate::{
     APIError,
     ParseHtmlError,
     time,
-    serializers::string,
     helpers::{
         get_default_middleware,
         parses_response
@@ -24,11 +23,11 @@ use lazy_regex::regex_replace_all;
 use scraper::{Html, Selector, element_ref::ElementRef};
 
 const HOSTNAME: &'static str = "https://steamcommunity.com";
-const API_HOSTNAME: &'static str = "https://api.steampowered.com";
+// const API_HOSTNAME: &'static str = "https://api.steampowered.com";
 const USER_AGENT_STRING: &'static str = "Mozilla/5.0 (Linux; U; Android 4.1.1; en-us; Google Nexus 4 - 4.1.1 - API 16 - 768x1280 Build/JRO03S) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
 
 fn build_time_bytes(time: i64) -> [u8; 8] {
-	time.to_be_bytes()
+    time.to_be_bytes()
 }
     
 fn generate_confirmation_hash_for_time(time: i64, tag: &str, identity_secret: &String) -> String {
@@ -45,7 +44,7 @@ fn generate_confirmation_hash_for_time(time: i64, tag: &str, identity_secret: &S
 fn get_device_id(steamid: &SteamID) -> String {
     let mut hasher = Sha1::new();
 
-    hasher.update(u64::from(steamid.clone()).to_string().as_bytes());
+    hasher.update(u64::from(*steamid).to_string().as_bytes());
     
     let result = hasher.finalize();
     let hash = result.iter()
@@ -62,7 +61,7 @@ fn get_device_id(steamid: &SteamID) -> String {
 
 fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlError> {
     fn parse_description(element: ElementRef, description_selector: &Selector) -> Result<Confirmation, ParseHtmlError> {
-		let description: Option<_> = element.select(&description_selector).next();
+        let description: Option<_> = element.select(&description_selector).next();
         let data_type = element.value().attr("data-type");
         let id = element.value().attr("data-confid");
         let key = element.value().attr("data-key");
@@ -94,7 +93,7 @@ fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlError
         })
     }
 
-	let fragment = Html::parse_fragment(&text);
+    let fragment = Html::parse_fragment(&text);
     // these should probably never fail
     let mobileconf_empty_selector = Selector::parse("#mobileconf_empty").unwrap();
     let mobileconf_done_selector = Selector::parse(".mobileconf_done").unwrap();
@@ -116,9 +115,9 @@ fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlError
         }
     }
     
-	let confirmation_list_selector = Selector::parse(".mobileconf_list_entry").unwrap();
-	let description_selector = Selector::parse(".mobileconf_list_entry_description").unwrap();
-	let confirmations = fragment.select(&confirmation_list_selector)
+    let confirmation_list_selector = Selector::parse(".mobileconf_list_entry").unwrap();
+    let description_selector = Selector::parse(".mobileconf_list_entry_description").unwrap();
+    let confirmations = fragment.select(&confirmation_list_selector)
         .map(|description| parse_description(description, &description_selector))
         .collect::<Result<Vec<Confirmation>, ParseHtmlError>>()?;
     
@@ -146,14 +145,14 @@ impl MobileAPI {
         let cookies = Arc::new(Jar::default());
         
         cookies.add_cookie_str("mobileClientVersion=0 (2.1.3)", &url);
-		cookies.add_cookie_str("mobileClient=android", &url);
-		cookies.add_cookie_str("Steam_Language=english", &url);
+        cookies.add_cookie_str("mobileClient=android", &url);
+        cookies.add_cookie_str("Steam_Language=english", &url);
         cookies.add_cookie_str("dob=", &url);
-		cookies.add_cookie_str(format!("steamid={}", u64::from(steamid.clone()).to_string()).as_str(), &url);
+        cookies.add_cookie_str(format!("steamid={}", u64::from(*steamid)).as_str(), &url);
         
         Self {
             client: get_default_middleware(Arc::clone(&cookies), USER_AGENT_STRING),
-            steamid: steamid.clone(),
+            steamid: *steamid,
             identity_secret,
             language: String::from("english"),
             cookies: Arc::clone(&cookies),
@@ -165,9 +164,9 @@ impl MobileAPI {
         format!("{}{}", HOSTNAME, pathname)
     }
 
-    fn get_api_url(&self, interface: &str, method: &str, version: usize) -> String {
-        format!("{}/{}/{}/v{}", API_HOSTNAME, interface, method, version)
-    }
+    // fn get_api_url(&self, interface: &str, method: &str, version: usize) -> String {
+    //     format!("{}/{}/{}/v{}", API_HOSTNAME, interface, method, version)
+    // }
     
     // probably would never fail
     fn set_cookies(&self, cookies: &Vec<String>) -> Result<(), ParseError> {
@@ -190,100 +189,102 @@ impl MobileAPI {
         Ok(())
     }
     
-	async fn get_confirmation_query_params(&self, tag: &str) -> Result<HashMap<&str, String>, APIError> {
+    async fn get_confirmation_query_params(&self, tag: &str) -> Result<HashMap<&str, String>, APIError> {
         if self.identity_secret.is_none() {
             return Err(APIError::Parameter("No identity secret"));
         }
         
-		// let time = self.get_server_time().await?;
+        // let time = self.get_server_time().await?;
         let time = server_time(0);
         let key = generate_confirmation_hash_for_time(time, tag, &self.identity_secret.clone().unwrap());
-		let mut params: HashMap<&str, String> = HashMap::new();
+        let mut params: HashMap<&str, String> = HashMap::new();
         
         // self.device_id.clone()
-		params.insert("p", get_device_id(&self.steamid));
-		params.insert("a", u64::from(self.steamid.clone()).to_string());
-		params.insert("k", key);
-		params.insert("t", time.to_string());
-		params.insert("m", "android".into());
-		params.insert("tag", tag.into());
-		
+        params.insert("p", get_device_id(&self.steamid));
+        params.insert("a", u64::from(self.steamid).to_string());
+        params.insert("k", key);
+        params.insert("t", time.to_string());
+        params.insert("m", "android".into());
+        params.insert("tag", tag.into());
+        
         Ok(params)
-	}
+    }
     
-	pub async fn send_confirmation_ajax(&self, confirmation: &Confirmation, operation: String) -> Result<(), APIError>  {
-		#[derive(Debug, Clone, Copy, Deserialize)]
-		struct SendConfirmationResponse {
-			pub success: bool,
-		}
+    pub async fn send_confirmation_ajax(&self, confirmation: &Confirmation, operation: String) -> Result<(), APIError>  {
+        #[derive(Debug, Clone, Copy, Deserialize)]
+        struct SendConfirmationResponse {
+            pub success: bool,
+        }
         
-		let mut query = self.get_confirmation_query_params("conf").await?;
+        let mut query = self.get_confirmation_query_params("conf").await?;
         
-		query.insert("op", operation);
-		query.insert("cid", confirmation.id.to_string());
-		query.insert("ck", confirmation.key.to_string());
+        query.insert("op", operation);
+        query.insert("cid", confirmation.id.to_string());
+        query.insert("ck", confirmation.key.to_string());
 
         let uri = self.get_uri("/mobileconf/ajaxop");
-		let response = self.client.get(&uri)
-			.header("X-Requested-With", "com.valvesoftware.android.steam.community")
-			.query(&query)
-			.send()
-            .await?;
-        // let body: SendConfirmationResponse = parses_response(response).await?;
-        let body = response.text().await?;
-        
-        println!("Send confirmation {}", body);
-        
-		Ok(())
-	}
-
-	pub async fn accept_confirmation(&self, confirmation: &Confirmation) -> Result<(), APIError> {
-		self.send_confirmation_ajax(confirmation, "allow".into()).await
-	}
-
-	pub async fn deny_confirmation(&self, confirmation: &Confirmation) -> Result<(), APIError> {
-		self.send_confirmation_ajax(confirmation, "cancel".into()).await
-	}
-    
-    pub async fn get_server_time(&self) -> Result<i64, APIError> {
-        #[derive(Deserialize, Debug)]
-        struct ServerTime {
-            #[serde(with = "string")]
-            server_time: i64,
-            // skew_tolerance_seconds: u32,
-            // large_time_jink: u32,
-            // probe_frequency_seconds: u32,
-            // adjusted_time_probe_frequency_seconds: u32,
-            // hint_probe_frequency_seconds: u32,
-            // sync_timeout: u32,
-            // try_again_seconds: u32,
-            // max_attempts: u32,
-        }
-        
-        #[derive(Deserialize, Debug)]
-        struct Response {
-            response: ServerTime,
-        }
-        
-        let uri = self.get_api_url("ITwoFactorService", "QueryTime", 1);
-        let response = self.client.post(&uri)
-            .body("steamid=0")
+        let response = self.client.get(&uri)
+            .header("X-Requested-With", "com.valvesoftware.android.steam.community")
+            .query(&query)
             .send()
             .await?;
-        let body: Response = parses_response(response).await?;
+        // let body: SendConfirmationResponse = parses_response(response).await?;
+        let body: SendConfirmationResponse = parses_response(response).await?;
         
-        Ok(body.response.server_time)
+        if !body.success {
+            return Err(APIError::Response("Confirmation unsuccessful".into()));
+        }
+        
+        Ok(())
     }
+
+    pub async fn accept_confirmation(&self, confirmation: &Confirmation) -> Result<(), APIError> {
+        self.send_confirmation_ajax(confirmation, "allow".into()).await
+    }
+
+    pub async fn deny_confirmation(&self, confirmation: &Confirmation) -> Result<(), APIError> {
+        self.send_confirmation_ajax(confirmation, "cancel".into()).await
+    }
+    
+    // pub async fn get_server_time(&self) -> Result<i64, APIError> {
+    //     #[derive(Deserialize, Debug)]
+    //     struct ServerTime {
+    //         #[serde(with = "string")]
+    //         server_time: i64,
+    //         // skew_tolerance_seconds: u32,
+    //         // large_time_jink: u32,
+    //         // probe_frequency_seconds: u32,
+    //         // adjusted_time_probe_frequency_seconds: u32,
+    //         // hint_probe_frequency_seconds: u32,
+    //         // sync_timeout: u32,
+    //         // try_again_seconds: u32,
+    //         // max_attempts: u32,
+    //     }
+        
+    //     #[derive(Deserialize, Debug)]
+    //     struct Response {
+    //         response: ServerTime,
+    //     }
+        
+    //     let uri = self.get_api_url("ITwoFactorService", "QueryTime", 1);
+    //     let response = self.client.post(&uri)
+    //         .body("steamid=0")
+    //         .send()
+    //         .await?;
+    //     let body: Response = parses_response(response).await?;
+        
+    //     Ok(body.response.server_time)
+    // }
     
     pub async fn get_trade_confirmations(&self) -> Result<Vec<Confirmation>, APIError> {
         let uri = self.get_uri("/mobileconf/conf");
         let query = self.get_confirmation_query_params("conf").await?;
-		let response = self.client.get(&uri)
-			.header("X-Requested-With", "com.valvesoftware.android.steam.community")
-			.query(&query)
+        let response = self.client.get(&uri)
+            .header("X-Requested-With", "com.valvesoftware.android.steam.community")
+            .query(&query)
             .send()
             .await?;
-		let body = response.text().await?;
+        let body = response.text().await?;
         let confirmations = parse_confirmations(body)?;
         
         Ok(confirmations)

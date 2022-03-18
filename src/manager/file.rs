@@ -46,7 +46,7 @@ pub async fn save_poll_data(steamid: &SteamID, data: &str) -> Result<(), FileErr
 
 pub fn get_filepath(steamid: &SteamID) -> Option<String> {
     let rootdir = env!("CARGO_MANIFEST_DIR");
-    let filename = format!("assets/poll_data_{}.json", u64::from(steamid.clone()));
+    let filename = format!("assets/poll_data_{}.json", u64::from(*steamid));
     
     match Path::new(rootdir).join(filename).to_str() {
         Some(filepath) => Some(String::from(filepath)),

@@ -1,11 +1,5 @@
 use crate::{response, TradeOfferState};
 
-// #[derive(Debug)]
-// pub struct Poll {
-//     pub new: Vec<response::trade_offer::TradeOffer>,
-//     pub changed: Vec<PollChange>,
-// }
-
 pub type Poll = Vec<(response::trade_offer::TradeOffer, Option<TradeOfferState>)>;
 
 #[derive(Debug)]

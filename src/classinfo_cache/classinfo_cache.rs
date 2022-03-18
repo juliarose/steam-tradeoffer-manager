@@ -45,7 +45,7 @@ impl ClassInfoCache {
             println!("Insert classinfo {}", classinfo_string);
             let classinfo = serde_json::from_str(classinfo_string)?;
             let classinfo = Arc::new(classinfo);
-            let class = (appid.clone(), classid.clone(), instanceid.clone());
+            let class = (appid, *classid, *instanceid);
             
             self.map.insert(class, Arc::clone(&classinfo));
             map.insert(class, Arc::clone(&classinfo));

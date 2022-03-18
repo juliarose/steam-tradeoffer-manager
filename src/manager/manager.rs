@@ -53,7 +53,7 @@ impl TradeOfferManager {
         identity_secret: Option<String>,
     ) -> Self {
         Self {
-            steamid: steamid.clone(),
+            steamid: *steamid,
             api: SteamTradeOfferAPI::new(steamid, key, identity_secret.clone()),
             mobile_api: MobileAPI::new(steamid, identity_secret),
             poll_data: Arc::new(RwLock::new(PollData::new())),
@@ -68,7 +68,7 @@ impl TradeOfferManager {
         let poll_data = file::load_poll_data(steamid).unwrap_or_else(|_| PollData::new());
         
         Self {
-            steamid: steamid.clone(),
+            steamid: *steamid,
             api: SteamTradeOfferAPI::new(steamid, key, identity_secret.clone()),
             mobile_api: MobileAPI::new(steamid, identity_secret),
             poll_data: Arc::new(RwLock::new(poll_data)),
@@ -197,7 +197,7 @@ impl TradeOfferManager {
         } else if let Some(tradeid) = offer.tradeid {
             self.api.get_receipt(&tradeid).await
         } else {
-            Err(APIError::Parameter("Missing tradeid".into()))
+            Err(APIError::Parameter("Missing tradeid"))
         }
     }
     

@@ -25,7 +25,6 @@ pub use currency::Currency;
 pub use manager::{
     TradeOfferManager,
     Poll,
-    PollChange
 };
 pub use error::{
     APIError,
@@ -39,3 +38,4 @@ pub use enums::{
     ConfirmationMethod,
     EResult
 };
+pub use steamid_ng;

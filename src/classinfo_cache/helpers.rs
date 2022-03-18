@@ -80,7 +80,7 @@ pub async fn load_classinfos(classes: &Vec<ClassInfoClass>) -> Vec<Result<ClassI
     
     for class in classes {
         // must be cloned to move across threads
-        let class = class.clone();
+        let class = *class;
         
         tasks.push(tokio::spawn(async move {
             load_classinfo(class).await
@@ -105,7 +105,7 @@ pub async fn save_classinfos(appid: u32, classinfos: &HashMap<ClassInfoAppClass,
     for ((classid, instanceid), classinfo) in classinfos {
         // must be cloned to move across threads
         let classinfo = classinfo.clone();
-        let class = (appid.clone(), *classid, *instanceid);
+        let class = (appid, *classid, *instanceid);
         
         tasks.push(tokio::spawn(async move {
             save_classinfo(class, classinfo).await

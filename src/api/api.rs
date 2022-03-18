@@ -85,7 +85,7 @@ impl SteamTradeOfferAPI {
         Self {
             client: get_default_middleware(Arc::clone(&cookies), USER_AGENT_STRING),
             key: key.to_string(),
-            steamid: steamid.clone(),
+            steamid: *steamid,
             identity_secret,
             language: String::from("english"),
             cookies: Arc::clone(&cookies),
@@ -311,12 +311,12 @@ impl SteamTradeOfferAPI {
         classes: &Vec<ClassInfoAppClass>,
     ) -> Result<ClassInfoMap, APIError> {
         let query = {
-            let mut query = Vec::new();
-            
-            query.push(("key".to_string(), self.key.to_string()));
-            query.push(("appid".to_string(), appid.to_string()));
-            query.push(("language".to_string(), self.language.clone()));
-            query.push(("class_count".to_string(), classes.len().to_string()));
+            let mut query = vec![
+                ("key".to_string(), self.key.to_string()),
+                ("appid".to_string(), appid.to_string()),
+                ("language".to_string(), self.language.clone()),
+                ("class_count".to_string(), classes.len().to_string()),
+            ];
             
             for (i, (classid, instanceid)) in classes.iter().enumerate() {
                 query.push((format!("classid{}", i), classid.to_string()));
@@ -374,10 +374,8 @@ impl SteamTradeOfferAPI {
             let results = classinfo_cache_helpers::load_classinfos(classes).await;
             let mut classinfo_cache = self.classinfo_cache.write().unwrap();
             
-            for result in results {
-                if let Ok((class, classinfo)) = result {
-                    classinfo_cache.insert(class, classinfo);
-                }
+            for (class, classinfo) in results.into_iter().flatten() {
+                classinfo_cache.insert(class, classinfo);
             }
             
             for (appid, classid, instanceid) in classes {
@@ -616,7 +614,7 @@ impl SteamTradeOfferAPI {
             return Err(APIError::NotLoggedIn);
         }
         
-        let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid.to_string()));
+        let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid));
         let params = AcceptOfferParams {
             sessionid: &sessionid.unwrap(),
             tradeofferid,
@@ -697,7 +695,7 @@ impl SteamTradeOfferAPI {
             start: Option<u64>,
         }
         
-        let sid = u64::from(steamid.clone());
+        let sid = u64::from(*steamid);
         let uri = self.get_uri(&format!("/profiles/{}/inventory/json/{}/{}", sid, appid, contextid));
         let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
         let response = self.client.get(&uri)
@@ -732,19 +730,16 @@ impl SteamTradeOfferAPI {
                     if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
                         inventory.push(response::asset::Asset {
                             classinfo: Arc::clone(classinfo),
-                            appid: appid.clone(),
-                            contextid: contextid.clone(),
+                            appid,
+                            contextid,
                             assetid: item.assetid,
                             amount: item.amount,
                         });
                     } else {
-                        let instanceid = match item.instanceid {
-                            Some(instanceid) => instanceid,
-                            None => 0,
-                        };
+                        let instanceid =  item.instanceid.unwrap_or(0);
                         
                         return Err(APIError::Response(
-                            format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()
+                            format!("Missing descriptions for item {}:{}", item.classid, instanceid)
                         ));
                     }
                 }
@@ -771,7 +766,7 @@ impl SteamTradeOfferAPI {
             start_assetid: Option<u64>,
         }
         
-        let sid = u64::from(steamid.clone());
+        let sid = u64::from(*steamid);
         let uri = self.get_uri(&format!("/inventory/{}/{}/{}", sid, appid, contextid));
         let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
         let response = self.client.get(&uri)
@@ -813,13 +808,10 @@ impl SteamTradeOfferAPI {
                             classinfo: Arc::clone(classinfo),
                         });
                     } else {
-                        let instanceid = match item.instanceid {
-                            Some(instanceid) => instanceid,
-                            None => 0,
-                        };
+                        let instanceid =  item.instanceid.unwrap_or(0);
                         
                         return Err(APIError::Response(
-                            format!("Missing descriptions for item {}:{}", item.classid, instanceid).into()
+                            format!("Missing descriptions for item {}:{}", item.classid, instanceid)
                         ));
                     }
                 }

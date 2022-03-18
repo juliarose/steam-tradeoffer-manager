@@ -24,7 +24,7 @@ impl From<&response::trade_offer::TradeOffer> for NewTradeOffer {
     fn from(offer: &response::trade_offer::TradeOffer) -> Self {
         Self {
             id: Some(offer.tradeofferid),
-            partner: offer.partner.clone(),
+            partner: offer.partner,
             items_to_give: from_trade_offer_items(&offer.items_to_give),
             items_to_receive: from_trade_offer_items(&offer.items_to_receive),
             message: None,
