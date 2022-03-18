@@ -12,10 +12,10 @@ use steam_tradeoffers::{
     steamid_ng::SteamID
 };
 
-fn assets_item_names(assets: &Vec<Asset>) -> Vec<String> {
+fn assets_item_names<'a>(assets: &'a Vec<Asset>) -> Vec<&'a str> {
     assets
         .iter()
-        .map(|item| item.classinfo.market_hash_name.clone())
+        .map(|item| item.classinfo.market_hash_name.as_ref())
         .collect::<Vec<_>>()
 }
 
