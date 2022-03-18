@@ -27,16 +27,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "key",
         Some("secret".into()),
     );
+    let sessionid = "sessionid";
+    let cookies = vec![String::from("cookie=value")];
     
-    manager.set_session("sessionid", &vec![String::from("cookie=value")])?;
+    manager.set_session(sessionid, &cookies)?;
     
     for (offer, old_state) in manager.do_poll(true).await? {
         if let Some(state) = old_state {
-            println!("Offer {} changed state: {} -> {}", offer, state, offer.trade_offer_state);
-        } else if !offer.is_our_offer && offer.trade_offer_state == TradeOfferState::Active {
-            println!("New offer {}", offer);
-            println!("Offering: {:?}", assets_item_names(&offer.items_to_give));
-            println!("Receiving: {:?}", assets_item_names(&offer.items_to_receive));
+            println!(
+                "Offer {} changed state: {} -> {}",
+                offer,
+                state,
+                offer.trade_offer_state
+            );
+        } else if offer.trade_offer_state == TradeOfferState::Active {
+            if offer.is_our_offer {
+                // we sent this offer
+            } else {
+                println!(
+                    "New offer {}",
+                    offer
+                );
+                println!(
+                    "Offering: {:?}",
+                    assets_item_names(&offer.items_to_give)
+                );
+                println!(
+                    "Receiving: {:?}",
+                    assets_item_names(&offer.items_to_receive)
+                );
+            }
         }
     }
     
