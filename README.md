@@ -5,7 +5,12 @@ Heavily inspired by the excellent [node-steam-tradeoffer-manager](https://github
 Thanks to https://github.com/dyc3/steamguard-cli (steamguard) for functionality relating to mobile confirmations.
 
 ```rs
-use steam_tradeoffers::{TradeOfferManager, Asset, TradeOfferState, steamid_ng::SteamID};
+use steam_tradeoffers::{
+    TradeOfferManager,
+    Asset,
+    TradeOfferState,
+    steamid_ng::SteamID
+};
 
 fn assets_item_names(assets: &Vec<Asset>) -> Vec<String> {
     assets
@@ -23,7 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some("secret".into()),
     );
     
-    manager.set_session("sessionid",&vec![String::from("cookie=value")])?;
+    manager.set_session("sessionid", &vec![String::from("cookie=value")])?;
     
     for (offer, old_state) in manager.do_poll(true).await? {
         if let Some(state) = old_state {
