@@ -58,12 +58,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     offer
                 );
                 println!(
-                    "Offering: {:?}",
-                    assets_item_names(&offer.items_to_give)
-                );
-                println!(
                     "Receiving: {:?}",
                     assets_item_names(&offer.items_to_receive)
+                );
+                println!(
+                    "Giving: {:?}",
+                    assets_item_names(&offer.items_to_give)
                 );
             }
         }
