@@ -1,12 +1,12 @@
 use super::raw;
 use lazy_regex::Regex;
 use crate::{
+    SteamID,
     classinfo_cache::ClassInfoCache,
     MissingClassInfoError,
     response,
 };
 use serde_json;
-use steamid_ng::SteamID;
 
 pub fn from_raw_receipt_asset(asset: raw::RawReceiptAsset, cache: &mut ClassInfoCache) -> Result<response::asset::Asset, MissingClassInfoError> {
     if let Some(classinfo) = cache.get_classinfo(&(asset.appid, asset.classid, asset.instanceid)) {

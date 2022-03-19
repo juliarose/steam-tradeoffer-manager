@@ -1,4 +1,3 @@
-use steamid_ng::SteamID;
 use serde::Deserialize;
 use hmacsha1::hmac_sha1;
 use reqwest::cookie::Jar;
@@ -9,6 +8,7 @@ use std::{
     sync::{Arc, RwLock}
 };
 use crate::{
+    SteamID,
     APIError,
     ParseHtmlError,
     time,

@@ -22,7 +22,7 @@ use crate::{
 };
 use steamid_ng::SteamID;
 use url::ParseError;
-use super::{Poll, file, poll_data::PollData};
+use super::{TradeOfferManagerBuilder, Poll, file, poll_data::PollData};
 
 #[derive(Debug)]
 pub struct TradeOfferManager {
@@ -58,6 +58,13 @@ impl TradeOfferManager {
             mobile_api: MobileAPI::new(steamid, identity_secret),
             poll_data: Arc::new(RwLock::new(PollData::new())),
         }
+    }
+    
+    pub fn builder(
+        steamid: &SteamID,
+        key: &str,
+    ) -> TradeOfferManagerBuilder {
+        TradeOfferManagerBuilder::new(steamid, key)
     }
     
     pub fn new_with_poll_data(

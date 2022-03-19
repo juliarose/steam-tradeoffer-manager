@@ -1,11 +1,11 @@
 use crate::{
     error::FileError,
+    SteamID,
 };
 use async_fs::File;
 use futures_lite::io::AsyncWriteExt;
 use std::path::Path;
 use std::fs;
-use steamid_ng::SteamID;
 use super::poll_data::PollData;
 
 pub fn load_poll_data(steamid: &SteamID) -> Result<PollData, FileError> {

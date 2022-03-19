@@ -3,7 +3,9 @@ use crate::response::{
     asset::Asset,
     classinfo::ClassInfo
 };
+use reqwest_middleware::ClientWithMiddleware;
 
+pub type Client = ClientWithMiddleware;
 pub type Inventory = Vec<Asset>;
 pub type AppId = u32;
 pub type ContextId = u32;

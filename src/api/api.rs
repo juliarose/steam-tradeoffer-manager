@@ -7,6 +7,7 @@ use crate::{
     APIError,
     Currency,
     OfferFilter,
+    SteamID,
     time::{ServerTime, get_system_time},
     classinfo_cache::{
         ClassInfoCache,
@@ -21,6 +22,7 @@ use crate::{
         AppId,
         ContextId,
         TradeId,
+        Client,
     },
     response,
     request::{self, serializers::steamid_as_string},
@@ -51,9 +53,7 @@ use serde::{Deserialize, Serialize};
 use serde_qs;
 use reqwest::cookie::Jar;
 use url::{Url, ParseError};
-use reqwest_middleware::ClientWithMiddleware;
 use reqwest::header::REFERER;
-use steamid_ng::SteamID;
 use lazy_regex::{regex_captures, regex_is_match};
 
 const HOSTNAME: &'static str = "https://steamcommunity.com";
@@ -63,7 +63,7 @@ const ONE_YEAR_SECS: u64 = 31536000;
 
 #[derive(Debug)]
 pub struct SteamTradeOfferAPI {
-    client: ClientWithMiddleware,
+    client: Client,
     pub key: String,
     pub cookies: Arc<Jar>,
     pub language: String,

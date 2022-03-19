@@ -1,12 +1,12 @@
 use std::fmt;
 use crate::{
+    SteamID,
     time::ServerTime,
     TradeOfferState,
     ConfirmationMethod,
     types::{TradeId, TradeOfferId},
 };
 use super::asset::Asset;
-use steamid_ng::SteamID;
 
 #[derive(Debug)]
 pub struct TradeOffer {

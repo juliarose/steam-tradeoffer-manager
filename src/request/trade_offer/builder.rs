@@ -1,6 +1,5 @@
 use super::{Item, NewTradeOffer};
-use crate::types::TradeOfferId;
-use steamid_ng::SteamID;
+use crate::{SteamID, types::TradeOfferId};
 
 pub struct NewTradeOfferBuilder {
     pub id: Option<TradeOfferId>,
