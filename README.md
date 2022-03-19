@@ -1,6 +1,6 @@
 # steam-tradeoffers
 
-Makes trade offers easy.
+Makes steam trade offers easy.
 
 Still a work in progress as I flesh out and test the APIs.
 
