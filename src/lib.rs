@@ -12,6 +12,7 @@ mod response;
 pub mod types;
 pub mod time;
 pub mod request;
+
 pub use response::{
     trade_offer::TradeOffer,
     asset::Asset,

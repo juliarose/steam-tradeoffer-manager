@@ -46,6 +46,13 @@ impl PollData {
 }
 
 impl TradeOfferManager {
+    
+    pub fn builder(
+        steamid: &SteamID,
+        key: &str,
+    ) -> TradeOfferManagerBuilder {
+        TradeOfferManagerBuilder::new(steamid, key)
+    }
 
     pub fn new(
         steamid: &SteamID,
@@ -60,13 +67,7 @@ impl TradeOfferManager {
         }
     }
     
-    pub fn builder(
-        steamid: &SteamID,
-        key: &str,
-    ) -> TradeOfferManagerBuilder {
-        TradeOfferManagerBuilder::new(steamid, key)
-    }
-    
+    /// Creates a new manager using existing poll data from file (if available).
     pub fn new_with_poll_data(
         steamid: &SteamID,
         key: &str,
@@ -82,6 +83,7 @@ impl TradeOfferManager {
         }
     }
     
+    /// Sets the session and cookies.
     pub fn set_session(
         &self,
         sessionid: &str,
@@ -141,6 +143,7 @@ impl TradeOfferManager {
         self.api.get_trade_offers(&OfferFilter::ActiveOnly, &None).await
     }
 
+    /// Gets a user's inventory using the old endpoint.
     pub async fn get_inventory_old(
         &self,
         steamid: &SteamID,
@@ -151,6 +154,7 @@ impl TradeOfferManager {
         self.api.get_inventory_old(steamid, appid, contextid, tradable_only).await
     }
     
+    /// Gets a user's inventory.
     pub async fn get_inventory(
         &self,
         steamid: &SteamID,
@@ -169,6 +173,7 @@ impl TradeOfferManager {
         file::save_poll_data(&self.steamid, &data).await
     }
     
+    /// Gets the user's details for trading.
     pub async fn get_user_details(
         &self,
         tradeofferid: &Option<TradeOfferId>,
@@ -198,6 +203,7 @@ impl TradeOfferManager {
         self.mobile_api.deny_confirmation(confirmaton).await
     }
     
+    /// Gets the trade receipt (new items) upon completion of a trade.
     pub async fn get_receipt(&self, offer: &response::trade_offer::TradeOffer) -> Result<Vec<response::asset::Asset>, APIError> {
         if offer.items_to_receive.is_empty() {
             Ok(Vec::new())
@@ -208,6 +214,7 @@ impl TradeOfferManager {
         }
     }
     
+    /// Updates the offer to the most recent state against the API.
     pub async fn update_offer(&self, offer: &mut response::trade_offer::TradeOffer) -> Result<(), APIError> {
         let updated = self.api.get_trade_offer(offer.tradeofferid).await?;
         
@@ -222,10 +229,20 @@ impl TradeOfferManager {
         
         Ok(())
     }
-
-    pub async fn do_poll(
+    
+    /// Performs a poll with a full update.
+    pub async fn poll_full_update(&self) -> Result<Poll, APIError> {
+        self.do_poll(true).await
+    }
+    
+    /// Polls for changes to offers.
+    pub async fn poll(&self) -> Result<Poll, APIError> {
+        self.do_poll(false).await
+    }
+    
+    async fn do_poll(
         &self,
-        full_update: bool,
+        full_update: bool
     ) -> Result<Poll, APIError> {
         fn date_difference_from_now(date: &ServerTime) -> i64 {
             let current_timestamp = time::get_server_time_now().timestamp();
