@@ -1,9 +1,17 @@
 # steam-tradeoffers
 
-Heavily inspired by the excellent [node-steam-tradeoffer-manager](https://github.com/DoctorMcKay/node-steam-tradeoffer-manager) module.
+Makes trade offers easy.
 
-Thanks to https://github.com/dyc3/steamguard-cli (steamguard) for functionality relating to mobile confirmations.
+Still a work in progress as I flesh out and test the APIs.
 
+## Features
+- Richly-featured API for creating, accepting, cancelling, and declining trade offers.
+- Manages account trade offer state.
+- Loading inventories.
+- Mobile confirmations.
+- Loads descriptions (classinfos) for assets. Classinfos are cached to file and read when available. The manager holds a [Least frequently used (LFU) cache](https://en.wikipedia.org/wiki/Least_frequently_used) of classinfos in memory to reduce file reads.
+
+## Usage
 ```rs
 use steam_tradeoffers::{
     TradeOfferManager,
@@ -67,6 +75,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+## Thanks
+
+Inspired by the excellent [node-steam-tradeoffer-manager](https://github.com/DoctorMcKay/node-steam-tradeoffer-manager) module. Thanks to https://github.com/dyc3/steamguard-cli (steamguard) for functionality relating to mobile confirmations.
 
 ## LICENSE
 
