@@ -38,4 +38,5 @@ pub use enums::{
     ConfirmationMethod,
     EResult
 };
-pub use steamid_ng;
+
+pub use steamid_ng::SteamID;

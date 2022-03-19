@@ -17,7 +17,7 @@ use steam_tradeoffers::{
     TradeOfferManager,
     Asset,
     TradeOfferState,
-    steamid_ng::SteamID
+    SteamID,
 };
 
 fn assets_item_names<'a>(assets: &'a Vec<Asset>) -> Vec<&'a str> {
@@ -40,6 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     manager.set_session(sessionid, &cookies)?;
     
+    // gets changes to trade offers for account
     for (offer, old_state) in manager.do_poll(true).await? {
         if let Some(state) = old_state {
             println!(
@@ -68,6 +69,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     
+    // loads inventory
     let items = manager.get_inventory(&steamid, 440, 2, true).await?;
     
     println!("{} items in your inventory", items.len());
