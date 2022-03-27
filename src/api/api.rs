@@ -472,11 +472,11 @@ impl SteamTradeOfferAPI {
             .await?;
         let body: GetTradeOffersResponse = parses_response(response).await?;
         let next_cursor = body.response.next_cursor;
-
-        if next_cursor > 0 {
+        
+        if next_cursor > Some(0) {
             responses.push(body.response);
     
-            Ok(self.get_trade_offers_request(responses, filter, historical_cutoff, Some(next_cursor)).await?)
+            Ok(self.get_trade_offers_request(responses, filter, historical_cutoff, next_cursor).await?)
         } else {
             responses.push(body.response);
             

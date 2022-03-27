@@ -24,7 +24,7 @@ pub struct GetTradeOffersResponseBody {
     pub trade_offers_sent: Vec<raw::RawTradeOffer>,
     #[serde(default)]
     pub trade_offers_received: Vec<raw::RawTradeOffer>,
-    pub next_cursor: u32,
+    pub next_cursor: Option<u32>,
 }
 
 #[derive(Deserialize, Debug)]
