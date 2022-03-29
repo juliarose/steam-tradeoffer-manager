@@ -230,17 +230,8 @@ impl TradeOfferManager {
         Ok(())
     }
     
-    /// Performs a poll with a full update.
-    pub async fn poll_full_update(&self) -> Result<Poll, APIError> {
-        self.do_poll(true).await
-    }
-    
-    /// Polls for changes to offers.
-    pub async fn poll(&self) -> Result<Poll, APIError> {
-        self.do_poll(false).await
-    }
-    
-    async fn do_poll(
+    /// Performs a poll for changes to offers.
+    pub async fn do_poll(
         &self,
         full_update: bool
     ) -> Result<Poll, APIError> {
