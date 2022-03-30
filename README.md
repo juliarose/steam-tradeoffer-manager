@@ -41,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     manager.set_session(sessionid, &cookies)?;
     
     // gets changes to trade offers for account
-    for (offer, old_state) in manager.poll().await? {
+    for (offer, old_state) in manager.do_poll(true).await? {
         if let Some(state) = old_state {
             println!(
                 "Offer {} changed state: {} -> {}",
