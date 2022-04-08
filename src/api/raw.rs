@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use chrono::serde::ts_seconds;
 use crate::{
     ConfirmationMethod,
@@ -21,7 +21,7 @@ use crate::{
     }
 };
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RawTradeOfferNoItems {
     #[serde(with = "string")]
     pub tradeofferid: TradeOfferId,
@@ -46,7 +46,7 @@ pub struct RawTradeOfferNoItems {
     pub confirmation_method: ConfirmationMethod,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RawTradeOffer {
     #[serde(with = "string")]
     pub tradeofferid: TradeOfferId,
@@ -76,7 +76,7 @@ pub struct RawTradeOffer {
     pub confirmation_method: ConfirmationMethod,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RawAsset {
     pub appid: AppId,
     #[serde(with = "string")]
@@ -91,7 +91,7 @@ pub struct RawAsset {
     pub amount: Amount,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RawReceiptAsset {
     pub appid: AppId,
     pub contextid: ContextId,
@@ -105,7 +105,7 @@ pub struct RawReceiptAsset {
     pub amount: Amount,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RawAssetOld {
     #[serde(with = "string", rename = "id")]
     pub assetid: AssetId,

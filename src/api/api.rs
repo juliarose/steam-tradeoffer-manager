@@ -209,6 +209,7 @@ impl SteamTradeOfferAPI {
         let params = {
             let json_tradeoffer = serde_json::to_string(&OfferForm {
                 newversion: true,
+                // this is hopefully safe enough
                 version: num_items as u32 + 1,
                 me: OfferFormUser {
                     assets: &offer.items_to_give,

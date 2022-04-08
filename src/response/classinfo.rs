@@ -14,7 +14,6 @@ use crate::{
     },
     serializers::{
         string,
-        option_string,
         option_string_0_as_none
     }
 };
@@ -62,21 +61,7 @@ pub struct Action {
     pub link: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
-pub struct AppData {
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "option_string", rename = "def_index")]
-    pub defindex: Option<u32>,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "option_string")]
-    pub quantity: Option<u32>,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "option_string")]
-    pub quality: Option<u8>,
-}
+pub type AppData = Option<serde_json::Map<String, serde_json::value::Value>>;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct ClassInfo {
@@ -124,5 +109,35 @@ pub struct ClassInfo {
     #[serde(deserialize_with = "hashmap_or_vec")]
     pub actions: Vec<Action>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub app_data: Option<AppData>,
+    pub app_data: AppData,
+}
+
+fn parse_value_as_u64(value: &serde_json::Value) -> Option<u64> {
+    match value {
+        serde_json::Value::String(string) => string.parse::<u64>().ok(),
+        _ => None,
+    }
+}
+
+impl ClassInfo {
+    
+    pub fn get_app_data_value(&self, key: &str) -> Option<&serde_json::Value> {
+        if let Some(app_data) = &self.app_data {
+            app_data.get(key)
+        } else {
+            None
+        }
+    }
+    
+    pub fn get_app_data_defindex(&self) -> Option<u64> {
+        self.get_app_data_value("def_index")
+            .map(|value| parse_value_as_u64(value))
+            .flatten()
+    }
+    
+    pub fn get_app_data_quality(&self) -> Option<u64> {
+        self.get_app_data_value("quality")
+            .map(|value| parse_value_as_u64(value))
+            .flatten()
+    }
 }
