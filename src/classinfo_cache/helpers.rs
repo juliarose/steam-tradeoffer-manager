@@ -9,69 +9,70 @@ use crate::{
 use super::{
     types::ClassInfoFile,
 };
+use std::time::{SystemTime, UNIX_EPOCH};
 use futures::future::join_all;
 use tokio::task::JoinHandle;
 use std::collections::HashMap;
 use async_fs::File;
 use futures_lite::io::AsyncWriteExt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 async fn load_classinfo(class: ClassInfoClass) -> Result<ClassInfoFile, FileError> {
-    match get_classinfo_file_path(&class) {
-        Some(filepath) => {
-            let data = async_fs::read_to_string(filepath).await?;
-            let classinfo = serde_json::from_str::<ClassInfo>(&data)?;
-                    
-            Ok((
-                class,
-                classinfo,
-            ))
-        },
-        None => Err(FileError::PathError),
-    }
+    let filepath = get_classinfo_file_path(&class, false);
+    let data = async_fs::read_to_string(filepath).await?;
+    let classinfo = serde_json::from_str::<ClassInfo>(&data)?;
+            
+    Ok((
+        class,
+        classinfo,
+    ))
 }
 
-fn get_classinfo_file_path(class: &ClassInfoClass) -> Option<String> {
-    fn get_classinfo_file_name(class: &ClassInfoClass) -> String {
-        let (appid, classid, instanceid) = class;
-        let instanceid = match instanceid {
-            Some(instanceid) => *instanceid,
-            None => 0,
-        };
-        
-        format!("assets/{}_{}_{}.json", appid, classid, instanceid)
-    }
-    
+fn get_classinfo_file_path(class: &ClassInfoClass, is_temp: bool) -> PathBuf {
     let rootdir = env!("CARGO_MANIFEST_DIR");
-    let filename = get_classinfo_file_name(&class);
+    let (appid, classid, instanceid) = class;
+    let instanceid = match instanceid {
+        Some(instanceid) => *instanceid,
+        None => 0,
+    };
+    let filename = match is_temp {
+        true => format!("assets/{}_{}_{}.json", appid, classid, instanceid),
+        false => {
+            let start = SystemTime::now();
+            let timestamp = start
+                .duration_since(UNIX_EPOCH)
+                // In any reasonable setting this shouldn't panic...
+                .expect("Invalid system time")
+                .as_millis();
+                
+            format!("assets/{}_{}_{}.json.{}.temp", appid, classid, instanceid, timestamp)
+        },
+    };
+    let filepath = Path::new(rootdir).join(filename);
     
-    match Path::new(rootdir).join(filename).to_str() {
-        Some(filepath) => Some(String::from(filepath)),
-        None => None,
-    }
+    filepath
 }
 
+/// Performs a basic atomic file write.
 async fn save_classinfo(class: ClassInfoClass, classinfo: String) -> Result<(), FileError> {
-    match get_classinfo_file_path(&class) {
-        Some(filepath) => {
-            let mut file = File::create(&filepath).await?;
-            // let data = serde_json::to_string(&classinfo)?;
+    let temp_filepath = get_classinfo_file_path(&class, true);
+    let mut temp_file = File::create(&temp_filepath).await?;
+
+    match temp_file.write_all(classinfo.as_bytes()).await {
+        Ok(_) => {
+            let filepath = get_classinfo_file_path(&class, false);
             
-            match file.write_all(classinfo.as_bytes()).await {
-                Ok(_) => {
-                    file.flush().await?;
-            
-                    Ok(())
-                },
-                Err(error) => {
-                    // something went wrong writing to this file...
-                    async_fs::remove_file(&filepath).await?;
-                    
-                    Err(error.into())
-                }
-            }
+            temp_file.flush().await?;
+            async_fs::rename(temp_filepath, filepath).await?;
+
+            Ok(())
         },
-        None => Err(FileError::PathError),
+        Err(error) => {
+            // something went wrong writing to this file...
+            async_fs::remove_file(&temp_filepath).await?;
+            
+            Err(error.into())
+        }
     }
 }
 
