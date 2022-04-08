@@ -109,6 +109,8 @@ pub struct ClassInfo {
     #[serde(deserialize_with = "hashmap_or_vec")]
     pub actions: Vec<Action>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    // todo this could be improved to use some custom map type whose values are either
+    // a string or map (I believe app_data contains only string values)
     pub app_data: AppData,
 }
 
