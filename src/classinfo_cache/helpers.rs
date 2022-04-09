@@ -36,8 +36,7 @@ fn get_classinfo_file_path(class: &ClassInfoClass, is_temp: bool) -> PathBuf {
         None => 0,
     };
     let filename = match is_temp {
-        true => format!("assets/{}_{}_{}.json", appid, classid, instanceid),
-        false => {
+        true => {
             let start = SystemTime::now();
             let timestamp = start
                 .duration_since(UNIX_EPOCH)
@@ -47,6 +46,7 @@ fn get_classinfo_file_path(class: &ClassInfoClass, is_temp: bool) -> PathBuf {
                 
             format!("assets/{}_{}_{}.json.{}.temp", appid, classid, instanceid, timestamp)
         },
+        false => format!("assets/{}_{}_{}.json", appid, classid, instanceid),
     };
     let filepath = Path::new(rootdir).join(filename);
     
