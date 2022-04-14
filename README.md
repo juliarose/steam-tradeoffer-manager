@@ -37,8 +37,6 @@ async fn accept_offer(
 ) -> Result<(), Error> {
     let accepted_offer = manager.accept_offer(&offer).await?;
     
-    // For demonstration - a confirmation isn't actually needed when 
-    // not giving anything
     if accepted_offer.needs_mobile_confirmation {
         manager.confirm_offer(&offer).await
     } else {
