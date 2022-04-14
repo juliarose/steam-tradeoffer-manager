@@ -22,14 +22,19 @@ use steam_tradeoffers::{
     SteamID,
 };
 
-fn assets_item_names<'a>(assets: &'a Vec<Asset>) -> Vec<&'a str> {
+fn assets_item_names<'a>(
+    assets: &'a Vec<Asset>,
+) -> Vec<&'a str> {
     assets
         .iter()
         .map(|item| item.classinfo.market_hash_name.as_ref())
         .collect::<Vec<_>>()
 }
 
-async fn accept_offer(manager: &TradeOfferManager, offer: &TradeOffer) -> Result<(), Error> {
+async fn accept_offer(
+    manager: &TradeOfferManager,
+    offer: &TradeOffer,
+) -> Result<(), Error> {
     let accepted_offer = manager.accept_offer(&offer).await?;
     
     // For demonstration - a confirmation isn't actually needed when 
@@ -44,7 +49,8 @@ async fn accept_offer(manager: &TradeOfferManager, offer: &TradeOffer) -> Result
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let steamid = SteamID::from(0);
-    let manager = TradeOfferManager::builder(steamid.clone(), String::from("key"))
+    let api_key = String::from("key");
+    let manager = TradeOfferManager::builder(steamid.clone(), api_key)
         .identity_secret(Some(String::from("secret")))
         .build();
     let sessionid = "sessionid";
