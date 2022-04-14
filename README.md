@@ -16,7 +16,9 @@ Still a work in progress as I flesh out and test the APIs.
 use steam_tradeoffers::{
     TradeOfferManager,
     Asset,
+    TradeOffer,
     TradeOfferState,
+    error::Error,
     SteamID,
 };
 
@@ -27,8 +29,20 @@ fn assets_item_names<'a>(assets: &'a Vec<Asset>) -> Vec<&'a str> {
         .collect::<Vec<_>>()
 }
 
+async fn accept_offer(manager: &TradeOfferManager, offer: &TradeOffer) -> Result<(), Error> {
+    let accepted_offer = manager.accept_offer(&offer).await?;
+    
+    // For demonstration - a confirmation isn't actually needed when 
+    // not giving anything
+    if accepted_offer.needs_mobile_confirmation {
+        manager.confirm_offer(&offer).await
+    } else {
+        Ok(())
+    }
+}
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Error> {
     let steamid = SteamID::from(0);
     let manager = TradeOfferManager::builder(steamid.clone(), String::from("key"))
         .identity_secret(Some(String::from("secret")))
@@ -66,16 +80,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 
                 // free items
                 if offer.items_to_give.is_empty() {
-                    let accepted_offer = manager.accept_offer(&offer).await?;
-                    
-                    // For demonstration - a confirmation isn't actually needed when 
-                    // not giving anything
-                    if accepted_offer.needs_mobile_confirmation {
-                        if let Err(error) = manager.confirm_offer(&offer).await {
-                            println!("Error confirming offer {}: {}", offer, error);
-                        } else {
-                            println!("Accepted offer {}", offer);
-                        }
+                    if let Err(error) = accept_offer(&manager, &offer).await {
+                        println!("Error accepting offer {}: {}", offer, error);
                     } else {
                         println!("Accepted offer {}", offer);
                     }
