@@ -20,7 +20,7 @@ use lazy_regex::{
     regex_is_match,
     regex_captures
 };
-use crate::APIError;
+use crate::error::Error;
 
 pub fn get_default_middleware<T>(cookie_store: Arc<T>, user_agent_string: &'static str) -> ClientWithMiddleware
 where
@@ -55,18 +55,18 @@ fn is_login(location_option: Option<&header::HeaderValue>) -> bool {
     }
 }
 
-pub async fn check_response(response: reqwest::Response) -> Result<bytes::Bytes, APIError> {
+pub async fn check_response(response: reqwest::Response) -> Result<bytes::Bytes, Error> {
     let status = &response.status();
     
     match status.as_u16() {
         300..=399 if is_login(response.headers().get("location")) => {
-            Err(APIError::NotLoggedIn)
+            Err(Error::NotLoggedIn)
         },
         400..=499 => {
-            Err(APIError::Http(*status))
+            Err(Error::Http(*status))
         },
         500..=599 => {
-            Err(APIError::Http(*status))
+            Err(Error::Http(*status))
         },
         _ => {
             Ok(response.bytes().await?)
@@ -74,7 +74,7 @@ pub async fn check_response(response: reqwest::Response) -> Result<bytes::Bytes,
     }
 }
 
-pub async fn parses_response<D>(response: reqwest::Response) -> Result<D, APIError>
+pub async fn parses_response<D>(response: reqwest::Response) -> Result<D, Error>
 where
     D: DeserializeOwned
 {
@@ -88,21 +88,21 @@ where
             
             if regex_is_match!(r#"<h1>Sorry!</h1>"#, &html) {
                 if let Some((_, message)) = regex_captures!("<h3>(.+)</h3>", &html) {
-                    Err(APIError::Response(message.into()))
+                    Err(Error::Response(message.into()))
                 } else {
-                    Err(APIError::Response("Unexpected error".into()))
+                    Err(Error::Response("Unexpected error".into()))
                 }
             } else if regex_is_match!(r#"<h1>Sign In</h1>"#, &html) && regex_is_match!(r#"g_steamID = false;"#, &html) {
-                Err(APIError::NotLoggedIn)
+                Err(Error::NotLoggedIn)
             } else if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
-                Err(APIError::Trade(message.into()))
+                Err(Error::Trade(message.into()))
             } else {
                 // TODO for testing - remove this eventually
                 let mut f = File::create("/home/colors/response.txt").unwrap();
                 let _ = f.write_all(&body);
                 
                 println!("{}", String::from_utf8_lossy(&body));
-                Err(APIError::Parse(parse_error))
+                Err(Error::Parse(parse_error))
             }
         }
     }

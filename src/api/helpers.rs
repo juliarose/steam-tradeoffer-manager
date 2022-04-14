@@ -2,8 +2,8 @@ use super::raw;
 use lazy_regex::Regex;
 use crate::{
     SteamID,
+    error::MissingClassInfoError,
     classinfo_cache::ClassInfoCache,
-    MissingClassInfoError,
     response,
 };
 use serde_json;

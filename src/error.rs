@@ -2,9 +2,8 @@ use std::{fmt, num::ParseIntError};
 use crate::types::{AppId, ClassId, InstanceId};
 use reqwest_middleware;
 use reqwest::{self, StatusCode};
-use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum FileError {
     #[error("Filesystem error: {}", .0)]
     FileSystem(#[from] std::io::Error),
@@ -16,8 +15,8 @@ pub enum FileError {
     PathError,
 }
 
-#[derive(Debug, Error)]
-pub enum APIError {
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
     #[error("Invalid parameter: {}", .0)]
     Parameter(&'static str),
     #[error("Unexpected response: {}", .0)]
@@ -42,20 +41,20 @@ pub enum APIError {
     MissingClassInfo(#[from] MissingClassInfoError),
 }
 
-impl From<reqwest_middleware::Error> for APIError {
-    fn from(error: reqwest_middleware::Error) -> APIError {
+impl From<reqwest_middleware::Error> for Error {
+    fn from(error: reqwest_middleware::Error) -> Error {
         match error {
             reqwest_middleware::Error::Reqwest(e) => {
-                APIError::Reqwest(e)
+                Error::Reqwest(e)
             },
             reqwest_middleware::Error::Middleware(e) => {
-                APIError::ReqwestMiddleware(e)
+                Error::ReqwestMiddleware(e)
             },
         }
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(thiserror::Error, Debug)]
 pub struct MissingClassInfoError {
     pub appid: AppId,
     pub classid: ClassId,
@@ -68,7 +67,7 @@ impl fmt::Display for MissingClassInfoError {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(thiserror::Error, Debug)]
 pub enum ParseHtmlError {
     #[error("{}", .0)]
     Malformed(&'static str),

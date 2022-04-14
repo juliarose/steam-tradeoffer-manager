@@ -4,7 +4,7 @@ use std::{
     collections::HashMap
 };
 use crate::{
-    APIError,
+    error::Error,
     ServerTime,
     OfferFilter,
     TradeOfferState,
@@ -17,11 +17,12 @@ use crate::{
     types::{
         AppId,
         ContextId,
-        TradeOfferId
-    }
+        TradeOfferId,
+    },
 };
 use steamid_ng::SteamID;
 use url::ParseError;
+use reqwest::cookie::Jar;
 use super::{TradeOfferManagerBuilder, Poll, file, poll_data::PollData};
 
 #[derive(Debug)]
@@ -45,42 +46,43 @@ impl PollData {
     }
 }
 
+impl From<TradeOfferManagerBuilder> for TradeOfferManager {
+    
+    fn from(builder: TradeOfferManagerBuilder) -> Self {
+        let cookies = Arc::new(Jar::default());
+        let steamid = builder.steamid;
+        let identity_secret = builder.identity_secret;
+        let poll_data = file::load_poll_data(&steamid).unwrap_or_else(|_| PollData::new());
+        let language = builder.language;
+        
+        Self {
+            steamid,
+            api: SteamTradeOfferAPI::new(
+                Arc::clone(&cookies),
+                steamid.clone(),
+                builder.key,
+                language.clone(),
+                identity_secret.clone(),
+                builder.classinfo_cache,
+            ),
+            mobile_api: MobileAPI::new(
+                cookies,
+                steamid.clone(),
+                language,
+                identity_secret,
+            ),
+            poll_data: Arc::new(RwLock::new(poll_data)),
+        }
+    }
+}
+
 impl TradeOfferManager {
     
     pub fn builder(
-        steamid: &SteamID,
-        key: &str,
+        steamid: SteamID,
+        key: String,
     ) -> TradeOfferManagerBuilder {
         TradeOfferManagerBuilder::new(steamid, key)
-    }
-
-    pub fn new(
-        steamid: &SteamID,
-        key: &str,
-        identity_secret: Option<String>,
-    ) -> Self {
-        Self {
-            steamid: *steamid,
-            api: SteamTradeOfferAPI::new(steamid, key, identity_secret.clone()),
-            mobile_api: MobileAPI::new(steamid, identity_secret),
-            poll_data: Arc::new(RwLock::new(PollData::new())),
-        }
-    }
-    
-    /// Creates a new manager using existing poll data from file (if available).
-    pub fn new_with_poll_data(
-        steamid: &SteamID,
-        key: &str,
-        identity_secret: Option<String>,
-    ) -> Self {
-        let poll_data = file::load_poll_data(steamid).unwrap_or_else(|_| PollData::new());
-        
-        Self {
-            steamid: *steamid,
-            api: SteamTradeOfferAPI::new(steamid, key, identity_secret.clone()),
-            mobile_api: MobileAPI::new(steamid, identity_secret),
-            poll_data: Arc::new(RwLock::new(poll_data)),
-        }
     }
     
     /// Sets the session and cookies.
@@ -98,18 +100,18 @@ impl TradeOfferManager {
     pub async fn send_offer(
         &self,
         offer: &request::trade_offer::NewTradeOffer,
-    ) -> Result<response::sent_offer::SentOffer, APIError> {
+    ) -> Result<response::sent_offer::SentOffer, Error> {
         self.api.send_offer(offer).await
     }
     
     pub async fn accept_offer(
         &self,
         offer: &response::trade_offer::TradeOffer,
-    ) -> Result<response::accepted_offer::AcceptedOffer, APIError> {
+    ) -> Result<response::accepted_offer::AcceptedOffer, Error> {
         if offer.is_our_offer {
-            return Err(APIError::Parameter("Cannot accept an offer that is ours"));
+            return Err(Error::Parameter("Cannot accept an offer that is ours"));
         } else if offer.trade_offer_state != TradeOfferState::Active {
-            return Err(APIError::Parameter("Cannot accept an offer that is not active"));
+            return Err(Error::Parameter("Cannot accept an offer that is not active"));
         }
 
         self.api.accept_offer(offer.tradeofferid, &offer.partner).await
@@ -118,9 +120,9 @@ impl TradeOfferManager {
     pub async fn cancel_offer(
         &self,
         offer: &response::trade_offer::TradeOffer,
-    ) -> Result<(), APIError> {
+    ) -> Result<(), Error> {
         if !offer.is_our_offer {
-            return Err(APIError::Parameter("Cannot cancel an offer we did not create"));
+            return Err(Error::Parameter("Cannot cancel an offer we did not create"));
         }
         
         self.api.cancel_offer(offer.tradeofferid).await
@@ -129,9 +131,9 @@ impl TradeOfferManager {
     pub async fn decline_offer(
         &self,
         offer: &response::trade_offer::TradeOffer,
-    ) -> Result<(), APIError> {
+    ) -> Result<(), Error> {
         if offer.is_our_offer {
-            return Err(APIError::Parameter("Cannot decline an offer we created"));
+            return Err(Error::Parameter("Cannot decline an offer we created"));
         }
         
         self.api.decline_offer(offer.tradeofferid).await
@@ -139,7 +141,7 @@ impl TradeOfferManager {
 
     pub async fn get_trade_offers(
         &self
-    ) -> Result<Vec<response::trade_offer::TradeOffer>, APIError> {
+    ) -> Result<Vec<response::trade_offer::TradeOffer>, Error> {
         self.api.get_trade_offers(&OfferFilter::ActiveOnly, &None).await
     }
 
@@ -150,7 +152,7 @@ impl TradeOfferManager {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<response::asset::Asset>, APIError> {
+    ) -> Result<Vec<response::asset::Asset>, Error> {
         self.api.get_inventory_old(steamid, appid, contextid, tradable_only).await
     }
     
@@ -161,7 +163,7 @@ impl TradeOfferManager {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<response::asset::Asset>, APIError> {
+    ) -> Result<Vec<response::asset::Asset>, Error> {
         self.api.get_inventory(steamid, appid, contextid, tradable_only).await
     }
     
@@ -179,43 +181,43 @@ impl TradeOfferManager {
         tradeofferid: &Option<TradeOfferId>,
         partner: &SteamID,
         token: &Option<String>,
-    ) -> Result<response::user_details::UserDetails, APIError> {
+    ) -> Result<response::user_details::UserDetails, Error> {
         self.api.get_user_details(tradeofferid, partner, token).await
     }
     
     pub async fn get_trade_confirmations(
         &self,
-    ) -> Result<Vec<Confirmation>, APIError> {
+    ) -> Result<Vec<Confirmation>, Error> {
         self.mobile_api.get_trade_confirmations().await
     }
     
     pub async fn accept_confirmation(
         &self,
         confirmaton: &Confirmation,
-    ) -> Result<(), APIError> {
+    ) -> Result<(), Error> {
         self.mobile_api.accept_confirmation(confirmaton).await
     }
     
     pub async fn decline_confirmation(
         &self,
         confirmaton: &Confirmation,
-    ) -> Result<(), APIError> {
+    ) -> Result<(), Error> {
         self.mobile_api.deny_confirmation(confirmaton).await
     }
     
     /// Gets the trade receipt (new items) upon completion of a trade.
-    pub async fn get_receipt(&self, offer: &response::trade_offer::TradeOffer) -> Result<Vec<response::asset::Asset>, APIError> {
+    pub async fn get_receipt(&self, offer: &response::trade_offer::TradeOffer) -> Result<Vec<response::asset::Asset>, Error> {
         if offer.items_to_receive.is_empty() {
             Ok(Vec::new())
         } else if let Some(tradeid) = offer.tradeid {
             self.api.get_receipt(&tradeid).await
         } else {
-            Err(APIError::Parameter("Missing tradeid"))
+            Err(Error::Parameter("Missing tradeid"))
         }
     }
     
     /// Updates the offer to the most recent state against the API.
-    pub async fn update_offer(&self, offer: &mut response::trade_offer::TradeOffer) -> Result<(), APIError> {
+    pub async fn update_offer(&self, offer: &mut response::trade_offer::TradeOffer) -> Result<(), Error> {
         let updated = self.api.get_trade_offer(offer.tradeofferid).await?;
         
         offer.tradeofferid = updated.tradeofferid;
@@ -234,7 +236,7 @@ impl TradeOfferManager {
     pub async fn do_poll(
         &self,
         full_update: bool
-    ) -> Result<Poll, APIError> {
+    ) -> Result<Poll, Error> {
         fn date_difference_from_now(date: &ServerTime) -> i64 {
             let current_timestamp = time::get_server_time_now().timestamp();
             
@@ -261,7 +263,7 @@ impl TradeOfferManager {
                     
                 if seconds_since_last_poll <= 1 {
                     // We last polled less than a second ago... we shouldn't spam the API
-                    return Err(APIError::Parameter("Poll called too soon after last poll"));
+                    return Err(Error::Parameter("Poll called too soon after last poll"));
                 }            
             }
             

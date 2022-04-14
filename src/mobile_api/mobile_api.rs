@@ -9,12 +9,11 @@ use std::{
 };
 use crate::{
     SteamID,
-    APIError,
-    ParseHtmlError,
     time,
+    error::{ParseHtmlError, Error},
     helpers::{
         get_default_middleware,
-        parses_response
+        parses_response,
     }
 };
 use super::{Confirmation, ConfirmationType};
@@ -140,22 +139,27 @@ pub struct MobileAPI {
 
 impl MobileAPI {
     
-    pub fn new(steamid: &SteamID, identity_secret: Option<String>) -> Self {
+    pub fn new(
+        cookies: Arc<Jar>,
+        steamid: SteamID,
+        language: String,
+        identity_secret: Option<String>,
+    ) -> Self {
         let url = HOSTNAME.parse::<Url>().unwrap();
-        let cookies = Arc::new(Jar::default());
+        let client = get_default_middleware(Arc::clone(&cookies), USER_AGENT_STRING);
         
         cookies.add_cookie_str("mobileClientVersion=0 (2.1.3)", &url);
         cookies.add_cookie_str("mobileClient=android", &url);
         cookies.add_cookie_str("Steam_Language=english", &url);
         cookies.add_cookie_str("dob=", &url);
-        cookies.add_cookie_str(format!("steamid={}", u64::from(*steamid)).as_str(), &url);
+        cookies.add_cookie_str(format!("steamid={}", u64::from(steamid)).as_str(), &url);
         
         Self {
-            client: get_default_middleware(Arc::clone(&cookies), USER_AGENT_STRING),
-            steamid: *steamid,
+            client,
+            steamid,
             identity_secret,
-            language: String::from("english"),
-            cookies: Arc::clone(&cookies),
+            language,
+            cookies,
             sessionid: Arc::new(RwLock::new(None)),
         }
     }
@@ -189,9 +193,9 @@ impl MobileAPI {
         Ok(())
     }
     
-    async fn get_confirmation_query_params(&self, tag: &str) -> Result<HashMap<&str, String>, APIError> {
+    async fn get_confirmation_query_params(&self, tag: &str) -> Result<HashMap<&str, String>, Error> {
         if self.identity_secret.is_none() {
-            return Err(APIError::Parameter("No identity secret"));
+            return Err(Error::Parameter("No identity secret"));
         }
         
         // let time = self.get_server_time().await?;
@@ -210,7 +214,7 @@ impl MobileAPI {
         Ok(params)
     }
     
-    pub async fn send_confirmation_ajax(&self, confirmation: &Confirmation, operation: String) -> Result<(), APIError>  {
+    pub async fn send_confirmation_ajax(&self, confirmation: &Confirmation, operation: String) -> Result<(), Error>  {
         #[derive(Debug, Clone, Copy, Deserialize)]
         struct SendConfirmationResponse {
             pub success: bool,
@@ -232,21 +236,21 @@ impl MobileAPI {
         let body: SendConfirmationResponse = parses_response(response).await?;
         
         if !body.success {
-            return Err(APIError::Response("Confirmation unsuccessful".into()));
+            return Err(Error::Response("Confirmation unsuccessful".into()));
         }
         
         Ok(())
     }
 
-    pub async fn accept_confirmation(&self, confirmation: &Confirmation) -> Result<(), APIError> {
+    pub async fn accept_confirmation(&self, confirmation: &Confirmation) -> Result<(), Error> {
         self.send_confirmation_ajax(confirmation, "allow".into()).await
     }
 
-    pub async fn deny_confirmation(&self, confirmation: &Confirmation) -> Result<(), APIError> {
+    pub async fn deny_confirmation(&self, confirmation: &Confirmation) -> Result<(), Error> {
         self.send_confirmation_ajax(confirmation, "cancel".into()).await
     }
     
-    // pub async fn get_server_time(&self) -> Result<i64, APIError> {
+    // pub async fn get_server_time(&self) -> Result<i64, Error> {
     //     #[derive(Deserialize, Debug)]
     //     struct ServerTime {
     //         #[serde(with = "string")]
@@ -276,7 +280,7 @@ impl MobileAPI {
     //     Ok(body.response.server_time)
     // }
     
-    pub async fn get_trade_confirmations(&self) -> Result<Vec<Confirmation>, APIError> {
+    pub async fn get_trade_confirmations(&self) -> Result<Vec<Confirmation>, Error> {
         let uri = self.get_uri("/mobileconf/conf");
         let query = self.get_confirmation_query_params("conf").await?;
         let response = self.client.get(&uri)

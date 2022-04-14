@@ -17,6 +17,11 @@ impl NewTradeOffer {
     pub fn builder(steamid: SteamID) -> NewTradeOfferBuilder {
         NewTradeOfferBuilder::new(steamid)
     }
+    
+    pub fn is_empty(&self) -> bool {
+        self.items_to_give.is_empty() &&
+        self.items_to_receive.is_empty()
+    }
 }
 
 impl From<&response::trade_offer::TradeOffer> for NewTradeOffer {

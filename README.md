@@ -29,12 +29,9 @@ fn assets_item_names<'a>(assets: &'a Vec<Asset>) -> Vec<&'a str> {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let steamid = SteamID::from(0);
-    let manager = TradeOfferManager::new(
-        &steamid,
-        "key",
-        Some("secret".into()),
-    );
+    let manager = TradeOfferManager::builder(SteamID::from(0), String::from("key"))
+        .identity_secret(Some(String::from("secret")))
+        .build();
     let sessionid = "sessionid";
     let cookies = vec![String::from("cookie=value")];
     
