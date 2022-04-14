@@ -1,5 +1,5 @@
 use std::{fmt, num::ParseIntError};
-use crate::types::{AppId, ClassId, InstanceId};
+use crate::types::{AppId, ClassId, InstanceId, TradeOfferId};
 use reqwest_middleware;
 use reqwest::{self, StatusCode};
 
@@ -39,6 +39,8 @@ pub enum Error {
     Trade(String),
     #[error("{}", .0)]
     MissingClassInfo(#[from] MissingClassInfoError),
+    #[error("No confirmation for offer {}", .0)]
+    NoConfirmationForOffer(TradeOfferId)
 }
 
 impl From<reqwest_middleware::Error> for Error {

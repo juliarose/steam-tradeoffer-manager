@@ -63,6 +63,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "Giving: {:?}",
                     assets_item_names(&offer.items_to_give)
                 );
+                
+                // free items
+                if offer.items_to_give.is_empty() {
+                    let accepted_offer = manager.accept_offer(&offer).await?;
+                    
+                    // For demonstration - a confirmation isn't actually needed when 
+                    // not giving anything
+                    if accepted_offer.needs_mobile_confirmation {
+                        if let Err(error) = manager.confirm_offer(&offer).await {
+                            println!("Error confirming offer {}: {}", offer, error);
+                        } else {
+                            println!("Accepted offer {}", offer);
+                        }
+                    } else {
+                        println!("Accepted offer {}", offer);
+                    }
+                }
             }
         }
     }

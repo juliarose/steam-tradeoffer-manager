@@ -18,7 +18,7 @@ use crate::{
         AppId,
         ContextId,
         TradeOfferId,
-    },
+    }, TradeOffer,
 };
 use steamid_ng::SteamID;
 use url::ParseError;
@@ -189,6 +189,29 @@ impl TradeOfferManager {
         &self,
     ) -> Result<Vec<Confirmation>, Error> {
         self.mobile_api.get_trade_confirmations().await
+    }
+    
+    pub async fn confirm_offer(
+        &self,
+        trade_offer: &TradeOffer,
+    ) -> Result<(), Error> {
+        self.confirm_offerid(trade_offer.tradeofferid.clone()).await
+    }
+    
+    pub async fn confirm_offerid(
+        &self,
+        tradeofferid: TradeOfferId,
+    ) -> Result<(), Error> {
+        let confirmations = self.get_trade_confirmations().await?;
+        let confirmation = confirmations
+            .into_iter()
+            .find(|confirmation| confirmation.creator == tradeofferid);
+        
+        if let Some(confirmation) = confirmation {
+            self.accept_confirmation(&confirmation).await
+        } else {
+            Err(Error::NoConfirmationForOffer(tradeofferid))
+        }
     }
     
     pub async fn accept_confirmation(
