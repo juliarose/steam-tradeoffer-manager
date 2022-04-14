@@ -94,7 +94,6 @@ async fn main() -> Result<(), Error> {
         }
     }
     
-    // loads inventory
     let items = manager.get_inventory(&steamid, 440, 2, true).await?;
     
     println!("{} items in your inventory", items.len());
@@ -105,7 +104,7 @@ async fn main() -> Result<(), Error> {
 
 ## Thanks
 
-Inspired by the excellent [node-steam-tradeoffer-manager](https://github.com/DoctorMcKay/node-steam-tradeoffer-manager) module. Thanks to https://github.com/dyc3/steamguard-cli (steamguard) for functionality relating to mobile confirmations.
+Based on the excellent [node-steam-tradeoffer-manager](https://github.com/DoctorMcKay/node-steam-tradeoffer-manager) module. Thanks to https://github.com/dyc3/steamguard-cli (steamguard) for functionality relating to mobile confirmations.
 
 ## LICENSE
 
