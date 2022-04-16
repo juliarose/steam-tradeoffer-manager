@@ -9,10 +9,7 @@ use crate::{
     OfferFilter,
     SteamID,
     time::{ServerTime, get_system_time},
-    classinfo_cache::{
-        ClassInfoCache,
-        helpers as classinfo_cache_helpers,
-    },
+    classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
     types::{
         ClassInfoMap,
         ClassInfoAppClass,
@@ -27,10 +24,7 @@ use crate::{
     response,
     request::{self, serializers::steamid_as_string},
     serializers::string,
-    helpers::{
-        get_default_middleware,
-        parses_response,
-    }
+    helpers::{get_default_middleware, parses_response},
 };
 use super::{
     raw,

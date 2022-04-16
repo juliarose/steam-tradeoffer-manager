@@ -56,6 +56,10 @@ async fn main() -> Result<(), Error> {
     
     manager.set_session(sessionid, &cookies)?;
     
+    let items = manager.get_inventory(&steamid, 440, 2, true).await?;
+    
+    println!("{} items in your inventory", items.len());
+    
     // gets changes to trade offers for account
     for (offer, old_state) in manager.do_poll(true).await? {
         if let Some(state) = old_state {
@@ -93,10 +97,6 @@ async fn main() -> Result<(), Error> {
             }
         }
     }
-    
-    let items = manager.get_inventory(&steamid, 440, 2, true).await?;
-    
-    println!("{} items in your inventory", items.len());
     
     Ok(())
 }
