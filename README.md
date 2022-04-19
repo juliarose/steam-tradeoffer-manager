@@ -68,7 +68,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 state,
                 offer.trade_offer_state
             );
-        } else if offer.trade_offer_state == TradeOfferState::Active && !offer.is_our_offer {
+        } else if
+            offer.trade_offer_state == TradeOfferState::Active &&
+            !offer.is_our_offer
+        {
             println!(
                 "New offer {}",
                 offer
