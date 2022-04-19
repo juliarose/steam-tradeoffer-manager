@@ -1,7 +1,6 @@
 use std::{fmt, num::ParseIntError};
 use crate::types::{AppId, ClassId, InstanceId, TradeOfferId};
 use reqwest_middleware;
-use reqwest::{self, StatusCode};
 
 #[derive(thiserror::Error, Debug)]
 pub enum FileError {
@@ -29,8 +28,8 @@ pub enum Error {
     QueryParameter(#[from] serde_qs::Error),
     #[error("Error parsing response: {}", .0)]
     Parse(#[from] serde_json::Error),
-    #[error("{}", .0)]
-    Http(StatusCode),
+    #[error("Error {}", .0.status())]
+    Http(reqwest::Response),
     #[error("Not logged in")]
     NotLoggedIn,
     #[error("Error parsing HTML document: {}", .0)]

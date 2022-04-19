@@ -63,10 +63,10 @@ pub async fn check_response(response: reqwest::Response) -> Result<bytes::Bytes,
             Err(Error::NotLoggedIn)
         },
         400..=499 => {
-            Err(Error::Http(*status))
+            Err(Error::Http(response))
         },
         500..=599 => {
-            Err(Error::Http(*status))
+            Err(Error::Http(response))
         },
         _ => {
             Ok(response.bytes().await?)
