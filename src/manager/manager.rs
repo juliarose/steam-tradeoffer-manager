@@ -13,7 +13,6 @@ use crate::{
     api::SteamTradeOfferAPI,
     error::FileError,
     mobile_api::{MobileAPI, Confirmation},
-    TradeOffer,
     types::{
         AppId,
         ContextId,
@@ -193,7 +192,7 @@ impl TradeOfferManager {
     
     pub async fn confirm_offer(
         &self,
-        trade_offer: &TradeOffer,
+        trade_offer: &response::TradeOffer,
     ) -> Result<(), Error> {
         self.confirm_offerid(trade_offer.tradeofferid.clone()).await
     }

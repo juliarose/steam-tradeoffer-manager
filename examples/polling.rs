@@ -1,7 +1,6 @@
 use steam_tradeoffers::{
     TradeOfferManager,
-    Asset,
-    TradeOffer,
+    response::{TradeOffer, Asset},
     enums::TradeOfferState,
     error::Error,
     SteamID,
@@ -45,6 +44,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     println!("{} items in your inventory", items.len());
     
+    let manager = TradeOfferManager::builder(steamid.clone(), api_key)
+        .identity_secret(String::from("secret"))
+        .build();
     // gets changes to trade offers for account
     for (offer, old_state) in manager.do_poll(true).await? {
         if let Some(state) = old_state {
