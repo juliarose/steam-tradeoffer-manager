@@ -53,30 +53,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 state,
                 offer.trade_offer_state
             );
-        } else if offer.trade_offer_state == TradeOfferState::Active {
-            if offer.is_our_offer {
-                // we sent this offer
-            } else {
-                println!(
-                    "New offer {}",
-                    offer
-                );
-                println!(
-                    "Receiving: {:?}",
-                    assets_item_names(&offer.items_to_receive)
-                );
-                println!(
-                    "Giving: {:?}",
-                    assets_item_names(&offer.items_to_give)
-                );
-                
-                // free items
-                if offer.items_to_give.is_empty() {
-                    if let Err(error) = accept_offer(&manager, &offer).await {
-                        println!("Error accepting offer {}: {}", offer, error);
-                    } else {
-                        println!("Accepted offer {}", offer);
-                    }
+        } else if offer.trade_offer_state == TradeOfferState::Active && !offer.is_our_offer {
+            println!(
+                "New offer {}",
+                offer
+            );
+            println!(
+                "Receiving: {:?}",
+                assets_item_names(&offer.items_to_receive)
+            );
+            println!(
+                "Giving: {:?}",
+                assets_item_names(&offer.items_to_give)
+            );
+            
+            // free items
+            if offer.items_to_give.is_empty() {
+                if let Err(error) = accept_offer(&manager, &offer).await {
+                    println!("Error accepting offer {}: {}", offer, error);
+                } else {
+                    println!("Accepted offer {}", offer);
                 }
             }
         }
