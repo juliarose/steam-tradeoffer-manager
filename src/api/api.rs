@@ -5,8 +5,7 @@ use std::{
 };
 use crate::{
     error::Error,
-    Currency,
-    OfferFilter,
+    enums::OfferFilter,
     SteamID,
     time::{ServerTime, get_system_time},
     classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
@@ -136,7 +135,7 @@ impl SteamTradeOfferAPI {
         #[derive(Serialize, Debug)]
         struct OfferFormUser<'b> {
             assets: &'b Vec<request::trade_offer::Item>,
-            currency: Vec<Currency>,
+            currency: Vec<response::Currency>,
             ready: bool,
         }
 

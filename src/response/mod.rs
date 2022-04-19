@@ -5,7 +5,9 @@ pub mod asset;
 pub mod user_details;
 pub mod accepted_offer;
 pub mod deserializers;
+pub mod currency;
 
+pub use currency::Currency;
 pub use accepted_offer::AcceptedOffer;
 pub use user_details::UserDetails;
 pub use asset::Asset;

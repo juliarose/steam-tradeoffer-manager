@@ -1,5 +1,3 @@
-mod enums;
-mod currency;
 mod manager;
 mod api;
 mod serializers;
@@ -8,6 +6,7 @@ mod mobile_api;
 mod helpers;
 mod response;
 
+pub mod enums;
 pub mod types;
 pub mod time;
 pub mod request;
@@ -22,18 +21,10 @@ pub use response::{
     user_details::UserDetails,
 };
 pub use time::ServerTime;
-pub use currency::Currency;
 pub use manager::{
     TradeOfferManager,
     Poll,
 };
 pub mod error;
-pub use enums::{
-    TradeOfferState,
-    OfferFilter,
-    TradeStatus,
-    ConfirmationMethod,
-    EResult
-};
 
 pub use steamid_ng::SteamID;

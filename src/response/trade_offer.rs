@@ -2,8 +2,10 @@ use std::fmt;
 use crate::{
     SteamID,
     time::ServerTime,
-    TradeOfferState,
-    ConfirmationMethod,
+    enums::{
+        TradeOfferState,
+        ConfirmationMethod,
+    },
     types::{TradeId, TradeOfferId},
 };
 use super::asset::Asset;

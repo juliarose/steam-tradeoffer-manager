@@ -6,19 +6,19 @@ use std::{
 use crate::{
     error::Error,
     ServerTime,
-    OfferFilter,
-    TradeOfferState,
+    enums::{OfferFilter, TradeOfferState},
     time,
     response,
     request,
     api::SteamTradeOfferAPI,
     error::FileError,
     mobile_api::{MobileAPI, Confirmation},
+    TradeOffer,
     types::{
         AppId,
         ContextId,
         TradeOfferId,
-    }, TradeOffer,
+    },
 };
 use steamid_ng::SteamID;
 use url::ParseError;

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     time::ServerTime,
     types::TradeOfferId,
-    TradeOfferState,
+    enums::TradeOfferState,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

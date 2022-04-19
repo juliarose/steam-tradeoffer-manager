@@ -1,8 +1,10 @@
 use serde::{Serialize, Deserialize};
 use chrono::serde::ts_seconds;
 use crate::{
-    ConfirmationMethod,
-    TradeOfferState,
+    enums::{
+        ConfirmationMethod,
+        TradeOfferState,
+    },
     ServerTime,
     serializers::{
         string,

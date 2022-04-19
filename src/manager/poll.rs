@@ -1,4 +1,4 @@
-use crate::{response, TradeOfferState};
+use crate::{response, enums::TradeOfferState};
 
 pub type Poll = Vec<(response::trade_offer::TradeOffer, Option<TradeOfferState>)>;
 
