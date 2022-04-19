@@ -30,15 +30,11 @@ async fn accept_offer(
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let steamid = SteamID::from(0);
-    let api_key = String::from("key");
-    let manager = TradeOfferManager::builder(steamid.clone(), api_key)
+    let manager = TradeOfferManager::builder(SteamID::from(0), String::from("api key"))
         .identity_secret(String::from("secret"))
         .build();
-    let sessionid = "sessionid";
-    let cookies = vec![String::from("cookie=value")];
     
-    manager.set_session(sessionid, &cookies)?;
+    manager.set_session("sessionid", &vec![String::from("cookie=value")])?;
     
     // gets changes to trade offers for account
     for (offer, old_state) in manager.do_poll(true).await? {
