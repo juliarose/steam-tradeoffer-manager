@@ -58,7 +58,7 @@ pub struct GetInventoryOldResponse {
     pub more_items: bool,
     #[serde(default)]
     #[serde(deserialize_with = "option_str_to_number", rename = "more_start")]
-    pub last_assetid: Option<u64>,
+    pub more_start: Option<u64>,
     #[serde(default)]
     #[serde(rename = "rgInventory")]
     pub assets: HashMap<String, raw::RawAssetOld>,

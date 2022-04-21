@@ -28,6 +28,11 @@ impl NewTradeOfferBuilder {
         self
     }
 
+    pub fn id(mut self, id: TradeOfferId) -> Self {
+        self.id = Some(id);
+        self
+    }
+
     pub fn items_to_give(mut self, items: Vec<Item>) -> Self {
         self.items_to_give = items;
         self

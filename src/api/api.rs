@@ -678,7 +678,7 @@ impl SteamTradeOfferAPI {
     async fn get_inventory_old_request(
         &self,
         responses: &mut Vec<GetInventoryOldResponse>,
-        start_assetid: Option<u64>,
+        start: Option<u64>,
         steamid: &SteamID,
         appid: u32,
         contextid: u32,
@@ -697,7 +697,7 @@ impl SteamTradeOfferAPI {
             .header(REFERER, referer)
             .query(&Query {
                 l: &self.language,
-                start: start_assetid,
+                start,
             })
             .send()
             .await?;
@@ -707,14 +707,15 @@ impl SteamTradeOfferAPI {
             Err(Error::Response("Bad response".into()))
         } else if body.more_items {
             // shouldn't occur, but we wouldn't want to call this endlessly if it does...
-            if body.last_assetid == start_assetid {
+            if body.more_start == start {
                 return Err(Error::Response("Bad response".into()));
             }
             
-            // space out requests
-            sleep(Duration::from_secs(1)).await;
+            let start = body.more_start.clone();
             
-            Ok(self.get_inventory_old_request(responses, body.last_assetid, steamid, appid, contextid, tradable_only).await?)
+            responses.push(body);
+            
+            Ok(self.get_inventory_old_request(responses, start, steamid, appid, contextid, tradable_only).await?)
         } else {
             responses.push(body);
             

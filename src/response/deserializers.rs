@@ -425,7 +425,7 @@ where
 pub fn option_str_to_number<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
 where
     D: Deserializer<'de>,
-    T: FromStr + Deserialize<'de>,
+    T: FromStr + TryFrom<u64> + Deserialize<'de>,
     T::Err: Display,
 {
     struct OptionVisitor<T> {
@@ -442,7 +442,7 @@ where
 
     impl<'de, T> Visitor<'de> for OptionVisitor<T>
     where
-        T: FromStr + Deserialize<'de>,
+        T: FromStr + TryFrom<u64> + Deserialize<'de>,
         T::Err: Display,
     {
         type Value = Option<T>;
@@ -465,6 +465,20 @@ where
             Ok(None)
         }
     
+        fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            match T::try_from(v) {
+                Ok(c) => {
+                    Ok(Some(c))
+                },
+                Err(_e) => {
+                    Err(de::Error::custom("Number too large to fit in target type"))
+                }
+            }
+        }
+        
         fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
         where
             E: de::Error,

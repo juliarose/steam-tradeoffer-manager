@@ -98,7 +98,9 @@ where
                 Err(Error::Trade(message.into()))
             } else {
                 // TODO for testing - remove this eventually
-                let mut f = File::create("/home/colors/response.txt").unwrap();
+                let rootdir = env!("CARGO_MANIFEST_DIR");
+                let filepath = std::path::Path::new(rootdir).join("response.txt");
+                let mut f = File::create(filepath).unwrap();
                 let _ = f.write_all(&body);
                 
                 println!("{}", String::from_utf8_lossy(&body));
