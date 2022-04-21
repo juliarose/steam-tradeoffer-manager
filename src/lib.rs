@@ -19,4 +19,4 @@ pub use manager::{
     Poll,
 };
 
-pub use steamid_ng::SteamID;
+pub use steamid_ng::{self, SteamID};
