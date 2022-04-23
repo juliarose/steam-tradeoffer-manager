@@ -3,12 +3,11 @@ use crate::{
     error::FileError,
     types::{
         ClassInfoClass,
-        ClassInfoAppClass
+        ClassInfoAppClass,
+        AppId,
     }
 };
-use super::{
-    types::ClassInfoFile,
-};
+use super::{types::ClassInfoFile};
 use std::time::{SystemTime, UNIX_EPOCH};
 use futures::future::join_all;
 use tokio::task::JoinHandle;
@@ -100,7 +99,7 @@ pub async fn load_classinfos(classes: &Vec<ClassInfoClass>) -> Vec<Result<ClassI
     results
 }
 
-pub async fn save_classinfos(appid: u32, classinfos: &HashMap<ClassInfoAppClass, String>) -> Vec<Result<(), FileError>> {
+pub async fn save_classinfos(appid: AppId, classinfos: &HashMap<ClassInfoAppClass, String>) -> Vec<Result<(), FileError>> {
     let mut tasks: Vec<JoinHandle<Result<(), FileError>>>= vec![];
     
     for ((classid, instanceid), classinfo) in classinfos {

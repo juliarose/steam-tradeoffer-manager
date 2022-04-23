@@ -8,7 +8,7 @@ use reqwest_middleware::ClientWithMiddleware;
 pub type Client = ClientWithMiddleware;
 pub type Inventory = Vec<Asset>;
 pub type AppId = u32;
-pub type ContextId = u32;
+pub type ContextId = u64;
 pub type AssetId = u64;
 pub type Amount = u32;
 pub type ClassId = u64;

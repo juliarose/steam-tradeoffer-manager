@@ -680,8 +680,8 @@ impl SteamTradeOfferAPI {
         responses: &mut Vec<GetInventoryOldResponse>,
         start: Option<u64>,
         steamid: &SteamID,
-        appid: u32,
-        contextid: u32,
+        appid: AppId,
+        contextid: ContextId,
         tradable_only: bool,
     ) -> Result<Vec<response::asset::Asset>, Error> { 
         #[derive(Serialize, Debug)]
@@ -751,8 +751,8 @@ impl SteamTradeOfferAPI {
         responses: &mut Vec<GetInventoryResponse>,
         start_assetid: Option<u64>,
         steamid: &SteamID,
-        appid: u32,
-        contextid: u32,
+        appid: AppId,
+        contextid: ContextId,
         tradable_only: bool,
     ) -> Result<Vec<response::asset::Asset>, Error> { 
         #[derive(Serialize, Debug)]

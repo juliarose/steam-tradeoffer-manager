@@ -6,13 +6,11 @@ use crate::{
     types::{
         ClassInfoMap,
         ClassInfoAppClass,
-        ClassInfoClass
+        ClassInfoClass,
+        AppId,
     }
 };
-use std::{
-    sync::Arc,
-    collections::HashMap
-};
+use std::{sync::Arc, collections::HashMap};
 use lfu_cache::LfuCache;
 
 #[derive(Debug)]
@@ -41,7 +39,7 @@ impl ClassInfoCache {
         self.map.insert(class, Arc::new(classinfo));
     }
     
-    pub fn insert_classinfos(&mut self, appid: u32, classinfos: &HashMap<ClassInfoAppClass, String>) -> Result<ClassInfoMap, serde_json::Error> {
+    pub fn insert_classinfos(&mut self, appid: AppId, classinfos: &HashMap<ClassInfoAppClass, String>) -> Result<ClassInfoMap, serde_json::Error> {
         let mut map = HashMap::new();
         
         for ((classid, instanceid), classinfo_string) in classinfos {
