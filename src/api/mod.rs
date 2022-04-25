@@ -232,9 +232,6 @@ impl SteamTradeOfferAPI {
                 tradeofferid_countered: &offer.id,
             }
         };
-        println!("{:?}", params);
-        println!("{:?}", referer);
-        println!("{:?}", self.cookies);
         let uri = self.get_uri("/tradeoffer/new/send");
         let response = self.client.post(&uri)
             .header(REFERER, referer)
@@ -327,7 +324,6 @@ impl SteamTradeOfferAPI {
             query
         };
         let uri = self.get_api_url("ISteamEconomy", "GetAssetClassInfo", 1);
-        println!("get {}", uri);
         let response = self.client.get(&uri)
             .query(&query)
             .send()

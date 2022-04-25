@@ -1,23 +1,12 @@
-use std::{
-    fs::File,
-    io::prelude::*,
-    sync::Arc
-};
-use reqwest_middleware::{
-    ClientBuilder,
-    ClientWithMiddleware
-};
-use reqwest_retry::{
-    RetryTransientMiddleware,
-    policies::ExponentialBackoff
-};
-use reqwest::{
-    header,
-    cookie::CookieStore
-};
+use std::sync::Arc;
+use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
+use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
+use reqwest::{header, cookie::CookieStore};
 use serde::de::DeserializeOwned;
 use lazy_regex::{regex_is_match, regex_captures};
 use crate::error::Error;
+use log::error;
+
 pub fn get_default_middleware<T>(
     cookie_store: Arc<T>,
     user_agent_string: &'static str,
@@ -96,13 +85,8 @@ where
             } else if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
                 Err(Error::Trade(message.into()))
             } else {
-                // TODO for testing - remove this eventually
-                let rootdir = env!("CARGO_MANIFEST_DIR");
-                let filepath = std::path::Path::new(rootdir).join("response.txt");
-                let mut f = File::create(filepath).unwrap();
-                let _ = f.write_all(&body);
+                error!("Error parsing body `{}`: {}", parse_error, String::from_utf8_lossy(&body));
                 
-                println!("{}", String::from_utf8_lossy(&body));
                 Err(Error::Parse(parse_error))
             }
         }
