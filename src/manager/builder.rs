@@ -28,7 +28,7 @@ impl TradeOfferManagerBuilder {
     }
 
     pub fn language(mut self, language: String) -> Self {
-        self.language = language.into();
+        self.language = language;
         self
     }
     

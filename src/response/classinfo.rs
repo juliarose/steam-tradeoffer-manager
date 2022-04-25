@@ -133,13 +133,11 @@ impl ClassInfo {
     
     pub fn get_app_data_defindex(&self) -> Option<u64> {
         self.get_app_data_value("def_index")
-            .map(|value| parse_value_as_u64(value))
-            .flatten()
+            .and_then(parse_value_as_u64)
     }
     
     pub fn get_app_data_quality(&self) -> Option<u64> {
         self.get_app_data_value("quality")
-            .map(|value| parse_value_as_u64(value))
-            .flatten()
+            .and_then(parse_value_as_u64)
     }
 }

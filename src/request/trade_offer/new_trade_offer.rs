@@ -52,7 +52,7 @@ impl From<response::trade_offer::TradeOffer> for NewTradeOffer {
     }
 }
 
-fn from_trade_offer_items(items: &Vec<response::asset::Asset>) -> Vec<Item> {
+fn from_trade_offer_items(items: &[response::asset::Asset]) -> Vec<Item> {
     items.iter()
         .map(|item| item.into())
         .collect::<Vec<_>>()

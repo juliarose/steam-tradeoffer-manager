@@ -38,6 +38,6 @@ impl fmt::Display for TradeOffer {
 impl TradeOffer {
     
     pub fn is_glitched(&self) -> bool {
-        self.items_to_receive.len() == 0 && self.items_to_receive.len() == 0
+        self.items_to_receive.is_empty() && self.items_to_receive.is_empty()
     }
 }

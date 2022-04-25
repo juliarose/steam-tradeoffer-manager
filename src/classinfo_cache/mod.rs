@@ -18,20 +18,25 @@ pub struct ClassInfoCache {
     map: LfuCache<ClassInfoClass, Arc<ClassInfo>>,
 }
 
-impl ClassInfoCache {
-    pub fn new() -> Self {
+impl Default for ClassInfoCache {
+    
+    fn default() -> Self {
         let map: LfuCache<ClassInfoClass, Arc<ClassInfo>> = LfuCache::with_capacity(500);
         
         Self {
             map
         }
     }
+}
+
+impl ClassInfoCache {
+    
+    pub fn new() -> Self {
+        Self::default()
+    }
     
     pub fn get_classinfo(&mut self, class: &ClassInfoClass) -> Option<Arc<ClassInfo>> {
-        match self.map.get(&class) {
-            Some(classinfo) => Some(Arc::clone(classinfo)),
-            None => None,
-        }
+        self.map.get(class).map(Arc::clone)
     }
     
     // takes the result from `load_classinfos` above and adds it to the map

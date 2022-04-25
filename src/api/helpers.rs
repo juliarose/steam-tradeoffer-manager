@@ -6,7 +6,6 @@ use crate::{
     classinfo_cache::ClassInfoCache,
     response,
 };
-use serde_json;
 
 pub fn from_raw_receipt_asset(asset: raw::RawReceiptAsset, cache: &mut ClassInfoCache) -> Result<response::asset::Asset, MissingClassInfoError> {
     if let Some(classinfo) = cache.get_classinfo(&(asset.appid, asset.classid, asset.instanceid)) {
