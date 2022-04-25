@@ -49,8 +49,6 @@ use url::{Url, ParseError};
 use reqwest::header::REFERER;
 use lazy_regex::{regex_captures, regex_is_match};
 
-const HOSTNAME: &'static str = "https://steamcommunity.com";
-const API_HOSTNAME: &'static str = "https://api.steampowered.com";
 const USER_AGENT_STRING: &'static str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
 const ONE_YEAR_SECS: u64 = 31536000;
 
@@ -67,6 +65,9 @@ pub struct SteamTradeOfferAPI {
 }
 
 impl SteamTradeOfferAPI {
+    
+    const HOSTNAME: &'static str = "https://steamcommunity.com";
+    const API_HOSTNAME: &'static str = "https://api.steampowered.com";
     
     pub fn new(
         cookies: Arc<Jar>,
@@ -92,7 +93,7 @@ impl SteamTradeOfferAPI {
         &self,
         pathname: &str,
     ) -> String {
-        format!("{}{}", HOSTNAME, pathname)
+        format!("{}{}", Self::HOSTNAME, pathname)
     }
 
     fn get_api_url(
@@ -101,11 +102,11 @@ impl SteamTradeOfferAPI {
         method: &str,
         version: usize,
     ) -> String {
-        format!("{}/{}/{}/v{}", API_HOSTNAME, interface, method, version)
+        format!("{}/{}/{}/v{}", Self::API_HOSTNAME, interface, method, version)
     }
     
     fn set_cookies(&self, cookies: &Vec<String>) -> Result<(), ParseError> {
-        let url = HOSTNAME.parse::<Url>()?;
+        let url = Self::HOSTNAME.parse::<Url>()?;
         
         for cookie_str in cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
@@ -232,6 +233,9 @@ impl SteamTradeOfferAPI {
                 tradeofferid_countered: &offer.id,
             }
         };
+        println!("{:?}", params);
+        println!("{:?}", referer);
+        println!("{:?}", self.cookies);
         let uri = self.get_uri("/tradeoffer/new/send");
         let response = self.client.post(&uri)
             .header(REFERER, referer)
@@ -688,6 +692,7 @@ impl SteamTradeOfferAPI {
         struct Query<'a> {
             l: &'a str,
             start: Option<u64>,
+            trading: bool,
         }
         
         let sid = u64::from(*steamid);
@@ -698,6 +703,7 @@ impl SteamTradeOfferAPI {
             .query(&Query {
                 l: &self.language,
                 start,
+                trading: tradable_only,
             })
             .send()
             .await?;
@@ -796,6 +802,10 @@ impl SteamTradeOfferAPI {
             for body in responses {
                 for item in &body.assets {
                     if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
+                        if tradable_only && !classinfo.tradable {
+                            continue;
+                        }
+                        
                         inventory.push(response::asset::Asset {
                             appid: item.appid,
                             contextid: item.contextid,

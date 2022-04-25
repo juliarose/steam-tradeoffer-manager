@@ -16,13 +16,12 @@ use reqwest::{
     cookie::CookieStore
 };
 use serde::de::DeserializeOwned;
-use lazy_regex::{
-    regex_is_match,
-    regex_captures
-};
+use lazy_regex::{regex_is_match, regex_captures};
 use crate::error::Error;
-
-pub fn get_default_middleware<T>(cookie_store: Arc<T>, user_agent_string: &'static str) -> ClientWithMiddleware
+pub fn get_default_middleware<T>(
+    cookie_store: Arc<T>,
+    user_agent_string: &'static str,
+) -> ClientWithMiddleware
 where
     T: CookieStore + 'static
 {

@@ -166,14 +166,6 @@ impl TradeOfferManager {
         self.api.get_inventory(steamid, appid, contextid, tradable_only).await
     }
     
-    async fn save_poll_data(&self) -> Result<(), FileError> {
-        // we clone this so we don't hold it across an await
-        let poll_data = self.poll_data.read().unwrap().clone();
-        let data = serde_json::to_string(&poll_data)?;
-        
-        file::save_poll_data(&self.steamid, &data).await
-    }
-    
     /// Gets the user's details for trading.
     pub async fn get_user_details(
         &self,
@@ -252,6 +244,14 @@ impl TradeOfferManager {
         offer.expiration_time = updated.expiration_time;
         
         Ok(())
+    }
+    
+    async fn save_poll_data(&self) -> Result<(), FileError> {
+        // we clone this so we don't hold it across an await
+        let poll_data = self.poll_data.read().unwrap().clone();
+        let data = serde_json::to_string(&poll_data)?;
+        
+        file::save_poll_data(&self.steamid, &data).await
     }
     
     /// Performs a poll for changes to offers.
