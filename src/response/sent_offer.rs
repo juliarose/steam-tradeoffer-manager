@@ -1,8 +1,5 @@
 use serde::{Serialize, Deserialize};
-use crate::{
-    types::TradeOfferId,
-    serializers::string
-};
+use crate::{types::TradeOfferId, serializers::string};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SentOffer {
