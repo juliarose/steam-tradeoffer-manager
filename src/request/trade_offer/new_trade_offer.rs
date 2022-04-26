@@ -2,6 +2,8 @@ use steamid_ng::SteamID;
 use crate::{response, types::TradeOfferId};
 use super::{Item, NewTradeOfferBuilder};
 
+/// Represents a trade offer not yet sent. A template including items from an existing offer can
+/// created by calling `from` on the offer.
 #[derive(Debug, Clone, PartialEq)]
 pub struct NewTradeOffer {
     pub id: Option<TradeOfferId>,
@@ -18,6 +20,7 @@ impl NewTradeOffer {
         NewTradeOfferBuilder::new(steamid)
     }
     
+    /// Checks if any items are included in the offer.
     pub fn is_empty(&self) -> bool {
         self.items_to_give.is_empty() &&
         self.items_to_receive.is_empty()
