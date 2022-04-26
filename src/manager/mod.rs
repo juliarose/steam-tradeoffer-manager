@@ -343,7 +343,6 @@ impl TradeOfferManager {
             if offers_since > 0 {
                 poll_data.offers_since = Some(time::timestamp_to_server_time(offers_since));
             }
-            
         }
         
         let _ = self.save_poll_data().await;
