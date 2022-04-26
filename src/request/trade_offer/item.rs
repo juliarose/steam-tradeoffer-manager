@@ -10,6 +10,7 @@ use crate::{
     }
 };
 
+/// An item to send in a trade offer.
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct Item {
     pub appid: AppId,

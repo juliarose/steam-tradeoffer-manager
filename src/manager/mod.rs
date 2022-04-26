@@ -7,11 +7,7 @@ pub use builder::TradeOfferManagerBuilder;
 pub use poll::Poll;
 
 use poll_data::PollData;
-use std::{
-    cmp,
-    sync::{Arc, RwLock},
-    collections::HashMap
-};
+use std::{cmp, sync::{Arc, RwLock}, collections::HashMap};
 use crate::{
     error::Error,
     ServerTime,
@@ -32,6 +28,8 @@ use steamid_ng::SteamID;
 use url::ParseError;
 use reqwest::cookie::Jar;
 
+/// Manager which includes functionality for interacting with trade offers, confirmations and 
+/// inventories.
 #[derive(Debug)]
 pub struct TradeOfferManager {
     steamid: SteamID,
@@ -85,6 +83,7 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
 
 impl TradeOfferManager {
     
+    /// Builder for new manager.
     pub fn builder(
         steamid: SteamID,
         key: String,
@@ -104,6 +103,7 @@ impl TradeOfferManager {
         Ok(())
     }
     
+    /// Sends an offer.
     pub async fn send_offer(
         &self,
         offer: &request::trade_offer::NewTradeOffer,
@@ -111,6 +111,7 @@ impl TradeOfferManager {
         self.api.send_offer(offer).await
     }
     
+    /// Accepts an offer.
     pub async fn accept_offer(
         &self,
         offer: &response::trade_offer::TradeOffer,
@@ -124,6 +125,7 @@ impl TradeOfferManager {
         self.api.accept_offer(offer.tradeofferid, &offer.partner).await
     }
     
+    /// Cancels an offer.
     pub async fn cancel_offer(
         &self,
         offer: &response::trade_offer::TradeOffer,
@@ -135,6 +137,7 @@ impl TradeOfferManager {
         self.api.cancel_offer(offer.tradeofferid).await
     }
     
+    /// Declines an offer.
     pub async fn decline_offer(
         &self,
         offer: &response::trade_offer::TradeOffer,
@@ -146,7 +149,8 @@ impl TradeOfferManager {
         self.api.decline_offer(offer.tradeofferid).await
     }
 
-    pub async fn get_trade_offers(
+    /// Gets active trade offers.
+    pub async fn get_active_trade_offers(
         &self
     ) -> Result<Vec<response::trade_offer::TradeOffer>, Error> {
         self.api.get_trade_offers(&OfferFilter::ActiveOnly, &None).await
@@ -184,12 +188,14 @@ impl TradeOfferManager {
         self.api.get_user_details(tradeofferid, partner, token).await
     }
     
+    /// Gets trade confirmations.
     pub async fn get_trade_confirmations(
         &self,
     ) -> Result<Vec<Confirmation>, Error> {
         self.mobile_api.get_trade_confirmations().await
     }
     
+    /// Confirms a trade offer.
     pub async fn confirm_offer(
         &self,
         trade_offer: &response::TradeOffer,
@@ -197,6 +203,7 @@ impl TradeOfferManager {
         self.confirm_offerid(trade_offer.tradeofferid).await
     }
     
+    /// Confirms an trade offer using its ID.
     pub async fn confirm_offerid(
         &self,
         tradeofferid: TradeOfferId,
@@ -213,6 +220,7 @@ impl TradeOfferManager {
         }
     }
     
+    /// Accepts a confirmation.
     pub async fn accept_confirmation(
         &self,
         confirmaton: &Confirmation,
@@ -220,6 +228,7 @@ impl TradeOfferManager {
         self.mobile_api.accept_confirmation(confirmaton).await
     }
     
+    /// Declines a confirmation.
     pub async fn decline_confirmation(
         &self,
         confirmaton: &Confirmation,
@@ -252,14 +261,6 @@ impl TradeOfferManager {
         offer.expiration_time = updated.expiration_time;
         
         Ok(())
-    }
-    
-    async fn save_poll_data(&self) -> Result<(), FileError> {
-        // we clone this so we don't hold it across an await
-        let poll_data = self.poll_data.read().unwrap().clone();
-        let data = serde_json::to_string(&poll_data)?;
-        
-        file::save_poll_data(&self.steamid, &data).await
     }
     
     /// Performs a poll for changes to offers.
@@ -348,5 +349,13 @@ impl TradeOfferManager {
         let _ = self.save_poll_data().await;
         
         Ok(poll)
+    }
+    
+    async fn save_poll_data(&self) -> Result<(), FileError> {
+        // we clone this so we don't hold it across an await
+        let poll_data = self.poll_data.read().unwrap().clone();
+        let data = serde_json::to_string(&poll_data)?;
+        
+        file::save_poll_data(&self.steamid, &data).await
     }
 }
