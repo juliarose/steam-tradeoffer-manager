@@ -679,13 +679,13 @@ impl SteamTradeOfferAPI {
         
         let mut responses: Vec<GetInventoryOldResponse> = Vec::new();
         let mut start: Option<u64> = None;
+        let sid = u64::from(*steamid);
+        let uri = self.get_uri(&format!("/profiles/{}/inventory/json/{}/{}", sid, appid, contextid));
+        let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
         
         loop {
-            let sid = u64::from(*steamid);
-            let uri = self.get_uri(&format!("/profiles/{}/inventory/json/{}/{}", sid, appid, contextid));
-            let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
             let response = self.client.get(&uri)
-                .header(REFERER, referer)
+                .header(REFERER, &referer)
                 .query(&Query {
                     l: &self.language,
                     trading: tradable_only,
@@ -752,13 +752,13 @@ impl SteamTradeOfferAPI {
         
         let mut responses: Vec<GetInventoryResponse> = Vec::new();
         let mut start_assetid: Option<u64> = None;
+        let sid = u64::from(*steamid);
+        let uri = self.get_uri(&format!("/inventory/{}/{}/{}", sid, appid, contextid));
+        let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
         
         loop {
-            let sid = u64::from(*steamid);
-            let uri = self.get_uri(&format!("/inventory/{}/{}/{}", sid, appid, contextid));
-            let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
             let response = self.client.get(&uri)
-                .header(REFERER, referer)
+                .header(REFERER, &referer)
                 .query(&Query {
                     l: &self.language,
                     count: 5000,
