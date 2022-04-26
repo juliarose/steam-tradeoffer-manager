@@ -10,6 +10,7 @@ use crate::{
 };
 use super::asset::Asset;
 
+/// A trade offer.
 #[derive(Debug)]
 pub struct TradeOffer {
     pub tradeofferid: TradeOfferId,

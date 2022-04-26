@@ -9,6 +9,7 @@ use crate::types::{
     ClassInfoClass
 };
 
+/// An asset which includes its related [`ClassInfo`] mapping.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Asset {
     pub appid: AppId,

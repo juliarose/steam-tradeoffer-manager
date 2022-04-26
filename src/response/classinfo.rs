@@ -1,25 +1,18 @@
 use serde::{Serialize, Deserialize};
-use super::{
-    deserializers::{
-        into_bool,
-        hashmap_or_vec,
-        from_fraudwarnings,
-        string_or_number
-    }
+use super::deserializers::{
+    into_bool,
+    hashmap_or_vec,
+    from_fraudwarnings,
+    string_or_number,
 };
 use crate::{
-    types::{
-        ClassId,
-        InstanceId
-    },
-    serializers::{
-        string,
-        option_string_0_as_none
-    }
+    types::{ClassId, InstanceId},
+    serializers::{string, option_string_0_as_none},
 };
 
 pub type Color = String;
 
+/// A description.
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct Description {
     pub value: String,
@@ -29,6 +22,7 @@ pub struct Description {
 
 impl Description {
     
+    /// Checks if description color matches string.
     pub fn is_color(&self, color: &str) -> bool {
         if let Some(description_color) = &self.color {
             description_color.eq_ignore_ascii_case(color)
@@ -37,6 +31,7 @@ impl Description {
         }
     }
     
+    /// Checks if description color matches string.
     pub fn is_color_str(&self, color: &str) -> bool {
         self.is_color(color)
     }
@@ -63,6 +58,7 @@ pub struct Action {
 
 pub type AppData = Option<serde_json::Map<String, serde_json::value::Value>>;
 
+/// Includes names and descriptions for a given class.
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct ClassInfo {
     #[serde(with = "string")]
@@ -109,8 +105,6 @@ pub struct ClassInfo {
     #[serde(deserialize_with = "hashmap_or_vec")]
     pub actions: Vec<Action>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    // todo this could be improved to use some custom map type whose values are either
-    // a string or map (I believe app_data contains only string values)
     pub app_data: AppData,
 }
 
@@ -123,6 +117,7 @@ fn parse_value_as_u64(value: &serde_json::Value) -> Option<u64> {
 
 impl ClassInfo {
     
+    /// Convenience  method for getting a value out of app_data.
     pub fn get_app_data_value(&self, key: &str) -> Option<&serde_json::Value> {
         if let Some(app_data) = &self.app_data {
             app_data.get(key)
@@ -131,11 +126,13 @@ impl ClassInfo {
         }
     }
     
+    /// Gets def_index value out of app_data parsed as a u64.
     pub fn get_app_data_defindex(&self) -> Option<u64> {
         self.get_app_data_value("def_index")
             .and_then(parse_value_as_u64)
     }
     
+    /// Gets quality value out of app_data parsed as a u64.
     pub fn get_app_data_quality(&self) -> Option<u64> {
         self.get_app_data_value("quality")
             .and_then(parse_value_as_u64)

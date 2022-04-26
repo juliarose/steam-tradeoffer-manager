@@ -7,7 +7,10 @@ use crate::{
     response,
 };
 
-pub fn from_raw_receipt_asset(asset: raw::RawReceiptAsset, cache: &mut ClassInfoCache) -> Result<response::asset::Asset, MissingClassInfoError> {
+pub fn from_raw_receipt_asset(
+    asset: raw::RawReceiptAsset,
+    cache: &mut ClassInfoCache,
+) -> Result<response::asset::Asset, MissingClassInfoError> {
     if let Some(classinfo) = cache.get_classinfo(&(asset.appid, asset.classid, asset.instanceid)) {
         Ok(response::asset::Asset {
             classinfo,
@@ -25,7 +28,10 @@ pub fn from_raw_receipt_asset(asset: raw::RawReceiptAsset, cache: &mut ClassInfo
     }  
 }
 
-pub fn from_raw_trade_offer(offer: raw::RawTradeOffer, cache: &mut ClassInfoCache) -> Result<response::trade_offer::TradeOffer, MissingClassInfoError> {
+pub fn from_raw_trade_offer(
+    offer: raw::RawTradeOffer,
+    cache: &mut ClassInfoCache,
+) -> Result<response::trade_offer::TradeOffer, MissingClassInfoError> {
     fn collect_items(assets: Vec<raw::RawAsset>, cache: &mut ClassInfoCache) -> Result<Vec<response::asset::Asset>, MissingClassInfoError> {
         let mut items = Vec::new();
         
@@ -81,7 +87,9 @@ pub fn from_raw_trade_offer(offer: raw::RawTradeOffer, cache: &mut ClassInfoCach
     })
 }
 
-pub fn parse_receipt_script(script: &str) -> Result<Vec<raw::RawReceiptAsset>, &'static str> {
+pub fn parse_receipt_script(
+    script: &str,
+) -> Result<Vec<raw::RawReceiptAsset>, &'static str> {
     let re = Regex::new(r#"oItem\s*=\s*(\{.*\});\s*\n"#).map_err(|_| "Invalid regexp")?;
     
     re.captures_iter(script)
