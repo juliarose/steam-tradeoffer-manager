@@ -223,17 +223,29 @@ impl TradeOfferManager {
     /// Accepts a confirmation.
     pub async fn accept_confirmation(
         &self,
-        confirmaton: &Confirmation,
+        confirmation: &Confirmation,
     ) -> Result<(), Error> {
-        self.mobile_api.accept_confirmation(confirmaton).await
+        self.mobile_api.accept_confirmation(confirmation).await
+    }
+    
+    /// Accepts confirmations.
+    pub async fn accept_confirmations(
+        &self,
+        confirmations: &[Confirmation],
+    ) -> Result<(), Error> {
+        for confirmation in confirmations {
+            self.mobile_api.accept_confirmation(confirmation).await?
+        }
+        
+        Ok(())
     }
     
     /// Declines a confirmation.
     pub async fn decline_confirmation(
         &self,
-        confirmaton: &Confirmation,
+        confirmation: &Confirmation,
     ) -> Result<(), Error> {
-        self.mobile_api.deny_confirmation(confirmaton).await
+        self.mobile_api.deny_confirmation(confirmation).await
     }
     
     /// Gets the trade receipt (new items) upon completion of a trade.
