@@ -7,7 +7,8 @@ pub use builder::TradeOfferManagerBuilder;
 pub use poll::Poll;
 
 use poll_data::PollData;
-use std::{cmp, sync::{Arc, RwLock}, collections::HashMap};
+use std::{cmp, sync::{Arc, RwLock}};
+use chrono::Duration;
 use crate::{
     error::Error,
     ServerTime,
@@ -37,18 +38,7 @@ pub struct TradeOfferManager {
     api: SteamTradeOfferAPI,
     mobile_api: MobileAPI,
     poll_data: Arc<RwLock<PollData>>,
-}
-
-impl PollData {
-    
-    pub fn new() -> Self {
-        Self {
-            offers_since: None,
-            last_poll: None,
-            last_poll_full_update: None,
-            state_map: HashMap::new(),
-        }
-    }
+    cancel_duration: Option<Duration>,
 }
 
 impl From<TradeOfferManagerBuilder> for TradeOfferManager {
@@ -77,6 +67,7 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
                 identity_secret,
             ),
             poll_data: Arc::new(RwLock::new(poll_data)),
+            cancel_duration: builder.cancel_duration,
         }
     }
 }
@@ -114,7 +105,7 @@ impl TradeOfferManager {
     /// Accepts an offer.
     pub async fn accept_offer(
         &self,
-        offer: &response::trade_offer::TradeOffer,
+        offer: &mut response::trade_offer::TradeOffer,
     ) -> Result<response::accepted_offer::AcceptedOffer, Error> {
         if offer.is_our_offer {
             return Err(Error::Parameter("Cannot accept an offer that is ours"));
@@ -122,31 +113,40 @@ impl TradeOfferManager {
             return Err(Error::Parameter("Cannot accept an offer that is not active"));
         }
 
-        self.api.accept_offer(offer.tradeofferid, &offer.partner).await
+        let accepted_offer = self.api.accept_offer(offer.tradeofferid, &offer.partner).await?;
+        offer.trade_offer_state = TradeOfferState::Accepted;
+        
+        Ok(accepted_offer)
     }
     
     /// Cancels an offer.
     pub async fn cancel_offer(
         &self,
-        offer: &response::trade_offer::TradeOffer,
+        offer: &mut response::trade_offer::TradeOffer,
     ) -> Result<(), Error> {
         if !offer.is_our_offer {
             return Err(Error::Parameter("Cannot cancel an offer we did not create"));
         }
         
-        self.api.cancel_offer(offer.tradeofferid).await
+        self.api.cancel_offer(offer.tradeofferid).await?;
+        offer.trade_offer_state = TradeOfferState::Canceled;
+        
+        Ok(())
     }
     
     /// Declines an offer.
     pub async fn decline_offer(
         &self,
-        offer: &response::trade_offer::TradeOffer,
+        offer: &mut response::trade_offer::TradeOffer,
     ) -> Result<(), Error> {
         if offer.is_our_offer {
             return Err(Error::Parameter("Cannot decline an offer we created"));
         }
         
-        self.api.decline_offer(offer.tradeofferid).await
+        self.api.decline_offer(offer.tradeofferid).await?;
+        offer.trade_offer_state = TradeOfferState::Declined;
+        
+        Ok(())
     }
 
     /// Gets a user's inventory using the old endpoint.
@@ -296,11 +296,10 @@ impl TradeOfferManager {
         }
         
         fn last_poll_full_outdated(last_poll_full_update: Option<ServerTime>) -> bool {
-            match last_poll_full_update {
-                Some(last_poll_full_update) => {
-                    date_difference_from_now(&last_poll_full_update) >= 120
-                },
-                None => true,
+            if let Some(last_poll_full_update) = last_poll_full_update {
+                date_difference_from_now(&last_poll_full_update) >= 5 * 60
+            } else {
+                true
             }
         }
         
@@ -328,14 +327,31 @@ impl TradeOfferManager {
             } else if let Some(poll_offers_since) = poll_data.offers_since {
                 // It looks like sometimes Steam can be dumb and backdate a modified offer. We need to handle this.
                 // Let's add a 30-minute buffer.
-                offers_since = poll_offers_since.timestamp() + 1800;
+                offers_since = poll_offers_since.timestamp() - 1800;
             }
         }
 
         let historical_cutoff = time::timestamp_to_server_time(offers_since);
-        let offers = self.api.get_trade_offers(&filter, &Some(historical_cutoff)).await?;
+        let mut offers = self.api.get_trade_offers(&filter, &Some(historical_cutoff)).await?;
         let mut offers_since: i64 = 0;
         let mut poll: Poll = Vec::new();
+        
+        if let Some(cancel_duration) = self.cancel_duration {
+            let cancel_time = chrono::Utc::now() - cancel_duration;
+            
+            // cancels all offers older than cancel_duration
+            futures::future::join_all(
+            offers
+                    .iter_mut()
+                    .filter(|offer| {
+                        offer.trade_offer_state == TradeOfferState::Active &&
+                        offer.is_our_offer &&
+                        offer.time_created < cancel_time
+                    })
+                    .map(|offer| async { self.cancel_offer(offer).await })
+                    .collect::<Vec<_>>()
+            ).await;
+        }
         
         {
             let mut poll_data = self.poll_data.write().unwrap();

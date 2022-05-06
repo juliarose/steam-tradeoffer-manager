@@ -13,3 +13,15 @@ pub struct PollData {
     pub last_poll_full_update: Option<ServerTime>,
     pub state_map: HashMap<TradeOfferId, TradeOfferState>,
 }
+
+impl PollData {
+    
+    pub fn new() -> Self {
+        Self {
+            offers_since: None,
+            last_poll: None,
+            last_poll_full_update: None,
+            state_map: HashMap::new(),
+        }
+    }
+}

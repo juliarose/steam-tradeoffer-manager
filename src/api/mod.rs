@@ -247,13 +247,12 @@ impl SteamTradeOfferAPI {
         trade_id: &TradeId,
     ) -> Result<Vec<response::asset::Asset>, Error> {
         fn collect_classes(raw_assets: &Vec<raw::RawReceiptAsset>) -> Vec<ClassInfoClass> {
-            let mut classes_set: HashSet<ClassInfoClass> = HashSet::new();
-
-            for item in raw_assets {
-                classes_set.insert((item.appid, item.classid, item.instanceid));
-            }
-            
-            classes_set.into_iter().collect()
+            raw_assets
+                .iter()
+                .map(|item| (item.appid, item.classid, item.instanceid))
+                .collect::<HashSet<_>>()
+                .into_iter()
+                .collect::<Vec<_>>()
         }
         
         let uri = self.get_uri(&format!("/trade/{}/receipt", trade_id));
@@ -401,6 +400,21 @@ impl SteamTradeOfferAPI {
         filter: &OfferFilter,
         historical_cutoff: &Option<ServerTime>,
     ) -> Result<Vec<response::trade_offer::TradeOffer>, Error> {
+        fn collect_classes(offers: &Vec<raw::RawTradeOffer>) -> Vec<ClassInfoClass> {
+            offers
+                .iter()
+                .map(|offer| {
+                    offer.items_to_give
+                        .iter()
+                        .chain(offer.items_to_receive.iter())
+                        .map(|item| (item.appid, item.classid, item.instanceid))
+                })
+                .flatten()
+                .collect::<HashSet<_>>()
+                .into_iter()
+                .collect()
+        }
+        
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -412,22 +426,6 @@ impl SteamTradeOfferAPI {
             get_descriptions: bool,
             time_historical_cutoff: u64,
             cursor: Option<u32>,
-        }
-
-        fn collect_classes(offers: &Vec<raw::RawTradeOffer>) -> Vec<ClassInfoClass> {
-            let mut classes_set: HashSet<ClassInfoClass> = HashSet::new();
-
-            for offer in offers {
-                for item in &offer.items_to_give {
-                    classes_set.insert((item.appid, item.classid, item.instanceid));
-                }
-
-                for item in &offer.items_to_receive {
-                    classes_set.insert((item.appid, item.classid, item.instanceid));
-                }
-            }
-            
-            classes_set.into_iter().collect()
         }
         
         let mut cursor = None;

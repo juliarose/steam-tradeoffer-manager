@@ -17,9 +17,9 @@ fn assets_item_names<'a>(
 
 async fn accept_offer(
     manager: &TradeOfferManager,
-    offer: &TradeOffer,
+    offer: &mut TradeOffer,
 ) -> Result<(), Error> {
-    let accepted_offer = manager.accept_offer(&offer).await?;
+    let accepted_offer = manager.accept_offer(offer).await?;
     
     if accepted_offer.needs_mobile_confirmation {
         manager.confirm_offer(&offer).await
@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     manager.set_session("sessionid", &vec![String::from("cookie=value")])?;
     
     // gets changes to trade offers for account
-    for (offer, old_state) in manager.do_poll(true).await? {
+    for (mut offer, old_state) in manager.do_poll(true).await? {
         if let Some(state) = old_state {
             println!(
                 "Offer {} changed state: {} -> {}",
@@ -55,7 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             
             // free items
             if offer.items_to_give.is_empty() {
-                if let Err(error) = accept_offer(&manager, &offer).await {
+                if let Err(error) = accept_offer(&manager, &mut offer).await {
                     println!("Error accepting offer {}: {}", offer, error);
                 } else {
                     println!("Accepted offer {}", offer);
