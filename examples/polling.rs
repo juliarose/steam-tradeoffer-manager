@@ -4,7 +4,10 @@ use steam_tradeoffers::{
     enums::TradeOfferState,
     error::Error,
     SteamID,
+    chrono::Duration,
 };
+use dotenv::dotenv;
+use std::env;
 
 fn assets_item_names<'a>(
     assets: &'a Vec<Asset>,
@@ -28,13 +31,45 @@ async fn accept_offer(
     }
 }
 
+fn get_session() -> (String, Vec<String>) {
+    let mut sessionid = None;
+    let mut cookies: Vec<String> = Vec::new();
+    let cookies_str = env::var("COOKIES")
+        .expect("COOKIES missing");
+    
+    for cookie in cookies_str.split("&") {
+        let mut split = cookie.split("=");
+        
+        if split.next().unwrap() == "sessionid" {
+            sessionid = Some(split.next().unwrap().to_string());
+        }
+        
+        cookies.push(cookie.to_string());
+    }
+    
+    (sessionid.unwrap(), cookies)
+}
+
+fn get_steamid(key: &str) -> SteamID {
+    let sid_str = env::var(key)
+        .expect(&format!("{} missing", key));
+    
+    SteamID::from(sid_str.parse::<u64>().unwrap())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let manager = TradeOfferManager::builder(SteamID::from(0), String::from("api key"))
-        .identity_secret(String::from("secret"))
-        .build();
+    dotenv().ok();
     
-    manager.set_session("sessionid", &vec![String::from("cookie=value")])?;
+    let steamid = get_steamid("STEAMID");
+    let key = env::var("API_KEY").expect("API_KEY missing");
+    let manager = TradeOfferManager::builder(steamid, key)
+        .identity_secret(String::from("secret"))
+        .cancel_duration(Duration::minutes(30))
+        .build();
+    let (sessionid, cookies) = get_session();
+    
+    manager.set_session(&sessionid, &cookies)?;
     
     // gets changes to trade offers for account
     for (mut offer, old_state) in manager.do_poll(true).await? {

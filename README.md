@@ -10,6 +10,7 @@ Still a work in progress as I flesh out and test the APIs.
 - Manages account trade offer state.
 - Loading inventories.
 - Mobile confirmations.
+- Automatically cancels offers past a set duration.
 - Loads descriptions (classinfos) for assets. Classinfos are cached to file and read when available. The manager holds a [Least frequently used (LFU) cache](https://en.wikipedia.org/wiki/Least_frequently_used) of classinfos in memory to reduce file reads.
 
 ## Usage
