@@ -149,13 +149,6 @@ impl TradeOfferManager {
         self.api.decline_offer(offer.tradeofferid).await
     }
 
-    /// Gets active trade offers.
-    pub async fn get_active_trade_offers(
-        &self
-    ) -> Result<Vec<response::trade_offer::TradeOffer>, Error> {
-        self.api.get_trade_offers(&OfferFilter::ActiveOnly, &None).await
-    }
-
     /// Gets a user's inventory using the old endpoint.
     pub async fn get_inventory_old(
         &self,
@@ -261,6 +254,22 @@ impl TradeOfferManager {
         offer.expiration_time = updated.expiration_time;
         
         Ok(())
+    }
+
+    /// Gets active trade offers.
+    pub async fn get_active_trade_offers(
+        &self
+    ) -> Result<Vec<response::trade_offer::TradeOffer>, Error> {
+        self.api.get_trade_offers(&OfferFilter::ActiveOnly, &None).await
+    }
+    
+    /// Gets trade offers.
+    pub async fn get_trade_offers(
+        &self,
+        filter: &OfferFilter,
+        historical_cutoff: &Option<ServerTime>,
+    ) -> Result<Vec<response::trade_offer::TradeOffer>, Error> {
+        self.api.get_trade_offers(filter, historical_cutoff).await
     }
     
     /// Performs a poll for changes to offers.
