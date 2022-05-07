@@ -7,7 +7,7 @@ use crate::{
         AppId,
     }
 };
-use super::{types::ClassInfoFile};
+use super::types::ClassInfoFile;
 use std::{
     time::{SystemTime, UNIX_EPOCH},
     path::{Path, PathBuf},

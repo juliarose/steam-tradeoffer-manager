@@ -247,7 +247,7 @@ impl SteamTradeOfferAPI {
         &self,
         trade_id: &TradeId,
     ) -> Result<Vec<response::asset::Asset>, Error> {
-        fn collect_classes(raw_assets: &Vec<raw::RawReceiptAsset>) -> Vec<ClassInfoClass> {
+        fn collect_classes(raw_assets: &[raw::RawReceiptAsset]) -> Vec<ClassInfoClass> {
             raw_assets
                 .iter()
                 .map(|item| (item.appid, item.classid, item.instanceid))
@@ -401,16 +401,15 @@ impl SteamTradeOfferAPI {
         filter: &OfferFilter,
         historical_cutoff: &Option<ServerTime>,
     ) -> Result<Vec<response::trade_offer::TradeOffer>, Error> {
-        fn collect_classes(offers: &Vec<raw::RawTradeOffer>) -> Vec<ClassInfoClass> {
+        fn collect_classes(offers: &[raw::RawTradeOffer]) -> Vec<ClassInfoClass> {
             offers
                 .iter()
-                .map(|offer| {
+                .flat_map(|offer| {
                     offer.items_to_give
                         .iter()
                         .chain(offer.items_to_receive.iter())
                         .map(|item| (item.appid, item.classid, item.instanceid))
                 })
-                .flatten()
                 .collect::<HashSet<_>>()
                 .into_iter()
                 .collect()
