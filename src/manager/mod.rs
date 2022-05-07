@@ -94,12 +94,28 @@ impl TradeOfferManager {
         Ok(())
     }
     
+    /// Counters an existing offer.
+    pub async fn counter_offer(
+        &self,
+        offer: &mut response::trade_offer::TradeOffer,
+        counter_offer: &request::trade_offer::NewTradeOffer,
+    ) -> Result<response::sent_offer::SentOffer, Error> {
+        let sent_offer = self.api.send_offer(
+            counter_offer,
+            Some(offer.tradeofferid),
+        ).await?;
+        
+        offer.trade_offer_state = TradeOfferState::Countered;
+        
+        Ok(sent_offer)
+    }
+    
     /// Sends an offer.
     pub async fn send_offer(
         &self,
         offer: &request::trade_offer::NewTradeOffer,
     ) -> Result<response::sent_offer::SentOffer, Error> {
-        self.api.send_offer(offer).await
+        self.api.send_offer(offer, None).await
     }
     
     /// Accepts an offer.

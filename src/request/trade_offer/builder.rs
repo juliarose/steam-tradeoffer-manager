@@ -1,8 +1,7 @@
 use super::{Item, NewTradeOffer};
-use crate::{SteamID, types::TradeOfferId};
+use crate::SteamID;
 
 pub struct NewTradeOfferBuilder {
-    pub id: Option<TradeOfferId>,
     pub partner: SteamID,
     pub items_to_give: Vec<Item>,
     pub items_to_receive: Vec<Item>,
@@ -14,23 +13,12 @@ impl NewTradeOfferBuilder {
     
     pub fn new(partner: SteamID) -> Self {
         Self {
-            id: None,
             partner,
             items_to_give: Vec::new(),
             items_to_receive: Vec::new(),
             message: None,
             token: None,
         }
-    }
-
-    pub fn counter(mut self, id: TradeOfferId) -> Self {
-        self.id = Some(id);
-        self
-    }
-
-    pub fn id(mut self, id: TradeOfferId) -> Self {
-        self.id = Some(id);
-        self
     }
 
     pub fn items_to_give(mut self, items: Vec<Item>) -> Self {
@@ -55,7 +43,6 @@ impl NewTradeOfferBuilder {
     
     pub fn build(self) -> NewTradeOffer {
         NewTradeOffer {
-            id: self.id,
             partner: self.partner,
             items_to_give: self.items_to_give,
             items_to_receive: self.items_to_receive,

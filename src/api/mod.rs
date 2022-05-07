@@ -130,6 +130,7 @@ impl SteamTradeOfferAPI {
     pub async fn send_offer(
         &self,
         offer: &request::trade_offer::NewTradeOffer,
+        counter_tradeofferid: Option<TradeOfferId>,
     ) -> Result<response::sent_offer::SentOffer, Error> {
         #[derive(Serialize, Debug)]
         struct OfferFormUser<'b> {
@@ -184,7 +185,7 @@ impl SteamTradeOfferAPI {
         }
         
         let referer = {
-            let pathname: String = match offer.id {
+            let pathname: String = match &counter_tradeofferid {
                 Some(id) => id.to_string(),
                 None => String::from("new"),
             };
@@ -228,7 +229,7 @@ impl SteamTradeOfferAPI {
                 partner: &offer.partner,
                 json_tradeoffer,
                 trade_offer_create_params,
-                tradeofferid_countered: &offer.id,
+                tradeofferid_countered: &counter_tradeofferid,
             }
         };
         let uri = self.get_uri("/tradeoffer/new/send");

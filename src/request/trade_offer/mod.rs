@@ -4,13 +4,12 @@ mod builder;
 pub use item::Item;
 pub use builder::NewTradeOfferBuilder;
 use steamid_ng::SteamID;
-use crate::{response, types::TradeOfferId};
+use crate::response;
 
 /// Represents a trade offer not yet sent. A template including items from an existing offer can
 /// created by calling `from` on the offer.
 #[derive(Debug, Clone, PartialEq)]
 pub struct NewTradeOffer {
-    pub id: Option<TradeOfferId>,
     pub partner: SteamID,
     pub items_to_give: Vec<Item>,
     pub items_to_receive: Vec<Item>,
@@ -35,7 +34,6 @@ impl From<&response::trade_offer::TradeOffer> for NewTradeOffer {
     
     fn from(offer: &response::trade_offer::TradeOffer) -> Self {
         Self {
-            id: Some(offer.tradeofferid),
             partner: offer.partner,
             items_to_give: from_trade_offer_items(&offer.items_to_give),
             items_to_receive: from_trade_offer_items(&offer.items_to_receive),
@@ -49,7 +47,6 @@ impl From<response::trade_offer::TradeOffer> for NewTradeOffer {
     
     fn from(offer: response::trade_offer::TradeOffer) -> Self {
         Self {
-            id: Some(offer.tradeofferid),
             partner: offer.partner,
             items_to_give: from_trade_offer_items(&offer.items_to_give),
             items_to_receive: from_trade_offer_items(&offer.items_to_receive),
