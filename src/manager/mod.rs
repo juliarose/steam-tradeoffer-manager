@@ -354,19 +354,20 @@ impl TradeOfferManager {
         
         if let Some(cancel_duration) = self.cancel_duration {
             let cancel_time = chrono::Utc::now() - cancel_duration;
+            let offers_to_cancel = offers
+                .iter_mut()
+                .filter(|offer| {
+                    offer.trade_offer_state == TradeOfferState::Active &&
+                    offer.is_our_offer &&
+                    offer.time_created < cancel_time
+                });
+            let cancel_futures = offers_to_cancel
+                .map(|offer| async { self.cancel_offer(offer).await })
+                .collect::<Vec<_>>();
             
-            // cancels all offers older than cancel_duration
-            futures::future::join_all(
-            offers
-                    .iter_mut()
-                    .filter(|offer| {
-                        offer.trade_offer_state == TradeOfferState::Active &&
-                        offer.is_our_offer &&
-                        offer.time_created < cancel_time
-                    })
-                    .map(|offer| async { self.cancel_offer(offer).await })
-                    .collect::<Vec<_>>()
-            ).await;
+            // cancels all offers older than cancel_time
+            // this will also update the state for the offers that were cancelled
+            futures::future::join_all(cancel_futures).await;
         }
         
         {

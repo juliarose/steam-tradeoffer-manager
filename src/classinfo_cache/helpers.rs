@@ -8,13 +8,15 @@ use crate::{
     }
 };
 use super::{types::ClassInfoFile};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    time::{SystemTime, UNIX_EPOCH},
+    path::{Path, PathBuf},
+    collections::HashMap,
+};
 use futures::future::join_all;
-use tokio::task::JoinHandle;
-use std::collections::HashMap;
 use async_fs::File;
+use tokio::task::JoinHandle;
 use futures_lite::io::AsyncWriteExt;
-use std::path::{Path, PathBuf};
 
 async fn load_classinfo(class: ClassInfoClass) -> Result<ClassInfoFile, FileError> {
     let filepath = get_classinfo_file_path(&class, false);
