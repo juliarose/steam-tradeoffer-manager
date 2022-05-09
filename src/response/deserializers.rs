@@ -357,6 +357,13 @@ where
             formatter.write_str("a map")
         }
     
+        fn visit_seq<M>(self, mut _seq: M) -> Result<Self::Value, M::Error>
+        where
+            M: SeqAccess<'de>,
+        {
+            Ok(Self::Value::new())
+        }
+    
         fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
         where
             M: MapAccess<'de>,

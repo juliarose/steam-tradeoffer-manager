@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
     sync::Arc,
+    fmt,
 };
 use crate::{
     types::ClassInfoAppClass,
@@ -11,12 +12,61 @@ use crate::{
             to_classinfo_map,
             option_str_to_number,
             deserialize_classinfo_map_raw,
-            deserialize_classinfo_map
+            deserialize_classinfo_map,
         }
     }
 };
 use super::raw;
-use serde::Deserialize;
+use serde::{
+    Deserialize,
+    de::{
+        MapAccess,
+        Visitor,
+        SeqAccess,
+        Deserializer,
+    },
+};
+
+type RgInventory = HashMap<String, raw::RawAssetOld>;
+
+fn deserialize_rg_inventory<'de, D>(deserializer: D) -> Result<RgInventory, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct RgInventoryVisitor;
+    
+    impl<'de> Visitor<'de> for RgInventoryVisitor {
+        type Value = RgInventory;
+        
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a map or seq")
+        }
+    
+        fn visit_seq<M>(self, mut _seq: M) -> Result<Self::Value, M::Error>
+        where
+            M: SeqAccess<'de>,
+        {
+            Ok(Self::Value::new())
+        }
+    
+        fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
+        where
+            M: MapAccess<'de>,
+        {
+            let mut map = Self::Value::new();
+            
+            while let Some(key) = access.next_key::<String>()? {
+                let asset = access.next_value::<raw::RawAssetOld>()?;
+                
+                map.insert(key, asset);
+            }
+            
+            Ok(map)
+        }
+    }
+    
+    deserializer.deserialize_any(RgInventoryVisitor)
+}
 
 #[derive(Deserialize, Debug)]
 pub struct GetTradeOffersResponseBody {
@@ -60,8 +110,8 @@ pub struct GetInventoryOldResponse {
     #[serde(deserialize_with = "option_str_to_number", rename = "more_start")]
     pub more_start: Option<u64>,
     #[serde(default)]
-    #[serde(rename = "rgInventory")]
-    pub assets: HashMap<String, raw::RawAssetOld>,
+    #[serde(deserialize_with = "deserialize_rg_inventory", rename = "rgInventory")]
+    pub assets: RgInventory,
     #[serde(deserialize_with = "deserialize_classinfo_map", rename = "rgDescriptions")]
     pub descriptions: HashMap<ClassInfoAppClass, Arc<response::classinfo::ClassInfo>>,
 }
