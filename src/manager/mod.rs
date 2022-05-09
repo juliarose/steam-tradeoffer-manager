@@ -259,7 +259,9 @@ impl TradeOfferManager {
     
     /// Gets the trade receipt (new items) upon completion of a trade.
     pub async fn get_receipt(&self, offer: &response::trade_offer::TradeOffer) -> Result<Vec<response::asset::Asset>, Error> {
-        if offer.items_to_receive.is_empty() {
+        if offer.trade_offer_state != TradeOfferState::Accepted {
+            Err(Error::Parameter(r#"Offer is not in "accepted" state"#))
+        } else if offer.items_to_receive.is_empty() {
             Ok(Vec::new())
         } else if let Some(tradeid) = offer.tradeid {
             self.api.get_receipt(&tradeid).await

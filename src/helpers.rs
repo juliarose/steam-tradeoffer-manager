@@ -4,7 +4,7 @@ use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 use reqwest::{header, cookie::CookieStore};
 use serde::de::DeserializeOwned;
 use lazy_regex::{regex_is_match, regex_captures};
-use crate::error::Error;
+use crate::error::{TradeOfferError, Error};
 use log::error;
 
 pub fn get_default_middleware<T>(
@@ -83,7 +83,7 @@ where
             } else if regex_is_match!(r#"<h1>Sign In</h1>"#, &html) && regex_is_match!(r#"g_steamID = false;"#, &html) {
                 Err(Error::NotLoggedIn)
             } else if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
-                Err(Error::Trade(message.into()))
+                Err(Error::Trade(TradeOfferError::from(message)))
             } else {
                 error!("Error parsing body `{}`: {}", parse_error, String::from_utf8_lossy(&body));
                 

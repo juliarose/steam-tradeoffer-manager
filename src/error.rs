@@ -1,6 +1,6 @@
-use std::{fmt, num::ParseIntError};
 use crate::types::{AppId, ClassId, InstanceId, TradeOfferId};
 use reqwest_middleware;
+use std::{fmt, num::ParseIntError};
 
 #[derive(thiserror::Error, Debug)]
 pub enum FileError {
@@ -35,22 +35,98 @@ pub enum Error {
     #[error("Error parsing HTML document: {}", .0)]
     Html(#[from] ParseHtmlError),
     #[error("Trade error: {}", .0)]
-    Trade(String),
+    Trade(TradeOfferError),
     #[error("{}", .0)]
     MissingClassInfo(#[from] MissingClassInfoError),
     #[error("No confirmation for offer {}", .0)]
-    NoConfirmationForOffer(TradeOfferId)
+    NoConfirmationForOffer(TradeOfferId),
+}
+
+#[derive(thiserror::Error, Debug, PartialEq)]
+#[repr(u8)]
+pub enum TradeOfferError {
+    #[error("{}", .0)]
+    Unknown(String),
+    #[error("{}", .0)]
+    UnknownEResult(i32),
+    #[error("Fail")]
+    Fail,
+    #[error("InvalidState")]
+    InvalidState,
+    #[error("AccessDenied")]
+    AccessDenied,
+    #[error("Timeout")]
+    Timeout,
+    #[error("ServiceUnavailable")]
+    ServiceUnavailable,
+    #[error("TimeLimitExceededout")]
+    LimitExceeded,
+    #[error("Revoked")]
+    Revoked,
+    #[error("AlreadyRedeemed")]
+    AlreadyRedeemed,
+}
+
+impl TradeOfferError {
+    
+    pub fn from_code(code: i32) -> Self {
+        match code {
+            2 => Self::Fail,
+            11 => Self::InvalidState,
+            15 => Self::AccessDenied,
+            16 => Self::Timeout,
+            20 => Self::ServiceUnavailable,
+            25 => Self::LimitExceeded,
+            26 => Self::LimitExceeded,
+            28 => Self::AlreadyRedeemed,
+            _ => Self::UnknownEResult(code),
+        }
+    }
+    
+    pub fn code(&self) -> Option<i32> {
+        match self {
+            Self::Fail => Some(2),
+            Self::InvalidState => Some(11),
+            Self::AccessDenied => Some(15),
+            Self::Timeout => Some(16),
+            Self::ServiceUnavailable => Some(20),
+            Self::LimitExceeded => Some(25),
+            Self::Revoked => Some(26),
+            Self::AlreadyRedeemed => Some(2),
+            Self::UnknownEResult(code) => Some(*code),
+            _ => None,
+        }
+    }
+}
+
+impl From<&str> for TradeOfferError {
+    
+    fn from(message: &str) -> Self {
+        if let Some(code) = message.trim().split(' ').rev().next() {
+            let mut chars = code.chars();
+            
+            if chars.next() != Some('(') {
+                return Self::Unknown(message.into());
+            }
+            
+            if chars.next_back() != Some(')') {
+                return Self::Unknown(message.into());
+            }
+            
+            if let Ok(code) = chars.as_str().parse::<i32>() {
+                return Self::from_code(code);
+            }
+        }
+        
+        Self::Unknown(message.into())
+    }
 }
 
 impl From<reqwest_middleware::Error> for Error {
     fn from(error: reqwest_middleware::Error) -> Error {
         match error {
-            reqwest_middleware::Error::Reqwest(e) => {
-                Error::Reqwest(e)
-            },
-            reqwest_middleware::Error::Middleware(e) => {
-                Error::ReqwestMiddleware(e)
-            },
+            reqwest_middleware::Error::Reqwest(e) => Error::Reqwest(e),
+            reqwest_middleware::Error::Middleware(e) => Error::ReqwestMiddleware(e),
         }
     }
 }
@@ -64,7 +140,11 @@ pub struct MissingClassInfoError {
 
 impl fmt::Display for MissingClassInfoError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Missing description for {}:{}:{:?})", self.appid, self.classid, self.instanceid)
+        write!(
+            f,
+            "Missing description for {}:{}:{:?})",
+            self.appid, self.classid, self.instanceid
+        )
     }
 }
 
@@ -76,4 +156,17 @@ pub enum ParseHtmlError {
     Response(String),
     #[error("{}", .0)]
     ParseInt(#[from] ParseIntError),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn parses_trade_offer_error() {
+        let message = "There was an error accepting this trade offer. Please try again later. (28)";
+        let error = TradeOfferError::from(message);
+        
+        assert_eq!(error, TradeOfferError::AlreadyRedeemed);
+    }
 }
