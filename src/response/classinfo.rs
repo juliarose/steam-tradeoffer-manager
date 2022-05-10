@@ -17,11 +17,11 @@ pub type Color = String;
 pub struct Description {
     pub value: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// A string representing the color e.g. `"FFFFFF"`
     pub color: Option<Color>,
 }
 
 impl Description {
-    
     /// Checks if description color matches string.
     pub fn is_color(&self, color: &str) -> bool {
         if let Some(description_color) = &self.color {
@@ -58,14 +58,16 @@ pub struct Action {
 
 pub type AppData = Option<serde_json::Map<String, serde_json::value::Value>>;
 
-/// Includes names and descriptions for a given class.
+/// Contains details about an item including names and descriptions. For help 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct ClassInfo {
     #[serde(with = "string")]
+    /// The ID for this [`ClassInfo`].
     pub classid: ClassId,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "option_string_0_as_none")]
+    /// The specific instance of this [`ClassInfo`].
     pub instanceid: InstanceId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
@@ -116,7 +118,6 @@ fn parse_value_as_u64(value: &serde_json::Value) -> Option<u64> {
 }
 
 impl ClassInfo {
-    
     /// Convenience  method for getting a value out of app_data.
     pub fn get_app_data_value(&self, key: &str) -> Option<&serde_json::Value> {
         if let Some(app_data) = &self.app_data {

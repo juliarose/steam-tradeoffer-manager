@@ -40,6 +40,8 @@ pub enum Error {
     MissingClassInfo(#[from] MissingClassInfoError),
     #[error("No confirmation for offer {}", .0)]
     NoConfirmationForOffer(TradeOfferId),
+    #[error("Poll called too soon after last poll")]
+    PollCalledTooSoon,
 }
 
 #[derive(thiserror::Error, Debug, PartialEq)]
@@ -68,7 +70,6 @@ pub enum TradeOfferError {
 }
 
 impl TradeOfferError {
-    
     pub fn from_code(code: i32) -> Self {
         match code {
             2 => Self::Fail,
@@ -100,7 +101,6 @@ impl TradeOfferError {
 }
 
 impl From<&str> for TradeOfferError {
-    
     fn from(message: &str) -> Self {
         if let Some(code) = message.trim().split(' ').rev().next() {
             let mut chars = code.chars();

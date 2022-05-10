@@ -18,7 +18,6 @@ pub struct NewTradeOffer {
 }
 
 impl NewTradeOffer {
-    
     pub fn builder(steamid: SteamID) -> NewTradeOfferBuilder {
         NewTradeOfferBuilder::new(steamid)
     }
@@ -31,7 +30,6 @@ impl NewTradeOffer {
 }
 
 impl From<&response::trade_offer::TradeOffer> for NewTradeOffer {
-    
     fn from(offer: &response::trade_offer::TradeOffer) -> Self {
         Self {
             partner: offer.partner,
@@ -44,7 +42,6 @@ impl From<&response::trade_offer::TradeOffer> for NewTradeOffer {
 }
 
 impl From<response::trade_offer::TradeOffer> for NewTradeOffer {
-    
     fn from(offer: response::trade_offer::TradeOffer) -> Self {
         Self {
             partner: offer.partner,

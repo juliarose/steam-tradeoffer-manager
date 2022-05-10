@@ -22,7 +22,6 @@ pub struct Item {
 }
 
 impl From<response::asset::Asset> for Item {
-    
     fn from(asset: response::asset::Asset) -> Item {
         Item {
             appid: asset.appid,
@@ -34,7 +33,6 @@ impl From<response::asset::Asset> for Item {
 }
 
 impl From<&response::asset::Asset> for Item {
-    
     fn from(asset: &response::asset::Asset) -> Item {
         Item {
             appid: asset.appid,

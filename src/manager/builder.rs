@@ -13,7 +13,6 @@ pub struct TradeOfferManagerBuilder {
 }
 
 impl TradeOfferManagerBuilder {
-    
     pub fn new(
         steamid: SteamID,
         key: String,

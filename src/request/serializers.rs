@@ -1,4 +1,3 @@
-
 use steamid_ng::SteamID;
 use serde::Serializer;
 

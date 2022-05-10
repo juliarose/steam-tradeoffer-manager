@@ -42,7 +42,6 @@ pub struct TradeOfferManager {
 }
 
 impl From<TradeOfferManagerBuilder> for TradeOfferManager {
-    
     fn from(builder: TradeOfferManagerBuilder) -> Self {
         let cookies = Arc::new(Jar::default());
         let steamid = builder.steamid;
@@ -73,7 +72,6 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
 }
 
 impl TradeOfferManager {
-    
     /// Builder for new manager.
     pub fn builder(
         steamid: SteamID,

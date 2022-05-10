@@ -20,7 +20,6 @@ pub struct Asset {
 }
 
 impl Asset {
-    
     pub fn key(&self) -> ClassInfoClass {
         (self.appid, self.classinfo.classid, self.classinfo.instanceid)
     }

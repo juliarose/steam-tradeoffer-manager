@@ -8,7 +8,6 @@ pub struct UserDetails {
 }
 
 impl UserDetails {
-    
     pub fn has_escrow(&self) -> bool {
         self.them_escrow > 0 || self.my_escrow > 0
     }

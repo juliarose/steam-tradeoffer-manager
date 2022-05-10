@@ -22,7 +22,6 @@ fn create_map(capacity: usize) -> LfuClassInfoMap {
 }
 
 impl Default for ClassInfoCache {
-    
     fn default() -> Self {
         Self {
             map: create_map(500),
@@ -31,7 +30,6 @@ impl Default for ClassInfoCache {
 }
 
 impl ClassInfoCache {
-    
     pub fn new(capacity: usize) -> Self {
         Self {
             map: create_map(capacity),

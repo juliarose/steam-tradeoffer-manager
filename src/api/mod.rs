@@ -66,7 +66,6 @@ pub struct SteamTradeOfferAPI {
 }
 
 impl SteamTradeOfferAPI {
-    
     pub fn new(
         cookies: Arc<Jar>,
         steamid: SteamID,

@@ -15,7 +15,6 @@ pub struct PollData {
 }
 
 impl PollData {
-    
     pub fn new() -> Self {
         Self {
             offers_since: None,
