@@ -13,28 +13,34 @@ use crate::{
 use std::{sync::Arc, collections::HashMap};
 use lfu_cache::LfuCache;
 
+type LfuClassInfoMap = LfuCache<ClassInfoClass, Arc<ClassInfo>>;
+
 /// Used for storing caches for [`ClassInfo`] data. Data is stored using an [`LfuCache`]
 /// to limit how many elements are stored in memory.
 #[derive(Debug)]
 pub struct ClassInfoCache {
-    map: LfuCache<ClassInfoClass, Arc<ClassInfo>>,
+    map: LfuClassInfoMap,
+}
+
+fn create_map(capacity: usize) -> LfuClassInfoMap {
+    LfuCache::with_capacity(500)
 }
 
 impl Default for ClassInfoCache {
     
     fn default() -> Self {
-        let map: LfuCache<ClassInfoClass, Arc<ClassInfo>> = LfuCache::with_capacity(500);
-        
         Self {
-            map
+            map: create_map(500),
         }
     }
 }
 
 impl ClassInfoCache {
     
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(capacity: usize) -> Self {
+        Self {
+            map: create_map(capacity),
+        }
     }
     
     /// Gets a [`ClassInfo`] wrapped in an [`Arc`] from the cache.
@@ -55,23 +61,15 @@ impl ClassInfoCache {
     }
     
     /// Inserts a set of [`ClassInfo`] elements into the cache from JSON strings. This deserializes
-    /// the JSON and store a copy of the JSON string to file for reading on-demand.
+    /// the JSON and stores a copy of the JSON string to file for reading on-demand.
     pub fn insert_classinfos(
         &mut self,
-        appid: AppId,
-        classinfos: &HashMap<ClassInfoAppClass, String>,
-    ) -> Result<ClassInfoMap, serde_json::Error> {
-        let mut map = HashMap::new();
-        
-        for ((classid, instanceid), classinfo_string) in classinfos {
-            let classinfo = serde_json::from_str(classinfo_string)?;
-            let classinfo = Arc::new(classinfo);
-            let class = (appid, *classid, *instanceid);
-            
-            self.map.insert(class, Arc::clone(&classinfo));
-            map.insert(class, Arc::clone(&classinfo));
+        classinfos: &HashMap<ClassInfoClass, Arc<ClassInfo>>,
+    ) -> Result<(), serde_json::Error> {
+        for (class, classinfo) in classinfos {
+            self.map.insert(*class, Arc::clone(&classinfo));
         }
 
-        Ok(map)
+        Ok(())
     }
 }

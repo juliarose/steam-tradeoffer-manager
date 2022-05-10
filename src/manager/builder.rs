@@ -14,13 +14,16 @@ pub struct TradeOfferManagerBuilder {
 
 impl TradeOfferManagerBuilder {
     
-    pub fn new(steamid: SteamID, key: String) -> Self {
+    pub fn new(
+        steamid: SteamID,
+        key: String,
+    ) -> Self {
         Self {
             steamid,
             key,
             identity_secret: None,
             language: String::from("english"),
-            classinfo_cache: Arc::new(RwLock::new(ClassInfoCache::new())),
+            classinfo_cache: Arc::new(RwLock::new(ClassInfoCache::default())),
             cancel_duration: None,
         }
     }

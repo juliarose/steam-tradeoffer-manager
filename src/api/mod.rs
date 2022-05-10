@@ -321,12 +321,25 @@ impl SteamTradeOfferAPI {
         
         classinfo_cache_helpers::save_classinfos(appid, &classinfos).await;
         
-        let inserted = self.classinfo_cache
+        let classinfos = classinfos
+            .into_iter()
+            .map(|((classid, instanceid), classinfo_string)| {
+                serde_json::from_str::<response::ClassInfo>(&classinfo_string)
+                    .map(|classinfo| {
+                        (
+                            (appid, classid, instanceid),
+                            Arc::new(classinfo),
+                        )
+                    })
+            })
+            .collect::<Result<HashMap<_, _>, _>>()?;
+        
+        self.classinfo_cache
             .write()
             .unwrap()
-            .insert_classinfos(appid, &classinfos)?;
+            .insert_classinfos(&classinfos)?;
 
-        Ok(inserted)
+        Ok(classinfos)
     }
     
     async fn get_app_asset_classinfos(
