@@ -333,10 +333,8 @@ impl SteamTradeOfferAPI {
             })
             .collect::<Result<HashMap<_, _>, _>>()?;
         
-        self.classinfo_cache
-            .write()
-            .unwrap()
-            .insert_classinfos(&classinfos)?;
+        self.classinfo_cache.write().unwrap()
+            .insert_classinfos(&classinfos);
 
         Ok(classinfos)
     }

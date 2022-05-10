@@ -57,11 +57,9 @@ impl ClassInfoCache {
     pub fn insert_classinfos(
         &mut self,
         classinfos: &HashMap<ClassInfoClass, Arc<ClassInfo>>,
-    ) -> Result<(), serde_json::Error> {
+    ) {
         for (class, classinfo) in classinfos {
             self.map.insert(*class, Arc::clone(classinfo));
         }
-
-        Ok(())
     }
 }
