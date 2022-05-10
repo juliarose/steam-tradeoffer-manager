@@ -23,7 +23,7 @@ pub struct ClassInfoCache {
 }
 
 fn create_map(capacity: usize) -> LfuClassInfoMap {
-    LfuCache::with_capacity(500)
+    LfuCache::with_capacity(capacity)
 }
 
 impl Default for ClassInfoCache {
