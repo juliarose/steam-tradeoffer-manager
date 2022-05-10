@@ -400,7 +400,7 @@ impl SteamTradeOfferAPI {
         for (appid, classes) in apps {
             for maps in self.get_app_asset_classinfos(appid, classes).await? {
                 for (class, classinfo) in maps {
-                    map.insert(class, Arc::clone(&classinfo));
+                    map.insert(class, classinfo);
                 }
             }
         }
