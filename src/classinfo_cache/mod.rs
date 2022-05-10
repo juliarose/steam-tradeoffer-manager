@@ -3,12 +3,7 @@ pub mod helpers;
 
 use crate::{
     response::classinfo::ClassInfo,
-    types::{
-        ClassInfoMap,
-        ClassInfoAppClass,
-        ClassInfoClass,
-        AppId,
-    }
+    types::ClassInfoClass,
 };
 use std::{sync::Arc, collections::HashMap};
 use lfu_cache::LfuCache;
