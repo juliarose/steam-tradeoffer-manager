@@ -60,8 +60,7 @@ impl ClassInfoCache {
         self.map.insert(class, Arc::new(classinfo));
     }
     
-    /// Inserts a set of [`ClassInfo`] elements into the cache from JSON strings. This deserializes
-    /// the JSON and stores a copy of the JSON string to file for reading on-demand.
+    /// Inserts a set of [`ClassInfo`] elements into the cache.
     pub fn insert_classinfos(
         &mut self,
         classinfos: &HashMap<ClassInfoClass, Arc<ClassInfo>>,
