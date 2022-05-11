@@ -48,9 +48,9 @@ impl ClassInfoCache {
     pub fn insert(
         &mut self,
         class: ClassInfoClass,
-        classinfo: ClassInfo,
+        classinfo: Arc<ClassInfo>,
     ) {
-        self.map.insert(class, Arc::new(classinfo));
+        self.map.insert(class, classinfo);
     }
     
     /// Inserts a set of [`ClassInfo`] elements into the cache.

@@ -1,6 +1,6 @@
 use super::TradeOfferManager;
 use crate::{SteamID, ClassInfoCache};
-use std::sync::{RwLock, Arc};
+use std::sync::{Mutex, Arc};
 use chrono::Duration;
 
 pub struct TradeOfferManagerBuilder {
@@ -8,7 +8,7 @@ pub struct TradeOfferManagerBuilder {
     pub key: String,
     pub identity_secret: Option<String>,
     pub language: String,
-    pub classinfo_cache: Arc<RwLock<ClassInfoCache>>,
+    pub classinfo_cache: Arc<Mutex<ClassInfoCache>>,
     pub cancel_duration: Option<Duration>,
 }
 
@@ -22,7 +22,7 @@ impl TradeOfferManagerBuilder {
             key,
             identity_secret: None,
             language: String::from("english"),
-            classinfo_cache: Arc::new(RwLock::new(ClassInfoCache::default())),
+            classinfo_cache: Arc::new(Mutex::new(ClassInfoCache::default())),
             cancel_duration: None,
         }
     }
@@ -37,7 +37,7 @@ impl TradeOfferManagerBuilder {
         self
     }
     
-    pub fn classinfo_cache(mut self, classinfo_cache: Arc<RwLock<ClassInfoCache>>) -> Self {
+    pub fn classinfo_cache(mut self, classinfo_cache: Arc<Mutex<ClassInfoCache>>) -> Self {
         self.classinfo_cache = classinfo_cache;
         self
     }

@@ -5,20 +5,22 @@ use crate::{
         ClassInfoClass,
         ClassInfoAppClass,
         AppId,
-    }
+    },
 };
 use super::types::ClassInfoFile;
 use std::{
     time::{SystemTime, UNIX_EPOCH},
     path::{Path, PathBuf},
-    collections::HashMap,
+    collections::{HashMap, HashSet},
 };
 use futures::future::join_all;
 use async_fs::File;
 use tokio::task::JoinHandle;
 use futures_lite::io::AsyncWriteExt;
 
-async fn load_classinfo(class: ClassInfoClass) -> Result<ClassInfoFile, FileError> {
+async fn load_classinfo(
+    class: ClassInfoClass,
+) -> Result<ClassInfoFile, FileError> {
     let filepath = get_classinfo_file_path(&class, false);
     let data = async_fs::read_to_string(filepath).await?;
     let classinfo = serde_json::from_str::<ClassInfo>(&data)?;
@@ -29,7 +31,10 @@ async fn load_classinfo(class: ClassInfoClass) -> Result<ClassInfoFile, FileErro
     ))
 }
 
-fn get_classinfo_file_path(class: &ClassInfoClass, is_temp: bool) -> PathBuf {
+fn get_classinfo_file_path(
+    class: &ClassInfoClass,
+    is_temp: bool,
+) -> PathBuf {
     let rootdir = env!("CARGO_MANIFEST_DIR");
     let (appid, classid, instanceid) = class;
     let instanceid = match instanceid {
@@ -55,7 +60,10 @@ fn get_classinfo_file_path(class: &ClassInfoClass, is_temp: bool) -> PathBuf {
 }
 
 /// Performs a basic atomic file write.
-async fn save_classinfo(class: ClassInfoClass, classinfo: String) -> Result<(), FileError> {
+async fn save_classinfo(
+    class: ClassInfoClass,
+    classinfo: String,
+) -> Result<(), FileError> {
     let temp_filepath = get_classinfo_file_path(&class, true);
     let mut temp_file = File::create(&temp_filepath).await?;
 
@@ -77,12 +85,14 @@ async fn save_classinfo(class: ClassInfoClass, classinfo: String) -> Result<(), 
     }
 }
 
-pub async fn load_classinfos(classes: &Vec<ClassInfoClass>) -> Vec<Result<ClassInfoFile, FileError>> {
+pub async fn load_classinfos(
+    classes: &HashSet<&ClassInfoClass>,
+) -> Vec<Result<ClassInfoFile, FileError>> {
     let mut tasks: Vec<JoinHandle<Result<ClassInfoFile, FileError>>>= vec![];
     
     for class in classes {
         // must be cloned to move across threads
-        let class = *class;
+        let class = **class;
         
         tasks.push(tokio::spawn(async move {
             load_classinfo(class).await
@@ -101,7 +111,10 @@ pub async fn load_classinfos(classes: &Vec<ClassInfoClass>) -> Vec<Result<ClassI
     results
 }
 
-pub async fn save_classinfos(appid: AppId, classinfos: &HashMap<ClassInfoAppClass, String>) -> Vec<Result<(), FileError>> {
+pub async fn save_classinfos(
+    appid: AppId,
+    classinfos: &HashMap<ClassInfoAppClass, String>,
+) -> Vec<Result<(), FileError>> {
     let mut tasks: Vec<JoinHandle<Result<(), FileError>>>= vec![];
     
     for ((classid, instanceid), classinfo) in classinfos {

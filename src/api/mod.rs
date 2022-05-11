@@ -16,7 +16,7 @@ use api_response::{
 };
 use std::{
     collections::{HashMap, HashSet},
-    sync::{Arc, RwLock},
+    sync::{Arc, RwLock, Mutex},
     time::Duration
 };
 use crate::{
@@ -62,7 +62,7 @@ pub struct SteamTradeOfferAPI {
     pub steamid: SteamID,
     pub identity_secret: Option<String>,
     pub sessionid: Arc<RwLock<Option<String>>>,
-    pub classinfo_cache: Arc<RwLock<ClassInfoCache>>,
+    pub classinfo_cache: Arc<Mutex<ClassInfoCache>>,
 }
 
 impl SteamTradeOfferAPI {
@@ -72,7 +72,7 @@ impl SteamTradeOfferAPI {
         key: String,
         language: String,
         identity_secret: Option<String>,
-        classinfo_cache: Arc<RwLock<ClassInfoCache>>,
+        classinfo_cache: Arc<Mutex<ClassInfoCache>>,
     ) -> Self {
         Self {
             client: get_default_middleware(Arc::clone(&cookies), USER_AGENT_STRING),
@@ -268,7 +268,7 @@ impl SteamTradeOfferAPI {
                 Ok(raw_assets) => {
                     let classes = collect_classes(&raw_assets);
                     let _ = self.get_asset_classinfos(&classes).await?;
-                    let mut classinfo_cache = self.classinfo_cache.write().unwrap();
+                    let mut classinfo_cache = self.classinfo_cache.lock().unwrap();
                     let assets = raw_assets
                         .into_iter()
                         .map(|asset| from_raw_receipt_asset(asset, &mut classinfo_cache))
@@ -333,7 +333,7 @@ impl SteamTradeOfferAPI {
             })
             .collect::<Result<HashMap<_, _>, _>>()?;
         
-        self.classinfo_cache.write().unwrap()
+        self.classinfo_cache.lock().unwrap()
             .insert_classinfos(&classinfos);
 
         Ok(classinfos)
@@ -360,39 +360,66 @@ impl SteamTradeOfferAPI {
         classes: &Vec<ClassInfoClass>,
     ) -> Result<ClassInfoMap, Error> {
         let mut apps: HashMap<AppId, Vec<ClassInfoAppClass>> = HashMap::new();
-        let mut map = HashMap::new();
+        let mut map: HashMap<ClassInfoClass, Arc<response::ClassInfo>> = HashMap::new();
+        let mut needed: HashSet<&ClassInfoClass> = HashSet::from_iter(classes.iter());
+        
+        if classes.is_empty() {
+            return Ok(map);
+        }
         
         {
-            let results = classinfo_cache_helpers::load_classinfos(classes).await;
-            let mut classinfo_cache = self.classinfo_cache.write().unwrap();
-            
-            for (class, classinfo) in results.into_iter().flatten() {
-                classinfo_cache.insert(class, classinfo);
+            {
+                let mut classinfo_cache = self.classinfo_cache.lock().unwrap();
+                
+                needed = needed
+                    .into_iter()
+                    .filter(|class| {
+                        if let Some(classinfo) = classinfo_cache.get_classinfo(&class) {
+                            map.insert(**class, classinfo);
+                            // we don't need it
+                            false
+                        } else {
+                            true
+                        }
+                    })
+                    .collect::<HashSet<_>>();
+                
+                // drop the lock
             }
             
-            for (appid, classid, instanceid) in classes {
-                let class = (*appid, *classid, *instanceid);
-
-                match classinfo_cache.get_classinfo(&class) {
-                    Some(classinfo) => {
+            if !needed.is_empty() {
+                let results = classinfo_cache_helpers::load_classinfos(&needed).await
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>();
+                
+                if !results.is_empty() {
+                    let mut classinfo_cache = self.classinfo_cache.lock().unwrap();
+                    
+                    for (class, classinfo) in results {
+                        let classinfo = Arc::new(classinfo);
+                        
+                        needed.remove(&class);
+                        classinfo_cache.insert(class, Arc::clone(&classinfo));
                         map.insert(class, classinfo);
+                    }
+            
+                    // drop the lock
+                }
+            }
+            
+            for (appid, classid, instanceid) in needed {
+                match apps.get_mut(appid) {
+                    Some(classes) => {
+                        classes.push((*classid, *instanceid));
                     },
                     None => {
-                        match apps.get_mut(appid) {
-                            Some(classes) => {
-                                classes.push((*classid, *instanceid));
-                            },
-                            None => {
-                                let classes = vec![(*classid, *instanceid)];
-                                
-                                apps.insert(*appid, classes);
-                            },
-                        }
-                    }
-                };
+                        let classes = vec![(*classid, *instanceid)];
+                        
+                        apps.insert(*appid, classes);
+                    },
+                }
             }
-            
-            // drop the write lock
         }
         
         for (appid, classes) in apps {
@@ -482,7 +509,7 @@ impl SteamTradeOfferAPI {
 
         let classes = collect_classes(&response_offers);
         let _ = self.get_asset_classinfos(&classes).await?;
-        let mut classinfo_cache = self.classinfo_cache.write().unwrap();
+        let mut classinfo_cache = self.classinfo_cache.lock().unwrap();
         let offers = response_offers
             .into_iter()
             .map(|offer| from_raw_trade_offer(offer, &mut classinfo_cache))
