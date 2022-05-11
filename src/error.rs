@@ -32,6 +32,9 @@ pub enum Error {
     Http(reqwest::Response),
     #[error("Not logged in")]
     NotLoggedIn,
+    #[error("Response unsuccessful")]
+    /// A response returned a JSON response where `success` is `false`.
+    ResponseUnsuccessful,
     #[error("Error parsing HTML document: {}", .0)]
     Html(#[from] ParseHtmlError),
     #[error("Trade error: {}", .0)]

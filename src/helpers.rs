@@ -82,6 +82,8 @@ where
                 }
             } else if regex_is_match!(r#"<h1>Sign In</h1>"#, &html) && regex_is_match!(r#"g_steamID = false;"#, &html) {
                 Err(Error::NotLoggedIn)
+            } else if regex_is_match!(r#"\{"success": ?false\}"#, &html) {
+                Err(Error::ResponseUnsuccessful)
             } else if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
                 Err(Error::Trade(TradeOfferError::from(message)))
             } else {
