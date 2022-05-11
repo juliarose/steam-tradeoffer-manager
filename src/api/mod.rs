@@ -333,8 +333,7 @@ impl SteamTradeOfferAPI {
             })
             .collect::<Result<HashMap<_, _>, _>>()?;
         
-        self.classinfo_cache.lock().unwrap()
-            .insert_classinfos(&classinfos);
+        self.classinfo_cache.lock().unwrap().insert_classinfos(&classinfos);
 
         Ok(classinfos)
     }
@@ -369,6 +368,7 @@ impl SteamTradeOfferAPI {
         
         {
             {
+                // check memory for caches
                 let mut classinfo_cache = self.classinfo_cache.lock().unwrap();
                 
                 needed = needed
@@ -388,6 +388,7 @@ impl SteamTradeOfferAPI {
             }
             
             if !needed.is_empty() {
+                // check filesystem for caches
                 let results = classinfo_cache_helpers::load_classinfos(&needed).await
                     .into_iter()
                     .flatten()

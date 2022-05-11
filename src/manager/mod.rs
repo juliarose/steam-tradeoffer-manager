@@ -330,7 +330,7 @@ impl TradeOfferManager {
                     
                 if seconds_since_last_poll <= 1 {
                     // We last polled less than a second ago... we shouldn't spam the API
-                    return Err(Error::Parameter("Poll called too soon after last poll"));
+                    return Err(Error::PollCalledTooSoon);
                 }            
             }
             
