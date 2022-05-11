@@ -658,21 +658,27 @@ impl SteamTradeOfferAPI {
         tradeofferid: TradeOfferId,
     ) -> Result<(), Error> {
         #[derive(Serialize, Debug)]
-        struct Form<'a> {
-            key: &'a str,
-            tradeofferid: TradeOfferId,
+        struct DeclineOfferParams<'a> {
+            sessionid: &'a String,
         }
-
-        let uri = self.get_api_url("IEconService", "DeclineTradeOffer", 1);
-        let _response = self.client.post(&uri)
-            .form(&Form {
-                key: &self.key,
-                tradeofferid,
+        
+        let sessionid = self.sessionid.read().unwrap().clone();
+        
+        if sessionid.is_none() {
+            return Err(Error::NotLoggedIn);
+        }
+        
+        let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid));
+        let uri = self.get_uri(&format!("/tradeoffer/{}/decline", tradeofferid));
+        let response = self.client.post(&uri)
+            .header(REFERER, referer)
+            .form(&DeclineOfferParams {
+                sessionid: &sessionid.unwrap(),
             })
             .send()
             .await?;
-        // let body: GetInventoryResponse = parses_response(response).await?;
-
+        log::debug!("Response from decline offer: {}", response.text().await?);
+        
         Ok(())
     }
     
@@ -681,20 +687,26 @@ impl SteamTradeOfferAPI {
         tradeofferid: TradeOfferId,
     ) -> Result<(), Error> {
         #[derive(Serialize, Debug)]
-        struct Form<'a> {
-            key: &'a str,
-            tradeofferid: TradeOfferId,
+        struct CancelOfferParams<'a> {
+            sessionid: &'a String,
         }
-
-        let uri = self.get_api_url("IEconService", "CancelTradeOffer", 1);
-        let _response = self.client.post(&uri)
-            .form(&Form {
-                key: &self.key,
-                tradeofferid,
+        
+        let sessionid = self.sessionid.read().unwrap().clone();
+        
+        if sessionid.is_none() {
+            return Err(Error::NotLoggedIn);
+        }
+        
+        let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid));
+        let uri = self.get_uri(&format!("/tradeoffer/{}/cancel", tradeofferid));
+        let response = self.client.post(&uri)
+            .header(REFERER, referer)
+            .form(&CancelOfferParams {
+                sessionid: &sessionid.unwrap(),
             })
             .send()
             .await?;
-        // let body: GetInventoryResponse = parses_response(response).await?;
+        log::debug!("Response from cancel offer: {}", response.text().await?);
         
         Ok(())
     }
