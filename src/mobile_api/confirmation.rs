@@ -1,4 +1,4 @@
-/// A mobile confirmation. There are multiple things that can be confirmed, like trade offers.
+/// A mobile confirmation. Used primarily for confirming trade offers or listing items on the market..
 #[derive(Debug, Clone, PartialEq)]
 pub struct Confirmation {
     pub id: u64,
