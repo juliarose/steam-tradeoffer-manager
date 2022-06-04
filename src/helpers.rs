@@ -1,6 +1,5 @@
 use std::sync::Arc;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
-use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 use reqwest::{header, cookie::CookieStore};
 use serde::de::DeserializeOwned;
 use lazy_regex::{regex_is_match, regex_captures};
@@ -14,7 +13,6 @@ pub fn get_default_middleware<T>(
 where
     T: CookieStore + 'static
 {
-    let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
     let mut headers = header::HeaderMap::new();
     
     headers.insert(header::USER_AGENT, header::HeaderValue::from_static(user_agent_string));
@@ -26,7 +24,6 @@ where
         .unwrap();
     
     ClientBuilder::new(client)
-        .with(RetryTransientMiddleware::new_with_policy(retry_policy))
         .build()
 }
 
@@ -43,22 +40,18 @@ fn is_login(location_option: Option<&header::HeaderValue>) -> bool {
     }
 }
 
-pub async fn check_response(response: reqwest::Response) -> Result<bytes::Bytes, Error> {
+pub async fn check_response(
+    response: reqwest::Response,
+) -> Result<bytes::Bytes, Error> {
     let status = &response.status();
     
     match status.as_u16() {
         300..=399 if is_login(response.headers().get("location")) => {
             Err(Error::NotLoggedIn)
         },
-        400..=499 => {
-            Err(Error::Http(response))
-        },
-        500..=599 => {
-            Err(Error::Http(response))
-        },
-        _ => {
-            Ok(response.bytes().await?)
-        }
+        400..=499 => Err(Error::Http(response)),
+        500..=599 => Err(Error::Http(response)),
+        _ => Ok(response.bytes().await?)
     }
 }
 
