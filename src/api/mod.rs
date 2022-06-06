@@ -246,15 +246,6 @@ impl SteamTradeOfferAPI {
         &self,
         trade_id: &TradeId,
     ) -> Result<Vec<response::asset::Asset>, Error> {
-        fn collect_classes(raw_assets: &[raw::RawReceiptAsset]) -> Vec<ClassInfoClass> {
-            raw_assets
-                .iter()
-                .map(|item| (item.appid, item.classid, item.instanceid))
-                .collect::<HashSet<_>>()
-                .into_iter()
-                .collect::<Vec<_>>()
-        }
-        
         let uri = self.get_uri(&format!("/trade/{}/receipt", trade_id));
         let response = self.client.get(&uri)
             .send()
@@ -266,7 +257,12 @@ impl SteamTradeOfferAPI {
         } else if let Some((_, script)) = regex_captures!(r#"(var oItem;[\s\S]*)</script>"#, &body) {
             match parse_receipt_script(script) {
                 Ok(raw_assets) => {
-                    let classes = collect_classes(&raw_assets);
+                    let classes = raw_assets
+                        .iter()
+                        .map(|item| (item.appid, item.classid, item.instanceid))
+                        .collect::<HashSet<_>>()
+                        .into_iter()
+                        .collect::<Vec<_>>();
                     let map = self.get_asset_classinfos(&classes).await?;
                     let assets = raw_assets
                         .into_iter()
@@ -438,20 +434,6 @@ impl SteamTradeOfferAPI {
         filter: &OfferFilter,
         historical_cutoff: &Option<ServerTime>,
     ) -> Result<Vec<response::trade_offer::TradeOffer>, Error> {
-        fn collect_classes(offers: &[raw::RawTradeOffer]) -> Vec<ClassInfoClass> {
-            offers
-                .iter()
-                .flat_map(|offer| {
-                    offer.items_to_give
-                        .iter()
-                        .chain(offer.items_to_receive.iter())
-                        .map(|item| (item.appid, item.classid, item.instanceid))
-                })
-                .collect::<HashSet<_>>()
-                .into_iter()
-                .collect()
-        }
-        
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -507,7 +489,17 @@ impl SteamTradeOfferAPI {
             response_offers.append(&mut response.trade_offers_sent);
         }
 
-        let classes = collect_classes(&response_offers);
+        let classes = response_offers
+            .iter()
+            .flat_map(|offer| {
+                offer.items_to_give
+                    .iter()
+                    .chain(offer.items_to_receive.iter())
+                    .map(|item| (item.appid, item.classid, item.instanceid))
+            })
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect();
         let map = self.get_asset_classinfos(&classes).await?;
         let offers = response_offers
             .into_iter()
