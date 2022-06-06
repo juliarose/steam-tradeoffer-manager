@@ -267,11 +267,10 @@ impl SteamTradeOfferAPI {
             match parse_receipt_script(script) {
                 Ok(raw_assets) => {
                     let classes = collect_classes(&raw_assets);
-                    let _ = self.get_asset_classinfos(&classes).await?;
-                    let mut classinfo_cache = self.classinfo_cache.lock().unwrap();
+                    let map = self.get_asset_classinfos(&classes).await?;
                     let assets = raw_assets
                         .into_iter()
-                        .map(|asset| from_raw_receipt_asset(asset, &mut classinfo_cache))
+                        .map(|asset| from_raw_receipt_asset(asset, &map))
                         .collect::<Result<Vec<_>, _>>()?;
                     
                     Ok(assets)
@@ -509,11 +508,10 @@ impl SteamTradeOfferAPI {
         }
 
         let classes = collect_classes(&response_offers);
-        let _ = self.get_asset_classinfos(&classes).await?;
-        let mut classinfo_cache = self.classinfo_cache.lock().unwrap();
+        let map = self.get_asset_classinfos(&classes).await?;
         let offers = response_offers
             .into_iter()
-            .map(|offer| from_raw_trade_offer(offer, &mut classinfo_cache))
+            .map(|offer| from_raw_trade_offer(offer, &map))
             .collect::<Result<Vec<_>, _>>()?;
         
         Ok(offers)

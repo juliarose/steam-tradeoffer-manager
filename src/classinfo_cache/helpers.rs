@@ -25,10 +25,7 @@ async fn load_classinfo(
     let data = async_fs::read_to_string(filepath).await?;
     let classinfo = serde_json::from_str::<ClassInfo>(&data)?;
             
-    Ok((
-        class,
-        classinfo,
-    ))
+    Ok((class, classinfo))
 }
 
 fn get_classinfo_file_path(

@@ -1,19 +1,20 @@
 use super::raw;
 use lazy_regex::Regex;
+use std::sync::Arc;
 use crate::{
     SteamID,
     error::MissingClassInfoError,
-    classinfo_cache::ClassInfoCache,
+    types::ClassInfoMap,
     response,
 };
 
 pub fn from_raw_receipt_asset(
     asset: raw::RawReceiptAsset,
-    cache: &mut ClassInfoCache,
+    cache: &ClassInfoMap,
 ) -> Result<response::asset::Asset, MissingClassInfoError> {
-    if let Some(classinfo) = cache.get_classinfo(&(asset.appid, asset.classid, asset.instanceid)) {
+    if let Some(classinfo) = cache.get(&(asset.appid, asset.classid, asset.instanceid)) {
         Ok(response::asset::Asset {
-            classinfo,
+            classinfo: Arc::clone(&classinfo),
             appid: asset.appid,
             contextid: asset.contextid,
             assetid: asset.assetid,
@@ -30,15 +31,15 @@ pub fn from_raw_receipt_asset(
 
 pub fn from_raw_trade_offer(
     offer: raw::RawTradeOffer,
-    cache: &mut ClassInfoCache,
+    cache: &ClassInfoMap,
 ) -> Result<response::trade_offer::TradeOffer, MissingClassInfoError> {
-    fn collect_items(assets: Vec<raw::RawAsset>, cache: &mut ClassInfoCache) -> Result<Vec<response::asset::Asset>, MissingClassInfoError> {
+    fn collect_items(assets: Vec<raw::RawAsset>, cache: &ClassInfoMap) -> Result<Vec<response::asset::Asset>, MissingClassInfoError> {
         let mut items = Vec::new();
         
         for asset in assets {
-            if let Some(classinfo) = cache.get_classinfo(&(asset.appid, asset.classid, asset.instanceid)) {
+            if let Some(classinfo) = cache.get(&(asset.appid, asset.classid, asset.instanceid)) {
                 items.push(response::asset::Asset {
-                    classinfo,
+                    classinfo: Arc::clone(&classinfo),
                     appid: asset.appid,
                     contextid: asset.contextid,
                     assetid: asset.assetid,
