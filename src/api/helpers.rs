@@ -10,9 +10,9 @@ use crate::{
 
 pub fn from_raw_receipt_asset(
     asset: raw::RawReceiptAsset,
-    cache: &ClassInfoMap,
+    map: &ClassInfoMap,
 ) -> Result<response::asset::Asset, MissingClassInfoError> {
-    if let Some(classinfo) = cache.get(&(asset.appid, asset.classid, asset.instanceid)) {
+    if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
         Ok(response::asset::Asset {
             classinfo: Arc::clone(&classinfo),
             appid: asset.appid,
@@ -31,13 +31,13 @@ pub fn from_raw_receipt_asset(
 
 pub fn from_raw_trade_offer(
     offer: raw::RawTradeOffer,
-    cache: &ClassInfoMap,
+    map: &ClassInfoMap,
 ) -> Result<response::trade_offer::TradeOffer, MissingClassInfoError> {
-    fn collect_items(assets: Vec<raw::RawAsset>, cache: &ClassInfoMap) -> Result<Vec<response::asset::Asset>, MissingClassInfoError> {
+    fn collect_items(assets: Vec<raw::RawAsset>, map: &ClassInfoMap) -> Result<Vec<response::asset::Asset>, MissingClassInfoError> {
         let mut items = Vec::new();
         
         for asset in assets {
-            if let Some(classinfo) = cache.get(&(asset.appid, asset.classid, asset.instanceid)) {
+            if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
                 items.push(response::asset::Asset {
                     classinfo: Arc::clone(&classinfo),
                     appid: asset.appid,
@@ -67,8 +67,8 @@ pub fn from_raw_trade_offer(
         )
     }
     
-    let items_to_give = collect_items(offer.items_to_give, cache)?;
-    let items_to_receive = collect_items(offer.items_to_receive, cache)?;
+    let items_to_give = collect_items(offer.items_to_give, map)?;
+    let items_to_receive = collect_items(offer.items_to_receive, map)?;
     
     Ok(response::trade_offer::TradeOffer {
         items_to_give,
