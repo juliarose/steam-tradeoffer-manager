@@ -129,7 +129,7 @@ impl MobileAPI {
         let body: SendConfirmationResponse = parses_response(response).await?;
         
         if !body.success {
-            return Err(Error::Response("Confirmation unsuccessful".into()));
+            return Err(Error::Response("Confirmation unsuccessful. The confirmation may no longer exist or another trade may be going through. Check again to verify.".into()));
         }
         
         Ok(())
