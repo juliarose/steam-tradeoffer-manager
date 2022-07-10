@@ -644,10 +644,16 @@ impl SteamTradeOfferAPI {
     pub async fn decline_offer(
         &self,
         tradeofferid: TradeOfferId,
-    ) -> Result<(), Error> {
+    ) -> Result<TradeOfferId, Error> {
         #[derive(Serialize, Debug)]
         struct DeclineOfferParams<'a> {
             sessionid: &'a String,
+        }
+        
+        #[derive(Deserialize, Debug)]
+        struct Response {
+            #[serde(with = "string")]
+            tradeofferid: TradeOfferId,
         }
         
         let sessionid = self.sessionid.read().unwrap().clone();
@@ -665,18 +671,24 @@ impl SteamTradeOfferAPI {
             })
             .send()
             .await?;
-        log::debug!("Response from decline offer: {}", response.text().await?);
+        let body: Response = parses_response(response).await?;
         
-        Ok(())
+        Ok(body.tradeofferid)
     }
     
     pub async fn cancel_offer(
         &self,
         tradeofferid: TradeOfferId,
-    ) -> Result<(), Error> {
+    ) -> Result<TradeOfferId, Error> {
         #[derive(Serialize, Debug)]
         struct CancelOfferParams<'a> {
             sessionid: &'a String,
+        }
+        
+        #[derive(Deserialize, Debug)]
+        struct Response {
+            #[serde(with = "string")]
+            tradeofferid: TradeOfferId,
         }
         
         let sessionid = self.sessionid.read().unwrap().clone();
@@ -694,9 +706,9 @@ impl SteamTradeOfferAPI {
             })
             .send()
             .await?;
-        log::debug!("Response from cancel offer: {}", response.text().await?);
+        let body: Response = parses_response(response).await?;
         
-        Ok(())
+        Ok(body.tradeofferid)
     }
     
     pub async fn get_inventory_old(
