@@ -41,7 +41,6 @@ use crate::{
     serializers::string,
     helpers::{get_default_middleware, parses_response},
 };
-use async_std::task::sleep;
 use serde::{Deserialize, Serialize};
 use reqwest::cookie::Jar;
 use url::{Url, ParseError};
