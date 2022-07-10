@@ -81,7 +81,7 @@ impl MobileAPI {
         Ok(())
     }
     
-    async fn get_confirmation_query_params(&self, tag: &str) -> Result<HashMap<&str, String>, Error> {
+    async fn get_confirmation_query_params<'a>(&self, tag: &str) -> Result<HashMap<&'a str, String>, Error> {
         if self.identity_secret.is_none() {
             return Err(Error::Parameter("No identity secret"));
         }
