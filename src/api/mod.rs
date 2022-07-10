@@ -814,9 +814,6 @@ impl SteamTradeOfferAPI {
                     return Err(Error::Response("Bad response".into()));
                 }
                 
-                // space out requests
-                sleep(Duration::from_secs(1)).await;
-                
                 start_assetid = body.last_assetid;
                 responses.push(body);
             } else {
