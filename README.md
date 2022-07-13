@@ -2,7 +2,7 @@
 
 Makes steam trade offers easy.
 
-Still a work in progress as I flesh out and test the APIs.
+Mostly functional, but you may find some issues. Please open an issue if you do.
 
 ## Features
 

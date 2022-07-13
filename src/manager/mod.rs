@@ -357,7 +357,12 @@ impl TradeOfferManager {
             let offers_to_cancel = offers
                 .iter_mut()
                 .filter(|offer| {
-                    offer.trade_offer_state == TradeOfferState::Active &&
+                    let is_active_state = {
+                        offer.trade_offer_state == TradeOfferState::Active ||
+                        offer.trade_offer_state == TradeOfferState::CreatedNeedsConfirmation
+                    };
+                    
+                    is_active_state &&
                     offer.is_our_offer &&
                     offer.time_created < cancel_time
                 });
