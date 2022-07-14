@@ -367,7 +367,7 @@ impl SteamTradeOfferAPI {
                 needed = needed
                     .into_iter()
                     .filter(|class| {
-                        if let Some(classinfo) = classinfo_cache.get_classinfo(&class) {
+                        if let Some(classinfo) = classinfo_cache.get_classinfo(class) {
                             map.insert(**class, classinfo);
                             // we don't need it
                             false

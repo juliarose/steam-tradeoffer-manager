@@ -25,7 +25,7 @@ async fn accept_offer(
     let accepted_offer = manager.accept_offer(offer).await?;
     
     if accepted_offer.needs_mobile_confirmation {
-        manager.confirm_offer(&offer).await
+        manager.confirm_offer(offer).await
     } else {
         Ok(())
     }
@@ -37,8 +37,8 @@ fn get_session() -> (String, Vec<String>) {
     let cookies_str = env::var("COOKIES")
         .expect("COOKIES missing");
     
-    for cookie in cookies_str.split("&") {
-        let mut split = cookie.split("=");
+    for cookie in cookies_str.split('&') {
+        let mut split = cookie.split('=');
         
         if split.next().unwrap() == "sessionid" {
             sessionid = Some(split.next().unwrap().to_string());
@@ -52,7 +52,7 @@ fn get_session() -> (String, Vec<String>) {
 
 fn get_steamid(key: &str) -> SteamID {
     let sid_str = env::var(key)
-        .expect(&format!("{} missing", key));
+        .unwrap_or_else(|_| panic!("{} missing", key));
     
     SteamID::from(sid_str.parse::<u64>().unwrap())
 }

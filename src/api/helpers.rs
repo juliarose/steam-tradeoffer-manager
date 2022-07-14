@@ -14,7 +14,7 @@ pub fn from_raw_receipt_asset(
 ) -> Result<response::asset::Asset, MissingClassInfoError> {
     if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
         Ok(response::asset::Asset {
-            classinfo: Arc::clone(&classinfo),
+            classinfo: Arc::clone(classinfo),
             appid: asset.appid,
             contextid: asset.contextid,
             assetid: asset.assetid,
@@ -39,7 +39,7 @@ pub fn from_raw_trade_offer(
         for asset in assets {
             if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
                 items.push(response::asset::Asset {
-                    classinfo: Arc::clone(&classinfo),
+                    classinfo: Arc::clone(classinfo),
                     appid: asset.appid,
                     contextid: asset.contextid,
                     assetid: asset.assetid,
