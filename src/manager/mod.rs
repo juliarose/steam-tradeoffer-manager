@@ -402,7 +402,7 @@ impl TradeOfferManager {
             
             // Clear poll data offers otherwise this could expand infinitely.
             // Using a higher number than is removed so this process needs to run less frequently.
-            if poll_data.state_map.len() > 1200 {
+            if poll_data.state_map.len() > 2500 {
                 let mut tradeofferids = poll_data.state_map
                     .keys()
                     .cloned()
@@ -414,7 +414,7 @@ impl TradeOfferManager {
                 let (
                     _tradeofferids,
                     tradeofferids_to_remove,
-                ) = tradeofferids.split_at(1000);
+                ) = tradeofferids.split_at(2000);
                 
                 for tradeofferid in tradeofferids_to_remove {
                     poll_data.state_map.remove(tradeofferid);
