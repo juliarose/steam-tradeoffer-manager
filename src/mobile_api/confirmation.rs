@@ -1,9 +1,10 @@
-/// A mobile confirmation. Used primarily for confirming trade offers or listing items on the market..
+/// A mobile confirmation. Used primarily for confirming trade offers or listing 
+/// items on the market.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Confirmation {
     pub id: u64,
     pub key: u64,
-    /// Trade offer ID or market transaction ID
+    /// Trade offer ID or market transaction ID.
     pub creator: u64,
     pub conf_type: ConfirmationType,
     pub description: String,

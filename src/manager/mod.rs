@@ -400,6 +400,27 @@ impl TradeOfferManager {
                 }
             }
             
+            // Clear poll data offers otherwise this could expand infinitely.
+            // Using a higher number than is removed so this process needs to run less frequently.
+            if poll_data.state_map.len() > 1200 {
+                let mut tradeofferids = poll_data.state_map
+                    .keys()
+                    .cloned()
+                    .collect::<Vec<_>>();
+                
+                // high to low
+                tradeofferids.sort_by(|a, b| b.cmp(a));
+                
+                let (
+                    _tradeofferids,
+                    tradeofferids_to_remove,
+                ) = tradeofferids.split_at(1000);
+                
+                for tradeofferid in tradeofferids_to_remove {
+                    poll_data.state_map.remove(tradeofferid);
+                }
+            }
+            
             if offers_since > 0 {
                 poll_data.offers_since = Some(time::timestamp_to_server_time(offers_since));
             }
