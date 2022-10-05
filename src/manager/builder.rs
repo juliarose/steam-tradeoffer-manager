@@ -3,11 +3,17 @@ use crate::{SteamID, ClassInfoCache};
 use std::sync::{Mutex, Arc};
 use chrono::Duration;
 
+/// Builder for constring a trade offer manager.
 pub struct TradeOfferManagerBuilder {
+    /// Your account's Steam ID.
     pub steamid: SteamID,
+    /// Your account's API key from https://steamcommunity.com/dev/apikey
     pub key: String,
+    /// The identity secret for the account (optional). Required for mobile confirmations.
     pub identity_secret: Option<String>,
+    /// The language for API responses.
     pub language: String,
+    /// A 
     pub classinfo_cache: Arc<Mutex<ClassInfoCache>>,
     pub cancel_duration: Option<Duration>,
 }

@@ -3,18 +3,6 @@ use reqwest_middleware;
 use std::{fmt, num::ParseIntError};
 
 #[derive(thiserror::Error, Debug)]
-pub enum FileError {
-    #[error("Filesystem error: {}", .0)]
-    FileSystem(#[from] std::io::Error),
-    #[error("Error parsing file contents: {}", .0)]
-    Parse(#[from] serde_json::Error),
-    #[error("Join error")]
-    JoinError,
-    #[error("Path conversion to string failed")]
-    PathError,
-}
-
-#[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Invalid parameter: {}", .0)]
     Parameter(&'static str),
@@ -47,27 +35,75 @@ pub enum Error {
     PollCalledTooSoon,
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum FileError {
+    #[error("Filesystem error: {}", .0)]
+    FileSystem(#[from] std::io::Error),
+    #[error("Error parsing file contents: {}", .0)]
+    Parse(#[from] serde_json::Error),
+    #[error("Join error")]
+    JoinError,
+    #[error("Path conversion to string failed")]
+    PathError,
+}
+
+/// An error received from a response when sending or acting of trade offers.
 #[derive(thiserror::Error, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum TradeOfferError {
+    /// An unknown error occurred.
     #[error("{}", .0)]
     Unknown(String),
+    /// An unknown error occurred with a numeric EResult code.
     #[error("{}", .0)]
     UnknownEResult(i32),
+    /// # Code 2
+    /// Returned when a more specific error code couldn't be determined.
     #[error("Fail")]
     Fail,
+    /// # Code 11
+    /// This trade offer is in an invalid state, and cannot be acted upon. Usually 
+    /// you'll need to send a new trade offer.
     #[error("InvalidState")]
     InvalidState,
+    /// # Code 15
+    /// You can't send or accept this trade offer because either you can't trade with the 
+    /// other user, or one of the parties in this trade can't send or receive one of the 
+    /// items in the trade.
+    /// 
+    /// ## Possible causes:
+    /// - You aren't friends with the other user and you didn't provide a trade token.
+    /// - The provided trade token was wrong.
+    /// - You are trying to send or receive an item for a game in which you or the other user 
+    /// can't trade (e.g. due to a VAC ban).
+    /// - You are trying to send an item and the other user's inventory is full for that game.
     #[error("AccessDenied")]
     AccessDenied,
+    /// # Code 16
+    /// The Steam Community web server did not receive a timely reply from the trade  offers 
+    /// server while sending/accepting this trade offer. It is possible (and not unlikely) 
+    /// that the operation actually succeeded.
     #[error("Timeout")]
     Timeout,
+    /// # Code 20
+    /// As the name suggests, the trade offers service is currently unavailable.
     #[error("ServiceUnavailable")]
     ServiceUnavailable,
-    #[error("TimeLimitExceededout")]
+    /// # Code 25
+    /// Sending this trade offer would put you over your limit. You are limited to 5 Active offers 
+    /// (including those requiring confirmation, but excluding those in escrow) to a single 
+    /// recipient, or 30 Active offers total. If you are accepting a trade offer, then your 
+    /// inventory for a particular game may be full.
+    #[error("LimitExceeded")]
     LimitExceeded,
+    /// # Code 26
+    /// This response code suggests that one or more of the items in this trade offer does not 
+    /// exist in the inventory from which it was requested.
     #[error("Revoked")]
     Revoked,
+    /// # Code 28
+    /// When accepting a trade offer, this response code suggests that it has already been 
+    /// accepted.
     #[error("AlreadyRedeemed")]
     AlreadyRedeemed,
 }
@@ -81,7 +117,7 @@ impl TradeOfferError {
             16 => Self::Timeout,
             20 => Self::ServiceUnavailable,
             25 => Self::LimitExceeded,
-            26 => Self::LimitExceeded,
+            26 => Self::Revoked,
             28 => Self::AlreadyRedeemed,
             _ => Self::UnknownEResult(code),
         }
@@ -96,7 +132,7 @@ impl TradeOfferError {
             Self::ServiceUnavailable => Some(20),
             Self::LimitExceeded => Some(25),
             Self::Revoked => Some(26),
-            Self::AlreadyRedeemed => Some(2),
+            Self::AlreadyRedeemed => Some(28),
             Self::UnknownEResult(code) => Some(*code),
             _ => None,
         }
