@@ -2,47 +2,69 @@ use crate::types::{AppId, ClassId, InstanceId, TradeOfferId};
 use reqwest_middleware;
 use std::{fmt, num::ParseIntError};
 
+/// Any range of errors encountered when making requests.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+    /// A paramter is missing or invalid.
     #[error("Invalid parameter: {}", .0)]
     Parameter(&'static str),
+    /// The response is not expected. The containing string provides a message with more details.
     #[error("Unexpected response: {}", .0)]
     Response(String),
+    /// An error was encountered during the request.
     #[error("Request error: {}", .0)]
     Reqwest(#[from] reqwest::Error),
+    /// An error was encountered within the request middleware.
     #[error("Request middleware error: {}", .0)]
     ReqwestMiddleware(anyhow::Error),
+    /// An error was encountered converting parameters to a valid URL string.
     #[error("Unable to convert to query parameters: {}", .0)]
     QueryParameter(#[from] serde_qs::Error),
+    /// An error was encountered parsing a JSON response body.
     #[error("Error parsing response: {}", .0)]
     Parse(#[from] serde_json::Error),
+    /// An error was encountered on response. This is usually a response with an HTTP code other 
+    /// than 200.
     #[error("Error {}", .0.status())]
     Http(reqwest::Response),
+    /// You are not logged in.
     #[error("Not logged in")]
     NotLoggedIn,
-    #[error("Response unsuccessful")]
     /// A response returned a JSON response where `success` is `false`.
+    #[error("Response unsuccessful")]
     ResponseUnsuccessful,
+    /// An HTML document could not be parsed from the response.
     #[error("Error parsing HTML document: {}", .0)]
     Html(#[from] ParseHtmlError),
+    /// An error was encountered when sending or acting on trade offers.
     #[error("Trade error: {}", .0)]
     Trade(TradeOfferError),
     #[error("{}", .0)]
+    /// A [ClassInfo] is missing. For some reason a classinfo could not be obtained from Steam or 
+    /// the file system. This is rare but can sometimes occur if Steam's servers are having 
+    /// issues.
     MissingClassInfo(#[from] MissingClassInfoError),
+    /// This trade offer has no confirmations.
     #[error("No confirmation for offer {}", .0)]
     NoConfirmationForOffer(TradeOfferId),
+    /// A poll was called within 1 second from the last poll.
     #[error("Poll called too soon after last poll")]
     PollCalledTooSoon,
 }
 
+/// An error occurred when working with the file system.
 #[derive(thiserror::Error, Debug)]
 pub enum FileError {
+    /// A generic error.
     #[error("Filesystem error: {}", .0)]
     FileSystem(#[from] std::io::Error),
+    /// File contents could not be parsed as JSON.
     #[error("Error parsing file contents: {}", .0)]
     Parse(#[from] serde_json::Error),
+    // An error occurred joining reads.
     #[error("Join error")]
     JoinError,
+    // A path could not be converted to a string.
     #[error("Path conversion to string failed")]
     PathError,
 }
@@ -51,7 +73,7 @@ pub enum FileError {
 #[derive(thiserror::Error, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum TradeOfferError {
-    /// An unknown error occurred.
+    /// An unknown error occurred. The contained string will contain additional information.
     #[error("{}", .0)]
     Unknown(String),
     /// An unknown error occurred with a numeric EResult code.
@@ -71,7 +93,7 @@ pub enum TradeOfferError {
     /// other user, or one of the parties in this trade can't send or receive one of the 
     /// items in the trade.
     /// 
-    /// ## Possible causes:
+    /// Possible causes:
     /// - You aren't friends with the other user and you didn't provide a trade token.
     /// - The provided trade token was wrong.
     /// - You are trying to send or receive an item for a game in which you or the other user 

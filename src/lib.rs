@@ -17,6 +17,7 @@ pub use classinfo_cache::ClassInfoCache;
 pub use time::ServerTime;
 pub use manager::{
     TradeOfferManager,
+    TradeOfferManagerBuilder,
     Poll,
 };
 
