@@ -1,4 +1,4 @@
-use steam_tradeoffers::{
+use steam_tradeoffer_manager::{
     TradeOfferManager,
     request::trade_offer::{NewTradeOffer, Item},
     SteamID,

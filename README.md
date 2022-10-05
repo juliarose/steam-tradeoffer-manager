@@ -1,4 +1,4 @@
-# steam-tradeoffers
+# steam-tradeoffer-manager
 
 Makes steam trade offers easy.
 

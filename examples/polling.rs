@@ -1,4 +1,4 @@
-use steam_tradeoffers::{
+use steam_tradeoffer_manager::{
     TradeOfferManager,
     response::{TradeOffer, Asset},
     enums::TradeOfferState,

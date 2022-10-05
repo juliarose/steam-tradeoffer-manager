@@ -1,11 +1,11 @@
 [package]
-name = "steam-tradeoffers"
+name = "steam-tradeoffer-manager"
 version = "0.1.0"
 edition = "2021"
 description = "Makes steam trade offers easy."
 authors = ["Julia"]
-homepage = "https://github.com/juliarose/steam-tradeoffers"
-repository = "https://github.com/juliarose/steam-tradeoffers"
+homepage = "https://github.com/juliarose/steam-tradeoffer-manager"
+repository = "https://github.com/juliarose/steam-tradeoffer-manager"
 license = "MIT"
 keywords = ["tf2", "steam"]
 readme = "README.md"

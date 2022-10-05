@@ -47,7 +47,7 @@ pub enum Error {
     PollCalledTooSoon,
 }
 
-#[derive(thiserror::Error, Debug, PartialEq)]
+#[derive(thiserror::Error, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum TradeOfferError {
     #[error("{}", .0)]
