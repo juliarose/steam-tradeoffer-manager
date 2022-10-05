@@ -13,8 +13,11 @@ pub struct TradeOfferManagerBuilder {
     pub identity_secret: Option<String>,
     /// The language for API responses.
     pub language: String,
-    /// A 
+    /// The [ClassInfoCache] to use for this manager. Useful if instantiation multiple managers 
+    /// to share state.
     pub classinfo_cache: Arc<Mutex<ClassInfoCache>>,
+    /// The duration after a sent offer has been active to cancel during a poll. Offers will 
+    /// not be cancelled if this is not set.
     pub cancel_duration: Option<Duration>,
 }
 
