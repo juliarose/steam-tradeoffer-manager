@@ -31,6 +31,25 @@ async fn accept_offer(
     }
 }
 
+async fn handle_offer(
+    manager: &TradeOfferManager,
+    mut offer: &mut TradeOffer,
+) {
+    println!("New offer {}", offer);
+    println!("Receiving: {:?}", assets_item_names(&offer.items_to_receive));
+    println!("Giving: {:?}", assets_item_names(&offer.items_to_give));
+    
+    // free items
+    if offer.items_to_give.is_empty() {
+        if let Err(error) = accept_offer(&manager, &mut offer).await {
+            println!("Error accepting offer {}: {}", offer, error);
+        } else {
+            println!("Accepted offer {}", offer);
+        }
+    }
+}
+
+/// Gets session from environment variable.
 fn get_session() -> (String, Vec<String>) {
     let mut sessionid = None;
     let mut cookies: Vec<String> = Vec::new();
@@ -50,6 +69,7 @@ fn get_session() -> (String, Vec<String>) {
     (sessionid.unwrap(), cookies)
 }
 
+/// Gets steamid from environment variable.
 fn get_steamid(key: &str) -> SteamID {
     let sid_str = env::var(key)
         .unwrap_or_else(|_| panic!("{} missing", key));
@@ -58,7 +78,7 @@ fn get_steamid(key: &str) -> SteamID {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() {
     dotenv().ok();
     
     let steamid = get_steamid("STEAMID");
@@ -69,35 +89,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build();
     let (sessionid, cookies) = get_session();
     
-    manager.set_session(&sessionid, &cookies)?;
+    manager.set_session(&sessionid, &cookies).expect("Could not set session");
     
     // gets changes to trade offers for account
-    for (mut offer, old_state) in manager.do_poll(true).await? {
-        if let Some(state) = old_state {
-            println!(
-                "Offer {} changed state: {} -> {}",
-                offer,
-                state,
-                offer.trade_offer_state
-            );
-        } else if
-            offer.trade_offer_state == TradeOfferState::Active &&
-            !offer.is_our_offer
-        {
-            println!("New offer {}", offer);
-            println!("Receiving: {:?}", assets_item_names(&offer.items_to_receive));
-            println!("Giving: {:?}", assets_item_names(&offer.items_to_give));
-            
-            // free items
-            if offer.items_to_give.is_empty() {
-                if let Err(error) = accept_offer(&manager, &mut offer).await {
-                    println!("Error accepting offer {}: {}", offer, error);
-                } else {
-                    println!("Accepted offer {}", offer);
+    loop {
+        match manager.do_poll(true).await {
+            Ok(offers) => {
+                for (mut offer, old_state) in offers {
+                    if let Some(state) = old_state {
+                        println!(
+                            "Offer {} changed state: {} -> {}",
+                            offer,
+                            state,
+                            offer.trade_offer_state
+                        );
+                    } else if
+                        offer.trade_offer_state == TradeOfferState::Active &&
+                        !offer.is_our_offer
+                    {
+                        handle_offer(&manager, &mut offer).await;
+                    }
                 }
-            }
+            },
+            Err(error) => {
+                println!("Error polling offers: {}", error);
+            },
         }
+        
+        // poll every 30 seconds
+        // use async_std sleep if you need a non-blocking sleep
+        std::thread::sleep(std::time::Duration::from_secs(30));
     }
-    
-    Ok(())
 }

@@ -192,6 +192,7 @@ impl From<reqwest_middleware::Error> for Error {
     }
 }
 
+/// Details the missing classinfo.
 #[derive(thiserror::Error, Debug)]
 pub struct MissingClassInfoError {
     pub appid: AppId,
@@ -209,12 +210,16 @@ impl fmt::Display for MissingClassInfoError {
     }
 }
 
+/// An error occurred when parsing HTML.
 #[derive(thiserror::Error, Debug)]
 pub enum ParseHtmlError {
+    /// The HTML is not what is expected.
     #[error("{}", .0)]
     Malformed(&'static str),
+    /// There was an error in the response.
     #[error("{}", .0)]
     Response(String),
+    /// An error occurred parsing an integer in the response.
     #[error("{}", .0)]
     ParseInt(#[from] ParseIntError),
 }
