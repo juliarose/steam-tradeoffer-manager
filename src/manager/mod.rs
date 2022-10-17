@@ -7,7 +7,7 @@ pub use builder::TradeOfferManagerBuilder;
 pub use poll::Poll;
 
 use poll_data::PollData;
-use std::{cmp, sync::{Arc, RwLock}};
+use std::{cmp, path::PathBuf, sync::{Arc, RwLock}};
 use chrono::Duration;
 use crate::{
     error::Error,
@@ -39,6 +39,7 @@ pub struct TradeOfferManager {
     mobile_api: MobileAPI,
     poll_data: Arc<RwLock<PollData>>,
     cancel_duration: Option<Duration>,
+    data_directory: PathBuf,
 }
 
 impl From<TradeOfferManagerBuilder> for TradeOfferManager {
@@ -46,7 +47,10 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
         let cookies = Arc::new(Jar::default());
         let steamid = builder.steamid;
         let identity_secret = builder.identity_secret;
-        let poll_data = file::load_poll_data(&steamid).unwrap_or_else(|_| PollData::new());
+        let poll_data = file::load_poll_data(
+            &steamid,
+            &builder.data_directory,
+        ).unwrap_or_else(|_| PollData::new());
         let language = builder.language;
         
         Self {
@@ -58,6 +62,7 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
                 language.clone(),
                 identity_secret.clone(),
                 builder.classinfo_cache,
+                builder.data_directory.clone(),
             ),
             mobile_api: MobileAPI::new(
                 cookies,
@@ -67,6 +72,7 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
             ),
             poll_data: Arc::new(RwLock::new(poll_data)),
             cancel_duration: builder.cancel_duration,
+            data_directory: builder.data_directory,
         }
     }
 }
@@ -436,6 +442,10 @@ impl TradeOfferManager {
         let poll_data = self.poll_data.read().unwrap().clone();
         let data = serde_json::to_string(&poll_data)?;
         
-        file::save_poll_data(&self.steamid, &data).await
+        file::save_poll_data(
+            &self.steamid,
+            &data,
+            &self.data_directory,
+        ).await
     }
 }

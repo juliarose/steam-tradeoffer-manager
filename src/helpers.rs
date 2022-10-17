@@ -1,10 +1,14 @@
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest::{header, cookie::CookieStore};
 use serde::de::DeserializeOwned;
 use lazy_regex::{regex_is_match, regex_captures};
 use crate::error::{TradeOfferError, Error};
 use log::error;
+
+pub fn get_default_data_directory() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets")
+}
 
 pub fn get_default_middleware<T>(
     cookie_store: Arc<T>,

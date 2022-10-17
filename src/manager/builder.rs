@@ -1,6 +1,6 @@
 use super::TradeOfferManager;
-use crate::{SteamID, ClassInfoCache};
-use std::sync::{Mutex, Arc};
+use crate::{SteamID, ClassInfoCache, helpers::get_default_data_directory};
+use std::{path::PathBuf, sync::{Mutex, Arc}};
 use chrono::Duration;
 
 /// Builder for constring a trade offer manager.
@@ -19,6 +19,8 @@ pub struct TradeOfferManagerBuilder {
     /// The duration after a sent offer has been active to cancel during a poll. Offers will 
     /// not be cancelled if this is not set.
     pub cancel_duration: Option<Duration>,
+    /// The location to save data to.
+    pub data_directory: PathBuf,
 }
 
 impl TradeOfferManagerBuilder {
@@ -26,6 +28,7 @@ impl TradeOfferManagerBuilder {
         steamid: SteamID,
         key: String,
     ) -> Self {
+
         Self {
             steamid,
             key,
@@ -33,6 +36,7 @@ impl TradeOfferManagerBuilder {
             language: String::from("english"),
             classinfo_cache: Arc::new(Mutex::new(ClassInfoCache::default())),
             cancel_duration: None,
+            data_directory: get_default_data_directory(),
         }
     }
     
@@ -53,6 +57,11 @@ impl TradeOfferManagerBuilder {
     
     pub fn cancel_duration(mut self, duration: Duration) -> Self {
         self.cancel_duration = Some(duration);
+        self
+    }
+    
+    pub fn data_directory(mut self, data_directory: PathBuf) -> Self {
+        self.data_directory = data_directory;
         self
     }
     

@@ -15,6 +15,7 @@ use api_response::{
     GetAssetClassInfoResponse,
 };
 use std::{
+    path::PathBuf,
     collections::{HashMap, HashSet},
     sync::{Arc, RwLock, Mutex},
 };
@@ -61,6 +62,7 @@ pub struct SteamTradeOfferAPI {
     pub identity_secret: Option<String>,
     pub sessionid: Arc<RwLock<Option<String>>>,
     pub classinfo_cache: Arc<Mutex<ClassInfoCache>>,
+    pub data_directory: PathBuf,
 }
 
 impl SteamTradeOfferAPI {
@@ -71,6 +73,7 @@ impl SteamTradeOfferAPI {
         language: String,
         identity_secret: Option<String>,
         classinfo_cache: Arc<Mutex<ClassInfoCache>>,
+        data_directory: PathBuf,
     ) -> Self {
         Self {
             client: get_default_middleware(Arc::clone(&cookies), USER_AGENT_STRING),
@@ -81,6 +84,7 @@ impl SteamTradeOfferAPI {
             cookies: Arc::clone(&cookies),
             sessionid: Arc::new(RwLock::new(None)),
             classinfo_cache,
+            data_directory,
         }
     }
     
@@ -311,7 +315,11 @@ impl SteamTradeOfferAPI {
         let body: GetAssetClassInfoResponse = parses_response(response).await?;
         let classinfos = body.result;
         
-        classinfo_cache_helpers::save_classinfos(appid, &classinfos).await;
+        classinfo_cache_helpers::save_classinfos(
+            appid,
+            &classinfos,
+            &self.data_directory,
+        ).await;
         
         let classinfos = classinfos
             .into_iter()
@@ -382,7 +390,10 @@ impl SteamTradeOfferAPI {
             
             if !needed.is_empty() {
                 // check filesystem for caches
-                let results = classinfo_cache_helpers::load_classinfos(&needed).await
+                let results = classinfo_cache_helpers::load_classinfos(
+                    &needed,
+                    &self.data_directory,
+                ).await
                     .into_iter()
                     .flatten()
                     .collect::<Vec<_>>();
