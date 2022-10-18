@@ -1,0 +1,115 @@
+{
+    "icon_url": "-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot621FAR17PLfYQJM6dO4m4mZqPv9NLPF2GgE7MEk3e-ZoNmgjAXnqEdtNWn7JISRJAQ5MFHT-1W-xuq9g5-07cvXiSw0SeFYhWE",
+    "icon_url_large": "-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot621FAR17PLfYQJM6dO4m4mZqPv9NLPFqWdQ-sJ0xOqU8Yig31Ls_kZpN2jwd4KUJAY2YVrUrFO5kOfshJK8u5mbz3tr63Y8pSGKcgFBR7U",
+    "icon_drag_url": "",
+    "name": "AWP | Neo-Noir",
+    "market_hash_name": "AWP | Neo-Noir (Factory New)",
+    "market_name": "AWP | Neo-Noir (Factory New)",
+    "name_color": "D2D2D2",
+    "background_color": "",
+    "type": "Covert Sniper Rifle",
+    "tradable": "1",
+    "marketable": "1",
+    "commodity": "0",
+    "market_tradable_restriction": "7",
+    "fraudwarnings": {
+        "0": "Name Tag: ''Вынимай''"
+    },
+    "descriptions": {
+        "0": {
+            "type": "html",
+            "value": "Exterior: Factory New",
+            "app_data": ""
+        },
+        "1": {
+            "type": "html",
+            "value": " ",
+            "app_data": ""
+        },
+        "2": {
+            "type": "html",
+            "value": "High risk and high reward, the infamous AWP is recognizable by its signature report and one-shot, one-kill policy. It has been custom painted with two stylized blue-magenta women over a grayscale background.\n\n<i>\"They took comfort in each other's despair\"</i>",
+            "app_data": ""
+        },
+        "3": {
+            "type": "html",
+            "value": " ",
+            "app_data": ""
+        },
+        "4": {
+            "type": "html",
+            "value": "The Danger Zone Collection",
+            "color": "9da1a9",
+            "app_data": {
+                "def_index": "65535",
+                "is_itemset_name": "1"
+            }
+        },
+        "5": {
+            "type": "html",
+            "value": " ",
+            "app_data": ""
+        },
+        "6": {
+            "type": "html",
+            "value": "<br><div id=\"sticker_info\" name=\"sticker_info\" title=\"Sticker\" style=\"border: 2px solid rgb(102, 102, 102); border-radius: 6px; width=100; margin:4px; padding:8px;\"><center><img width=64 height=48 src=\"https://steamcdn-a.akamaihd.net/apps/730/icons/econ/stickers/op_riptide/goggles_holo.4fe24c57c9e1f83f916b4485fd1ed04a7588b685.png\"><br>Sticker: Dead Eye (Holo)</center></div>",
+            "app_data": {
+                "def_index": "65535"
+            }
+        }
+    },
+    "owner_descriptions": "",
+    "actions": {
+        "0": {
+            "name": "Inspect in Game...",
+            "link": "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20S%owner_steamid%A%assetid%D2658471798718381249"
+        }
+    },
+    "market_actions": {
+        "0": {
+            "name": "Inspect in Game...",
+            "link": "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20M%listingid%A%assetid%D2658471798718381249"
+        }
+    },
+    "tags": {
+        "0": {
+            "internal_name": "CSGO_Type_SniperRifle",
+            "name": "Sniper Rifle",
+            "category": "Type",
+            "category_name": "Type"
+        },
+        "1": {
+            "internal_name": "weapon_awp",
+            "name": "AWP",
+            "category": "Weapon",
+            "category_name": "Weapon"
+        },
+        "2": {
+            "internal_name": "set_community_21",
+            "name": "The Danger Zone Collection",
+            "category": "ItemSet",
+            "category_name": "Collection"
+        },
+        "3": {
+            "internal_name": "normal",
+            "name": "Normal",
+            "category": "Quality",
+            "category_name": "Category"
+        },
+        "4": {
+            "internal_name": "Rarity_Ancient_Weapon",
+            "name": "Covert",
+            "category": "Rarity",
+            "color": "eb4b4b",
+            "category_name": "Quality"
+        },
+        "5": {
+            "internal_name": "WearCategory0",
+            "name": "Factory New",
+            "category": "Exterior",
+            "category_name": "Exterior"
+        }
+    },
+    "classid": "4639516316",
+    "instanceid": "188530139"
+}

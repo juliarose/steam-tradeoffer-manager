@@ -89,8 +89,10 @@ pub struct ClassInfo {
     pub marketable: bool,
     #[serde(deserialize_with = "into_bool")]
     pub commodity: bool,
+    #[serde(default)]
     #[serde(deserialize_with = "string_or_number")]
     pub market_tradable_restriction: u8,
+    #[serde(default)]
     #[serde(deserialize_with = "string_or_number")]
     pub market_marketable_restriction: u8,
     #[serde(default)]
@@ -137,5 +139,16 @@ impl ClassInfo {
     pub fn get_app_data_quality(&self) -> Option<u64> {
         self.get_app_data_value("quality")
             .and_then(parse_value_as_u64)
+    }
+}
+
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn parses_csgo_item() {
+        let classinfo: ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_csgo.json")).unwrap();
+
+        assert_eq!(classinfo.tradable, true);
     }
 }
