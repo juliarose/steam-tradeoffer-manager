@@ -48,9 +48,9 @@ fn get_classinfo_file_path(
                 .expect("Invalid system time")
                 .as_millis();
                 
-            format!("assets/{}_{}_{}.json.{}.temp", appid, classid, instanceid, timestamp)
+            format!("{}_{}_{}.json.{}.temp", appid, classid, instanceid, timestamp)
         },
-        false => format!("assets/{}_{}_{}.json", appid, classid, instanceid),
+        false => format!("{}_{}_{}.json", appid, classid, instanceid),
     };
     
     data_directory.join(filename)
