@@ -143,11 +143,9 @@ impl ClassInfo {
 }
 
 mod tests {
-    use super::*;
-    
     #[test]
     fn parses_csgo_item() {
-        let classinfo: ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_csgo.json")).unwrap();
+        let classinfo: super::ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_csgo.json")).unwrap();
 
         assert_eq!(classinfo.tradable, true);
     }
