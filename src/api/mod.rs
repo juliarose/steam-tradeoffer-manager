@@ -39,18 +39,26 @@ use crate::{
     response,
     request::{self, serializers::steamid_as_string},
     serializers::string,
-    helpers::{get_default_middleware, parses_response},
+    helpers::{get_default_middleware, get_proxied_middleware ,parses_response},
 };
 use serde::{Deserialize, Serialize};
-use reqwest::cookie::Jar;
+use reqwest::{Proxy, cookie::Jar};
 use url::{Url, ParseError};
-use reqwest::header::REFERER;
+use reqwest::header::{REFERER, COOKIE};
 use lazy_regex::{regex_captures, regex_is_match};
 
 const HOSTNAME: &str = "https://steamcommunity.com";
 const API_HOSTNAME: &str = "https://api.steampowered.com";
 const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
 const ONE_YEAR_SECS: u64 = 31536000;
+
+/// Type of request.
+#[derive(Debug)]
+enum RequestType {
+    Cookies,
+    Cookieless,
+    Proxied(Proxy),
+}
 
 #[derive(Debug)]
 pub struct SteamTradeOfferAPI {
@@ -721,13 +729,14 @@ impl SteamTradeOfferAPI {
         
         Ok(body.tradeofferid)
     }
-    
-    pub async fn get_inventory_old(
+
+    async fn get_inventory_old_request(
         &self,
         steamid: &SteamID,
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
+        request_type: &RequestType,
     ) -> Result<Vec<response::asset::Asset>, Error> { 
         #[derive(Serialize, Debug)]
         struct Query<'a> {
@@ -743,15 +752,45 @@ impl SteamTradeOfferAPI {
         let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
         
         loop {
-            let response = self.client.get(&uri)
-                .header(REFERER, &referer)
-                .query(&Query {
-                    l: &self.language,
-                    trading: tradable_only,
-                    start,
-                })
-                .send()
-                .await?;
+            let response = match request_type {
+                RequestType::Cookies => {
+                    self.client.get(&uri)
+                        .header(REFERER, &referer)
+                        .query(&Query {
+                            l: &self.language,
+                            trading: tradable_only,
+                            start,
+                        })
+                        .send()
+                        .await
+                },
+                RequestType::Cookieless => {
+                    self.client.get(&uri)
+                        .header(COOKIE, "")
+                        .header(REFERER, &referer)
+                        .query(&Query {
+                            l: &self.language,
+                            trading: tradable_only,
+                            start,
+                        })
+                        .send()
+                        .await
+                },
+                RequestType::Proxied(proxy) => {
+                    get_proxied_middleware(
+                        USER_AGENT_STRING,
+                        proxy.clone(),
+                    ).get(&uri)
+                        .header(REFERER, &referer)
+                        .query(&Query {
+                            l: &self.language,
+                            trading: tradable_only,
+                            start,
+                        })
+                        .send()
+                        .await
+                },
+            }?;
             let body: GetInventoryOldResponse = parses_response(response).await?;
             
             if !body.success {
@@ -795,12 +834,13 @@ impl SteamTradeOfferAPI {
         Ok(inventory)
     }
     
-    pub async fn get_inventory(
+    async fn get_inventory_request(
         &self,
         steamid: &SteamID,
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
+        request_type: &RequestType,
     ) -> Result<Vec<response::asset::Asset>, Error> { 
         #[derive(Serialize, Debug)]
         struct Query<'a> {
@@ -816,15 +856,45 @@ impl SteamTradeOfferAPI {
         let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
         
         loop {
-            let response = self.client.get(&uri)
-                .header(REFERER, &referer)
-                .query(&Query {
-                    l: &self.language,
-                    count: 5000,
-                    start_assetid,
-                })
-                .send()
-                .await?;
+            let response = match request_type {
+                RequestType::Cookies => {
+                    self.client.get(&uri)
+                        .header(REFERER, &referer)
+                        .query(&Query {
+                            l: &self.language,
+                            count: 5000,
+                            start_assetid,
+                        })
+                        .send()
+                        .await
+                },
+                RequestType::Cookieless => {
+                    self.client.get(&uri)
+                        .header(COOKIE, "")
+                        .header(REFERER, &referer)
+                        .query(&Query {
+                            l: &self.language,
+                            count: 5000,
+                            start_assetid,
+                        })
+                        .send()
+                        .await
+                },
+                RequestType::Proxied(proxy) => {
+                    get_proxied_middleware(
+                        USER_AGENT_STRING,
+                        proxy.clone(),
+                    ).get(&uri)
+                        .header(REFERER, &referer)
+                        .query(&Query {
+                            l: &self.language,
+                            count: 5000,
+                            start_assetid,
+                        })
+                        .send()
+                        .await
+                },
+            }?;
             let body: GetInventoryResponse = parses_response(response).await?;
             
             if !body.success {
@@ -870,5 +940,103 @@ impl SteamTradeOfferAPI {
         }
         
         Ok(inventory)
+    }
+    
+    pub async fn get_inventory_old(
+        &self,
+        steamid: &SteamID,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+    ) -> Result<Vec<response::asset::Asset>, Error> {
+        self.get_inventory_old_request(
+            steamid,
+            appid,
+            contextid,
+            tradable_only,
+            &RequestType::Cookies,
+        ).await
+    }
+    
+    pub async fn get_inventory_old_cookieless(
+        &self,
+        steamid: &SteamID,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+    ) -> Result<Vec<response::asset::Asset>, Error> {
+        self.get_inventory_old_request(
+            steamid,
+            appid,
+            contextid,
+            tradable_only,
+            &RequestType::Cookieless,
+        ).await
+    }
+    
+    pub async fn get_inventory_old_proxied(
+        &self,
+        steamid: &SteamID,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+        proxy: Proxy,
+    ) -> Result<Vec<response::asset::Asset>, Error> {
+        self.get_inventory_old_request(
+            steamid,
+            appid,
+            contextid,
+            tradable_only,
+            &RequestType::Proxied(proxy),
+        ).await
+    }
+    
+    pub async fn get_inventory(
+        &self,
+        steamid: &SteamID,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+    ) -> Result<Vec<response::asset::Asset>, Error> {
+        self.get_inventory_request(
+            steamid,
+            appid,
+            contextid,
+            tradable_only,
+            &RequestType::Cookies,
+        ).await
+    }
+
+    pub async fn get_inventory_proxied(
+        &self,
+        steamid: &SteamID,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+        proxy: Proxy,
+    ) -> Result<Vec<response::asset::Asset>, Error> {
+        self.get_inventory_request(
+            steamid,
+            appid,
+            contextid,
+            tradable_only,
+            &RequestType::Proxied(proxy),
+        ).await
+    }
+
+    pub async fn get_inventory_cookieless(
+        &self,
+        steamid: &SteamID,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+    ) -> Result<Vec<response::asset::Asset>, Error> {
+        self.get_inventory_request(
+            steamid,
+            appid,
+            contextid,
+            tradable_only,
+            &RequestType::Cookieless,
+        ).await
     }
 }

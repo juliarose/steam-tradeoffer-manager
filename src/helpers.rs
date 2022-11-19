@@ -10,6 +10,24 @@ pub fn get_default_data_directory() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets")
 }
 
+pub fn get_proxied_middleware(
+    user_agent_string: &'static str,
+    proxy: reqwest::Proxy,
+) -> ClientWithMiddleware {
+    let mut headers = header::HeaderMap::new();
+    
+    headers.insert(header::USER_AGENT, header::HeaderValue::from_static(user_agent_string));
+    
+    let client = reqwest::ClientBuilder::new()
+        .proxy(proxy)
+        .default_headers(headers)
+        .build()
+        .unwrap();
+    
+    ClientBuilder::new(client)
+        .build()
+}
+
 pub fn get_default_middleware<T>(
     cookie_store: Arc<T>,
     user_agent_string: &'static str,
