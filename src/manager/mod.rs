@@ -180,17 +180,6 @@ impl TradeOfferManager {
         self.api.get_inventory_old(steamid, appid, contextid, tradable_only).await
     }
 
-    /// Gets a user's inventory using the old endpoint without using session cookies.
-    pub async fn get_inventory_old_cookieless(
-        &self,
-        steamid: &SteamID,
-        appid: AppId,
-        contextid: ContextId,
-        tradable_only: bool,
-    ) -> Result<Vec<response::asset::Asset>, Error> {
-        self.api.get_inventory_old_cookieless(steamid, appid, contextid, tradable_only).await
-    }
-
     /// Gets a user's inventory using the old endpoint using a proxy.
     pub async fn get_inventory_old_proxied(
         &self,
@@ -212,17 +201,6 @@ impl TradeOfferManager {
         tradable_only: bool,
     ) -> Result<Vec<response::asset::Asset>, Error> {
         self.api.get_inventory(steamid, appid, contextid, tradable_only).await
-    }
-
-    /// Gets a user's inventory without using session cookies.
-    pub async fn get_inventory_cookieless(
-        &self,
-        steamid: &SteamID,
-        appid: AppId,
-        contextid: ContextId,
-        tradable_only: bool,
-    ) -> Result<Vec<response::asset::Asset>, Error> {
-        self.api.get_inventory_cookieless(steamid, appid, contextid, tradable_only).await
     }
 
     /// Gets a user's inventory using the old endpoint using a proxy.
