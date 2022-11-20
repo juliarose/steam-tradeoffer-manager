@@ -44,7 +44,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use reqwest::{Proxy, cookie::Jar};
 use url::{Url, ParseError};
-use reqwest::header::{REFERER, COOKIE};
+use reqwest::header::REFERER;
 use lazy_regex::{regex_captures, regex_is_match};
 
 const HOSTNAME: &str = "https://steamcommunity.com";
@@ -753,20 +753,8 @@ impl SteamTradeOfferAPI {
         
         loop {
             let response = match request_type {
-                RequestType::Cookies => {
+                RequestType::Cookies | RequestType::Cookieless => {
                     self.client.get(&uri)
-                        .header(REFERER, &referer)
-                        .query(&Query {
-                            l: &self.language,
-                            trading: tradable_only,
-                            start,
-                        })
-                        .send()
-                        .await
-                },
-                RequestType::Cookieless => {
-                    self.client.get(&uri)
-                        .header(COOKIE, "")
                         .header(REFERER, &referer)
                         .query(&Query {
                             l: &self.language,
@@ -857,24 +845,12 @@ impl SteamTradeOfferAPI {
         
         loop {
             let response = match request_type {
-                RequestType::Cookies => {
+                RequestType::Cookies | RequestType::Cookieless => {
                     self.client.get(&uri)
                         .header(REFERER, &referer)
                         .query(&Query {
                             l: &self.language,
-                            count: 5000,
-                            start_assetid,
-                        })
-                        .send()
-                        .await
-                },
-                RequestType::Cookieless => {
-                    self.client.get(&uri)
-                        .header(COOKIE, "")
-                        .header(REFERER, &referer)
-                        .query(&Query {
-                            l: &self.language,
-                            count: 5000,
+                            count: 2000,
                             start_assetid,
                         })
                         .send()
@@ -888,7 +864,7 @@ impl SteamTradeOfferAPI {
                         .header(REFERER, &referer)
                         .query(&Query {
                             l: &self.language,
-                            count: 5000,
+                            count: 2000,
                             start_assetid,
                         })
                         .send()
@@ -914,28 +890,37 @@ impl SteamTradeOfferAPI {
         }
         
         let mut inventory: Inventory = Vec::new();
+        let items = responses
+            .into_iter()
+            .flat_map(|response| response.assets)
+            .collect::<Vec<_>>();
+        let classes = items
+            .iter()
+            .map(|item| (item.appid, item.classid, item.instanceid))
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect::<Vec<_>>();
+        let map = self.get_asset_classinfos(&classes).await?;
         
-        for body in responses {
-            for item in &body.assets {
-                if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
-                    if tradable_only && !classinfo.tradable {
-                        continue;
-                    }
-                    
-                    inventory.push(response::asset::Asset {
-                        appid: item.appid,
-                        contextid: item.contextid,
-                        assetid: item.assetid,
-                        amount: item.amount,
-                        classinfo: Arc::clone(classinfo),
-                    });
-                } else {
-                    let instanceid =  item.instanceid.unwrap_or(0);
-                    
-                    return Err(Error::Response(
-                        format!("Missing descriptions for item {}:{}", item.classid, instanceid)
-                    ));
+        for item in items {
+            if let Some(classinfo) = map.get(&(item.appid, item.classid, item.instanceid)) {
+                if tradable_only && !classinfo.tradable {
+                    continue;
                 }
+                
+                inventory.push(response::asset::Asset {
+                    appid: item.appid,
+                    contextid: item.contextid,
+                    assetid: item.assetid,
+                    amount: item.amount,
+                    classinfo: Arc::clone(classinfo),
+                });
+            } else {
+                let instanceid =  item.instanceid.unwrap_or(0);
+                
+                return Err(Error::Response(
+                    format!("Missing descriptions for item {}:{}", item.classid, instanceid)
+                ));
             }
         }
         
@@ -955,22 +940,6 @@ impl SteamTradeOfferAPI {
             contextid,
             tradable_only,
             &RequestType::Cookies,
-        ).await
-    }
-    
-    pub async fn get_inventory_old_cookieless(
-        &self,
-        steamid: &SteamID,
-        appid: AppId,
-        contextid: ContextId,
-        tradable_only: bool,
-    ) -> Result<Vec<response::asset::Asset>, Error> {
-        self.get_inventory_old_request(
-            steamid,
-            appid,
-            contextid,
-            tradable_only,
-            &RequestType::Cookieless,
         ).await
     }
     
@@ -1021,22 +990,6 @@ impl SteamTradeOfferAPI {
             contextid,
             tradable_only,
             &RequestType::Proxied(proxy),
-        ).await
-    }
-
-    pub async fn get_inventory_cookieless(
-        &self,
-        steamid: &SteamID,
-        appid: AppId,
-        contextid: ContextId,
-        tradable_only: bool,
-    ) -> Result<Vec<response::asset::Asset>, Error> {
-        self.get_inventory_request(
-            steamid,
-            appid,
-            contextid,
-            tradable_only,
-            &RequestType::Cookieless,
         ).await
     }
 }

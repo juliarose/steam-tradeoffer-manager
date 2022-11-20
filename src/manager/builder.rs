@@ -28,7 +28,6 @@ impl TradeOfferManagerBuilder {
         steamid: SteamID,
         key: String,
     ) -> Self {
-
         Self {
             steamid,
             key,
