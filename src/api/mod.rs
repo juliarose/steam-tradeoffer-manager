@@ -56,7 +56,6 @@ const ONE_YEAR_SECS: u64 = 31536000;
 #[derive(Debug)]
 enum RequestType {
     Cookies,
-    Cookieless,
     Proxied(Proxy),
 }
 
@@ -753,7 +752,7 @@ impl SteamTradeOfferAPI {
         
         loop {
             let response = match request_type {
-                RequestType::Cookies | RequestType::Cookieless => {
+                RequestType::Cookies => {
                     self.client.get(&uri)
                         .header(REFERER, &referer)
                         .query(&Query {
@@ -845,7 +844,103 @@ impl SteamTradeOfferAPI {
         
         loop {
             let response = match request_type {
-                RequestType::Cookies | RequestType::Cookieless => {
+                RequestType::Cookies => {
+                    self.client.get(&uri)
+                        .header(REFERER, &referer)
+                        .query(&Query {
+                            l: &self.language,
+                            count: 2000,
+                            start_assetid,
+                        })
+                        .send()
+                        .await
+                },
+                RequestType::Proxied(proxy) => {
+                    get_proxied_middleware(
+                        USER_AGENT_STRING,
+                        proxy.clone(),
+                    ).get(&uri)
+                        .header(REFERER, &referer)
+                        .query(&Query {
+                            l: &self.language,
+                            count: 2000,
+                            start_assetid,
+                        })
+                        .send()
+                        .await
+                },
+            }?;
+            let body: GetInventoryResponse = parses_response(response).await?;
+            
+            if !body.success {
+                return Err(Error::Response("Bad response".into()));
+            } else if body.more_items {
+                // shouldn't occur, but we wouldn't want to call this endlessly if it does...
+                if body.last_assetid == start_assetid {
+                    return Err(Error::Response("Bad response".into()));
+                }
+                
+                start_assetid = body.last_assetid;
+                responses.push(body);
+            } else {
+                responses.push(body);
+                break;
+            }
+        }
+        
+        let mut inventory: Inventory = Vec::new();
+        
+        for body in responses {
+            for item in &body.assets {
+                if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
+                    if tradable_only && !classinfo.tradable {
+                        continue;
+                    }
+                    
+                    inventory.push(response::asset::Asset {
+                        appid: item.appid,
+                        contextid: item.contextid,
+                        assetid: item.assetid,
+                        amount: item.amount,
+                        classinfo: Arc::clone(classinfo),
+                    });
+                } else {
+                    let instanceid =  item.instanceid.unwrap_or(0);
+                    
+                    return Err(Error::Response(
+                        format!("Missing descriptions for item {}:{}", item.classid, instanceid)
+                    ));
+                }
+            }
+        }
+        
+        Ok(inventory)
+    }
+    
+    async fn get_inventory_with_classinfos_request(
+        &self,
+        steamid: &SteamID,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+        request_type: &RequestType,
+    ) -> Result<Vec<response::asset::Asset>, Error> { 
+        #[derive(Serialize, Debug)]
+        struct Query<'a> {
+            l: &'a str,
+            count: u32,
+            start_assetid: Option<u64>,
+        }
+        
+        let mut responses: Vec<GetInventoryResponse> = Vec::new();
+        let mut start_assetid: Option<u64> = None;
+        let sid = u64::from(*steamid);
+        let uri = self.get_uri(&format!("/inventory/{}/{}/{}", sid, appid, contextid));
+        let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
+        
+        loop {
+            let response = match request_type {
+                RequestType::Cookies => {
                     self.client.get(&uri)
                         .header(REFERER, &referer)
                         .query(&Query {
@@ -943,23 +1038,6 @@ impl SteamTradeOfferAPI {
         ).await
     }
     
-    pub async fn get_inventory_old_proxied(
-        &self,
-        steamid: &SteamID,
-        appid: AppId,
-        contextid: ContextId,
-        tradable_only: bool,
-        proxy: Proxy,
-    ) -> Result<Vec<response::asset::Asset>, Error> {
-        self.get_inventory_old_request(
-            steamid,
-            appid,
-            contextid,
-            tradable_only,
-            &RequestType::Proxied(proxy),
-        ).await
-    }
-    
     pub async fn get_inventory(
         &self,
         steamid: &SteamID,
@@ -968,6 +1046,22 @@ impl SteamTradeOfferAPI {
         tradable_only: bool,
     ) -> Result<Vec<response::asset::Asset>, Error> {
         self.get_inventory_request(
+            steamid,
+            appid,
+            contextid,
+            tradable_only,
+            &RequestType::Cookies,
+        ).await
+    }
+    
+    pub async fn get_inventory_with_classinfos(
+        &self,
+        steamid: &SteamID,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+    ) -> Result<Vec<response::asset::Asset>, Error> {
+        self.get_inventory_with_classinfos_request(
             steamid,
             appid,
             contextid,
