@@ -29,6 +29,28 @@ pub struct TradeOffer {
     pub confirmation_method: ConfirmationMethod,
 }
 
+impl Default for TradeOffer {
+    
+    fn default() -> Self {
+        TradeOffer {
+            tradeofferid: 0,
+            tradeid: None,
+            partner: SteamID::from(0),
+            message: None,
+            items_to_receive: Vec::new(),
+            items_to_give: Vec::new(),
+            is_our_offer: false,
+            from_real_time_trade: false,
+            expiration_time: chrono::Utc::now(),
+            time_created: chrono::Utc::now(),
+            time_updated: chrono::Utc::now(),
+            trade_offer_state: TradeOfferState::Active,
+            escrow_end_date: chrono::Utc::now(),
+            confirmation_method: ConfirmationMethod::None,
+        }
+    }
+}
+
 impl fmt::Display for TradeOffer {
     
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -37,6 +59,10 @@ impl fmt::Display for TradeOffer {
 }
 
 impl TradeOffer {
+    
+    pub fn new() -> Self {
+        Self::default()
+    }
     
     /// Checks whether the trade offer is glitched or not by checking if no items are present.
     pub fn is_glitched(&self) -> bool {

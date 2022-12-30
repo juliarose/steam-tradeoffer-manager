@@ -30,7 +30,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         true,
     ).await?;
     
-    println!("{}", inventory.len());
+    println!("{} items in inventory", inventory.len());
+    
+    if let Some(item) = inventory.iter().next() {
+        println!("First item: {}", item.classinfo.market_name);
+    }
 
     Ok(())
 }

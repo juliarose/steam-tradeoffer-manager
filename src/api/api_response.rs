@@ -99,6 +99,23 @@ pub struct GetInventoryResponse {
     pub last_assetid: Option<u64>,
 }
 
+// this ignores parsing the descriptions
+#[derive(Deserialize, Debug)]
+pub struct GetInventoryResponseIgnoreDescriptions {
+    #[serde(default)]
+    #[serde(deserialize_with = "from_int_to_bool")]
+    pub success: bool,
+    #[serde(default)]
+    #[serde(deserialize_with = "from_int_to_bool")]
+    pub more_items: bool,
+    #[serde(default)]
+    pub assets: Vec<raw::RawAsset>,
+    #[serde(default)]
+    #[serde(deserialize_with = "option_str_to_number")]
+    pub last_assetid: Option<u64>,
+    
+}
+
 #[derive(Deserialize, Debug)]
 pub struct GetInventoryOldResponse {
     #[serde(default)]

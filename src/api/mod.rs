@@ -11,6 +11,7 @@ use api_response::{
     GetTradeOffersResponseBody,
     GetTradeOffersResponse,
     GetInventoryResponse,
+    GetInventoryResponseIgnoreDescriptions,
     GetInventoryOldResponse,
     GetAssetClassInfoResponse,
 };
@@ -932,7 +933,7 @@ impl SteamTradeOfferAPI {
             start_assetid: Option<u64>,
         }
         
-        let mut responses: Vec<GetInventoryResponse> = Vec::new();
+        let mut responses: Vec<GetInventoryResponseIgnoreDescriptions> = Vec::new();
         let mut start_assetid: Option<u64> = None;
         let sid = u64::from(*steamid);
         let uri = self.get_uri(&format!("/inventory/{}/{}/{}", sid, appid, contextid));
@@ -966,7 +967,7 @@ impl SteamTradeOfferAPI {
                         .await
                 },
             }?;
-            let body: GetInventoryResponse = parses_response(response).await?;
+            let body: GetInventoryResponseIgnoreDescriptions = parses_response(response).await?;
             
             if !body.success {
                 return Err(Error::Response("Bad response".into()));
