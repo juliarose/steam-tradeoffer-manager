@@ -436,6 +436,7 @@ impl SteamTradeOfferAPI {
         }
         
         for (appid, classes) in apps {
+            println!("get classinfos {:?}", classes);
             for maps in self.get_app_asset_classinfos(appid, classes).await? {
                 for (class, classinfo) in maps {
                     map.insert(class, classinfo);
@@ -938,6 +939,7 @@ impl SteamTradeOfferAPI {
         let sid = u64::from(*steamid);
         let uri = self.get_uri(&format!("/inventory/{}/{}/{}", sid, appid, contextid));
         let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
+        println!("get {}", uri);
         
         loop {
             let response = match request_type {
