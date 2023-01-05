@@ -11,14 +11,10 @@ use std::{collections::HashMap, sync::{Arc, RwLock}};
 use crate::{
     SteamID,
     error::Error,
-    helpers::{
-        get_default_middleware,
-        parses_response,
-    },
+    helpers::parses_response,
 };
 
 const HOSTNAME: &str = "https://steamcommunity.com";
-const USER_AGENT_STRING: &str = "Mozilla/5.0 (Linux; U; Android 4.1.1; en-us; Google Nexus 4 - 4.1.1 - API 16 - 768x1280 Build/JRO03S) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30";
 
 #[derive(Debug)]
 pub struct MobileAPI {
@@ -33,12 +29,12 @@ pub struct MobileAPI {
 impl MobileAPI {
     pub fn new(
         cookies: Arc<Jar>,
+        client: ClientWithMiddleware,
         steamid: SteamID,
         language: String,
         identity_secret: Option<String>,
     ) -> Self {
         let url = HOSTNAME.parse::<Url>().unwrap();
-        let client = get_default_middleware(Arc::clone(&cookies), USER_AGENT_STRING);
         
         cookies.add_cookie_str("mobileClientVersion=0 (2.1.3)", &url);
         cookies.add_cookie_str("mobileClient=android", &url);

@@ -27,7 +27,8 @@ use crate::{
 };
 use steamid_ng::SteamID;
 use url::ParseError;
-use reqwest::cookie::Jar;
+
+pub const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
 
 /// Manager which includes functionality for interacting with trade offers, confirmations and 
 /// inventories.
@@ -42,42 +43,14 @@ pub struct TradeOfferManager {
     data_directory: PathBuf,
 }
 
-impl From<TradeOfferManagerBuilder> for TradeOfferManager {
-    fn from(builder: TradeOfferManagerBuilder) -> Self {
-        let cookies = Arc::new(Jar::default());
-        let steamid = builder.steamid;
-        let identity_secret = builder.identity_secret;
-        let poll_data = file::load_poll_data(
-            &steamid,
-            &builder.data_directory,
-        ).unwrap_or_else(|_| PollData::new());
-        let language = builder.language;
-        
-        Self {
-            steamid,
-            api: SteamTradeOfferAPI::new(
-                Arc::clone(&cookies),
-                steamid,
-                builder.key,
-                language.clone(),
-                identity_secret.clone(),
-                builder.classinfo_cache,
-                builder.data_directory.clone(),
-            ),
-            mobile_api: MobileAPI::new(
-                cookies,
-                steamid,
-                language,
-                identity_secret,
-            ),
-            poll_data: Arc::new(RwLock::new(poll_data)),
-            cancel_duration: builder.cancel_duration,
-            data_directory: builder.data_directory,
-        }
-    }
-}
-
 impl TradeOfferManager {
+    pub fn new(
+        steamid: SteamID,
+        key: String,
+    ) -> Self {
+        Self::builder(steamid, key).build()
+    }
+    
     /// Builder for new manager.
     pub fn builder(
         steamid: SteamID,
@@ -200,18 +173,6 @@ impl TradeOfferManager {
         tradable_only: bool,
     ) -> Result<Vec<response::asset::Asset>, Error> {
         self.api.get_inventory_with_classinfos(steamid, appid, contextid, tradable_only).await
-    }
-
-    /// Gets a user's inventory using the old endpoint using a proxy.
-    pub async fn get_inventory_proxied(
-        &self,
-        steamid: &SteamID,
-        appid: AppId,
-        contextid: ContextId,
-        tradable_only: bool,
-        proxy: reqwest::Proxy,
-    ) -> Result<Vec<response::asset::Asset>, Error> {
-        self.api.get_inventory_proxied(steamid, appid, contextid, tradable_only, proxy).await
     }
     
     /// Gets the user's details for trading.

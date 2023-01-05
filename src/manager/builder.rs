@@ -1,7 +1,15 @@
-use super::TradeOfferManager;
-use crate::{SteamID, ClassInfoCache, helpers::get_default_data_directory};
-use std::{path::PathBuf, sync::{Mutex, Arc}};
+use super::{file, PollData, TradeOfferManager, USER_AGENT_STRING};
+use crate::{
+    SteamID,
+    api::SteamTradeOfferAPI,
+    mobile_api::MobileAPI,
+    ClassInfoCache,
+    helpers::{get_default_middleware, get_default_data_directory},
+};
+use std::{path::PathBuf, sync::{Mutex, RwLock, Arc}};
 use chrono::Duration;
+use reqwest::cookie::Jar;
+use reqwest_middleware::ClientWithMiddleware;
 
 /// Builder for constring a trade offer manager.
 pub struct TradeOfferManagerBuilder {
@@ -21,6 +29,12 @@ pub struct TradeOfferManagerBuilder {
     pub cancel_duration: Option<Duration>,
     /// The location to save data to.
     pub data_directory: PathBuf,
+    /// Request cookies.
+    pub cookies: Option<Arc<Jar>>,
+    /// Client to use for requests.
+    pub client: Option<ClientWithMiddleware>,
+    /// User agent for requests.
+    pub user_agent: &'static str,
 }
 
 impl TradeOfferManagerBuilder {
@@ -36,6 +50,9 @@ impl TradeOfferManagerBuilder {
             classinfo_cache: Arc::new(Mutex::new(ClassInfoCache::default())),
             cancel_duration: None,
             data_directory: get_default_data_directory(),
+            cookies: None,
+            client: None,
+            user_agent: USER_AGENT_STRING,
         }
     }
     
@@ -64,7 +81,52 @@ impl TradeOfferManagerBuilder {
         self
     }
     
+    pub fn user_agent(mut self, user_agent: &'static str) -> Self {
+        self.user_agent = user_agent;
+        self
+    }
+    
     pub fn build(self) -> TradeOfferManager {
-        TradeOfferManager::from(self)
+        let cookies = self.cookies.unwrap_or_else(|| Arc::new(Jar::default()));
+        let client = self.client.unwrap_or_else(|| {
+            get_default_middleware(
+                Arc::clone(&cookies),
+                self.user_agent,
+            )
+        });
+        
+        let cookies = Arc::new(Jar::default());
+        let steamid = self.steamid;
+        let identity_secret = self.identity_secret;
+        let poll_data = file::load_poll_data(
+            &steamid,
+            &self.data_directory,
+        ).unwrap_or_else(|_| PollData::new());
+        let language = self.language;
+        let mobile_api_client = client.clone();
+        
+        TradeOfferManager {
+            steamid: self.steamid,
+            api: SteamTradeOfferAPI::new(
+                Arc::clone(&cookies),
+                client,
+                steamid,
+                self.key,
+                language.clone(),
+                identity_secret.clone(),
+                self.classinfo_cache,
+                self.data_directory.clone(),
+            ),
+            mobile_api: MobileAPI::new(
+                cookies,
+                mobile_api_client,
+                steamid,
+                language,
+                identity_secret,
+            ),
+            poll_data: Arc::new(RwLock::new(poll_data)),
+            cancel_duration: self.cancel_duration,
+            data_directory: self.data_directory,
+        }
     }
 }
