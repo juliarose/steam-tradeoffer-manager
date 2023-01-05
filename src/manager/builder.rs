@@ -104,8 +104,6 @@ impl TradeOfferManagerBuilder {
                 self.user_agent,
             )
         });
-        
-        let cookies = Arc::new(Jar::default());
         let steamid = self.steamid;
         let identity_secret = self.identity_secret;
         let poll_data = file::load_poll_data(
