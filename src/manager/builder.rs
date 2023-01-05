@@ -81,6 +81,16 @@ impl TradeOfferManagerBuilder {
         self
     }
     
+    pub fn client(mut self, client: ClientWithMiddleware) -> Self {
+        self.client = Some(client);
+        self
+    }
+    
+    pub fn cookies(mut self, cookies: Arc<Jar>) -> Self {
+        self.cookies = Some(cookies);
+        self
+    }
+    
     pub fn user_agent(mut self, user_agent: &'static str) -> Self {
         self.user_agent = user_agent;
         self
