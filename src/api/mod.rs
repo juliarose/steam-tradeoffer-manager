@@ -516,7 +516,7 @@ impl SteamTradeOfferAPI {
             // ignore offers where the classinfo cannot be obtained
             // attempts to load the missing classinfos will continue
             // but it will not cause the whole poll to fail
-            .flat_map(|offer| from_raw_trade_offer(offer, &map).ok())
+            .filter_map(|offer| from_raw_trade_offer(offer, &map).ok())
             .collect::<Vec<_>>();
         
         Ok(offers)
