@@ -14,8 +14,6 @@ use crate::{
     helpers::parses_response,
 };
 
-const HOSTNAME: &str = "https://steamcommunity.com";
-
 #[derive(Debug)]
 pub struct MobileAPI {
     client: ClientWithMiddleware,
@@ -27,6 +25,8 @@ pub struct MobileAPI {
 }
 
 impl MobileAPI {
+    pub const HOSTNAME: &str = "https://steamcommunity.com";
+    
     pub fn new(
         cookies: Arc<Jar>,
         client: ClientWithMiddleware,
@@ -34,7 +34,8 @@ impl MobileAPI {
         language: String,
         identity_secret: Option<String>,
     ) -> Self {
-        let url = HOSTNAME.parse::<Url>().unwrap();
+        // I would only hope this never fails...
+        let url = Self::HOSTNAME.parse::<Url>().unwrap();
         
         cookies.add_cookie_str("mobileClientVersion=0 (2.1.3)", &url);
         cookies.add_cookie_str("mobileClient=android", &url);
@@ -53,12 +54,12 @@ impl MobileAPI {
     }
     
     fn get_uri(&self, pathname: &str) -> String {
-        format!("{}{}", HOSTNAME, pathname)
+        format!("{}{}", Self::HOSTNAME, pathname)
     }
     
     // probably would never fail
     fn set_cookies(&self, cookies: &Vec<String>) -> Result<(), ParseError> {
-        let url = HOSTNAME.parse::<Url>()?;
+        let url = Self::HOSTNAME.parse::<Url>()?;
         
         for cookie_str in cookies {
             self.cookies.add_cookie_str(cookie_str, &url);

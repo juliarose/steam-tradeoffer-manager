@@ -49,8 +49,6 @@ use url::{Url, ParseError};
 use reqwest::header::REFERER;
 use lazy_regex::{regex_captures, regex_is_match};
 
-const HOSTNAME: &str = "https://steamcommunity.com";
-const API_HOSTNAME: &str = "https://api.steampowered.com";
 const ONE_YEAR_SECS: u64 = 31536000;
 
 #[derive(Debug)]
@@ -67,6 +65,9 @@ pub struct SteamTradeOfferAPI {
 }
 
 impl SteamTradeOfferAPI {
+    pub const HOSTNAME: &str = "https://steamcommunity.com";
+    pub const API_HOSTNAME: &str = "https://api.steampowered.com";
+    
     pub fn new(
         cookies: Arc<Jar>,
         client: ClientWithMiddleware,
@@ -94,7 +95,7 @@ impl SteamTradeOfferAPI {
         &self,
         pathname: &str,
     ) -> String {
-        format!("{}{}", HOSTNAME, pathname)
+        format!("{}{}", Self::HOSTNAME, pathname)
     }
 
     fn get_api_url(
@@ -103,11 +104,11 @@ impl SteamTradeOfferAPI {
         method: &str,
         version: usize,
     ) -> String {
-        format!("{}/{}/{}/v{}", API_HOSTNAME, interface, method, version)
+        format!("{}/{}/{}/v{}", Self::API_HOSTNAME, interface, method, version)
     }
     
     fn set_cookies(&self, cookies: &Vec<String>) -> Result<(), ParseError> {
-        let url = HOSTNAME.parse::<Url>()?;
+        let url = Self::HOSTNAME.parse::<Url>()?;
         
         for cookie_str in cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
