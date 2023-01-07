@@ -78,18 +78,15 @@ impl MobileAPI {
     }
     
     async fn get_confirmation_query_params<'a>(&self, tag: &str) -> Result<HashMap<&'a str, String>, Error> {
-        if self.identity_secret.is_none() {
-            return Err(Error::Parameter("No identity secret"));
-        }
-        
+        let identity_secret = self.identity_secret.as_ref()
+            .ok_or_else(|| Error::Parameter("No identity secret"))?;
         // let time = self.get_server_time().await?;
         let time = helpers::server_time(0);
         let key = helpers::generate_confirmation_hash_for_time(
             time,
             tag,
-            // safe - is_none checked above
-            &self.identity_secret.clone().unwrap(),
-        );
+            identity_secret,
+        )?;
         let mut params: HashMap<&str, String> = HashMap::new();
         
         // self.device_id.clone()

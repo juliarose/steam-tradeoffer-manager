@@ -9,20 +9,25 @@ use sha1::{Sha1, Digest};
 use lazy_regex::regex_replace_all;
 use scraper::{Html, Selector, element_ref::ElementRef};
 
+const MALFORMED_CONTENT: &str = "Unexpected content format";
 const MALFORMED_DESCRIPTION: &str = "Unexpected description format";
 
 pub fn build_time_bytes(time: i64) -> [u8; 8] {
     time.to_be_bytes()
 }
     
-pub fn generate_confirmation_hash_for_time(time: i64, tag: &str, identity_secret: &String) -> String {
-    let decode: &[u8] = &base64::decode(&identity_secret).unwrap();
+pub fn generate_confirmation_hash_for_time(
+    time: i64,
+    tag: &str,
+    identity_secret: &String,
+) -> Result<String, base64::DecodeError> {
+    let decode: &[u8] = &base64::decode(&identity_secret)?;
     let time_bytes = build_time_bytes(time);
     let tag_bytes = tag.as_bytes();
     let array = [&time_bytes, tag_bytes].concat();
     let hash = hmac_sha1(decode, &array);
     
-    base64::encode(hash)
+    Ok(base64::encode(hash))
 }
 
 pub fn get_device_id(steamid: &SteamID) -> String {
@@ -76,9 +81,12 @@ pub fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlE
 
     let fragment = Html::parse_fragment(&text);
     // these should probably never fail
-    let mobileconf_empty_selector = Selector::parse("#mobileconf_empty").unwrap();
-    let mobileconf_done_selector = Selector::parse(".mobileconf_done").unwrap();
-    let div_selector = Selector::parse("div").unwrap();
+    let mobileconf_empty_selector = Selector::parse("#mobileconf_empty")
+        .map_err(|_error| ParseHtmlError::Malformed(MALFORMED_CONTENT))?;
+    let mobileconf_done_selector = Selector::parse(".mobileconf_done")
+        .map_err(|_error| ParseHtmlError::Malformed(MALFORMED_CONTENT))?;
+    let div_selector = Selector::parse("div")
+        .map_err(|_error| ParseHtmlError::Malformed(MALFORMED_CONTENT))?;
     
     if let Some(element) = fragment.select(&mobileconf_empty_selector).next() {
         if mobileconf_done_selector.matches(&element) {
@@ -96,8 +104,10 @@ pub fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlE
         }
     }
     
-    let confirmation_list_selector = Selector::parse(".mobileconf_list_entry").unwrap();
-    let description_selector = Selector::parse(".mobileconf_list_entry_description").unwrap();
+    let confirmation_list_selector = Selector::parse(".mobileconf_list_entry")
+        .map_err(|_error| ParseHtmlError::Malformed(MALFORMED_CONTENT))?;
+    let description_selector = Selector::parse(".mobileconf_list_entry_description")
+        .map_err(|_error| ParseHtmlError::Malformed(MALFORMED_CONTENT))?;
     let confirmations = fragment.select(&confirmation_list_selector)
         .map(|description| parse_description(description, &description_selector))
         .collect::<Result<Vec<Confirmation>, ParseHtmlError>>()?;

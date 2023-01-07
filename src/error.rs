@@ -50,6 +50,10 @@ pub enum Error {
     /// A poll was called within 1 second from the last poll.
     #[error("Poll called too soon after last poll")]
     PollCalledTooSoon,
+    /// A number could not be decoded from base64. This means your identity_secret was used and is 
+    /// not valid a valid base64 number.
+    #[error("Invalid base64: {}", .0)]
+    Base64Decode(#[from] base64::DecodeError),
 }
 
 /// An error occurred when working with the file system.
