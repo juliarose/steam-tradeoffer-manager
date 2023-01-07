@@ -4,7 +4,6 @@ use reqwest::{header, cookie::CookieStore};
 use serde::de::DeserializeOwned;
 use lazy_regex::{regex_is_match, regex_captures};
 use crate::error::{TradeOfferError, Error};
-use log::error;
 
 pub fn get_default_data_directory() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets")
@@ -87,7 +86,7 @@ where
             } else if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
                 Err(Error::Trade(TradeOfferError::from(message)))
             } else {
-                error!("Error parsing body `{}`: {}", parse_error, String::from_utf8_lossy(&body));
+                log::error!("Error parsing body `{}`: {}", parse_error, String::from_utf8_lossy(&body));
                 
                 Err(Error::Parse(parse_error))
             }

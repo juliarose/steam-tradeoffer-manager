@@ -17,6 +17,7 @@ use futures::future::join_all;
 use async_fs::File;
 use tokio::task::JoinHandle;
 use futures_lite::io::AsyncWriteExt;
+use serde_json;
 
 async fn load_classinfo(
     class: ClassInfoClass,
@@ -62,13 +63,21 @@ async fn save_classinfo(
     classinfo: String,
     data_directory: &PathBuf, 
 ) -> Result<(), FileError> {
+    // first validate the classinfo string
+    if let Err(error) = serde_json::from_str::<ClassInfo>(&classinfo) {
+        // output a warning...
+        log::warn!("{}", error);
+        
+        return Err(FileError::Parse(error));
+    }
+    
     let temp_filepath = get_classinfo_file_path(
         &class,
         true,
         data_directory,
     );
     let mut temp_file = File::create(&temp_filepath).await?;
-
+    
     match temp_file.write_all(classinfo.as_bytes()).await {
         Ok(_) => {
             let filepath = get_classinfo_file_path(

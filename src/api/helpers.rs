@@ -34,28 +34,27 @@ pub fn from_raw_trade_offer(
     map: &ClassInfoMap,
 ) -> Result<response::trade_offer::TradeOffer, MissingClassInfoError> {
     fn collect_items(assets: Vec<raw::RawAsset>, map: &ClassInfoMap) -> Result<Vec<response::asset::Asset>, MissingClassInfoError> {
-        let mut items = Vec::new();
-        
-        for asset in assets {
-            if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
-                items.push(response::asset::Asset {
-                    classinfo: Arc::clone(classinfo),
-                    appid: asset.appid,
-                    contextid: asset.contextid,
-                    assetid: asset.assetid,
-                    amount: asset.amount,
-                });
-            } else {
-                // todo use a less broad error for this
-                return Err(MissingClassInfoError {
-                    appid: asset.appid,
-                    classid: asset.classid,
-                    instanceid: asset.instanceid,
-                });
-            }
-        }
-        
-        Ok(items)
+        assets
+            .into_iter()
+            .map(|asset| {
+                if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
+                    Ok(response::asset::Asset {
+                        classinfo: Arc::clone(classinfo),
+                        appid: asset.appid,
+                        contextid: asset.contextid,
+                        assetid: asset.assetid,
+                        amount: asset.amount,
+                    })
+                } else {
+                    // todo use a less broad error for this
+                    Err(MissingClassInfoError {
+                        appid: asset.appid,
+                        classid: asset.classid,
+                        instanceid: asset.instanceid,
+                    })
+                }
+            })
+            .collect::<Result<_, _>>()
     }
     
     fn steamid_from_accountid(accountid: u32) -> SteamID {

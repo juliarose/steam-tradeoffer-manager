@@ -327,6 +327,8 @@ impl SteamTradeOfferAPI {
             .into_iter()
             .map(|((classid, instanceid), classinfo_string)| {
                 serde_json::from_str::<response::ClassInfo>(&classinfo_string)
+                    // ignore classinfos that failed parsed
+                    .ok()
                     .map(|classinfo| {
                         (
                             (appid, classid, instanceid),
@@ -334,7 +336,8 @@ impl SteamTradeOfferAPI {
                         )
                     })
             })
-            .collect::<Result<HashMap<_, _>, _>>()?;
+            .flatten()
+            .collect::<HashMap<_, _>>();
         
         self.classinfo_cache.lock().unwrap().insert_classinfos(&classinfos);
 
@@ -514,8 +517,11 @@ impl SteamTradeOfferAPI {
         let map = self.get_asset_classinfos(&classes).await?;
         let offers = response_offers
             .into_iter()
-            .map(|offer| from_raw_trade_offer(offer, &map))
-            .collect::<Result<Vec<_>, _>>()?;
+            // ignore offers where the classinfo cannot be obtained
+            // attempts to load the missing classinfos will continue
+            // but it will not cause the whole poll to fail
+            .flat_map(|offer| from_raw_trade_offer(offer, &map).ok())
+            .collect::<Vec<_>>();
         
         Ok(offers)
     }
