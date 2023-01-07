@@ -57,25 +57,18 @@ pub fn from_raw_trade_offer(
             .collect::<Result<_, _>>()
     }
     
-    fn steamid_from_accountid(accountid: u32) -> SteamID {
-        SteamID::new(
-            accountid,
-            steamid_ng::Instance::Desktop,
-            steamid_ng::AccountType::Individual,
-            steamid_ng::Universe::Public
-        )
-    }
-    
-    let items_to_give = collect_items(offer.items_to_give, map)?;
-    let items_to_receive = collect_items(offer.items_to_receive, map)?;
-    
     Ok(response::trade_offer::TradeOffer {
-        items_to_give,
-        items_to_receive,
+        items_to_give: collect_items(offer.items_to_give, map)?,
+        items_to_receive: collect_items(offer.items_to_receive, map)?,
         tradeofferid: offer.tradeofferid,
         tradeid: offer.tradeid,
         trade_offer_state: offer.trade_offer_state,
-        partner: steamid_from_accountid(offer.accountid_other),
+        partner: SteamID::new(
+            offer.accountid_other,
+            steamid_ng::Instance::Desktop,
+            steamid_ng::AccountType::Individual,
+            steamid_ng::Universe::Public
+        ),
         message: offer.message,
         is_our_offer: offer.is_our_offer,
         from_real_time_trade: offer.from_real_time_trade,
