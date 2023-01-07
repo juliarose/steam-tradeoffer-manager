@@ -24,10 +24,19 @@ async fn load_classinfo(
     data_directory: &PathBuf, 
 ) -> Result<ClassInfoFile, FileError> {
     let filepath = get_classinfo_file_path(&class, false, data_directory);
-    let data = async_fs::read_to_string(filepath).await?;
-    let classinfo = serde_json::from_str::<ClassInfo>(&data)?;
+    let data = async_fs::read_to_string(&filepath).await?;
+    
+    match serde_json::from_str::<ClassInfo>(&data) {
+        Ok(classinfo) => {
+            Ok((class, classinfo))
+        },
+        Err(error) => {
+            // remove the file...
+            let _ = async_fs::remove_file(&filepath).await;
             
-    Ok((class, classinfo))
+            Err(FileError::Parse(error))
+        },
+    }
 }
 
 fn get_classinfo_file_path(
