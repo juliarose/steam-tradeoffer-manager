@@ -23,7 +23,7 @@ async fn load_classinfo(
     class: ClassInfoClass,
     data_directory: &PathBuf, 
 ) -> Result<ClassInfoFile, FileError> {
-    let filepath = get_classinfo_file_path(&class, false, data_directory);
+    let filepath = get_classinfo_file_path(&class, false, data_directory)?;
     let data = async_fs::read_to_string(&filepath).await?;
     
     match serde_json::from_str::<ClassInfo>(&data) {
@@ -43,27 +43,31 @@ fn get_classinfo_file_path(
     class: &ClassInfoClass,
     is_temp: bool,
     data_directory: &PathBuf, 
-) -> PathBuf {
+) -> Result<PathBuf, FileError> {
     let (appid, classid, instanceid) = class;
     let instanceid = match instanceid {
         Some(instanceid) => *instanceid,
         None => 0,
     };
-    let filename = match is_temp {
+    let filename: String = match is_temp {
         true => {
-            let start = SystemTime::now();
-            let timestamp = start
-                .duration_since(UNIX_EPOCH)
-                // In any reasonable setting this shouldn't panic...
-                .expect("Invalid system time")
-                .as_millis();
-                
-            format!("{}_{}_{}.json.{}.temp", appid, classid, instanceid, timestamp)
+            match SystemTime::now().duration_since(UNIX_EPOCH) {
+                Ok(system_time) => {
+                    let timestamp = system_time.as_millis();
+                    
+                    Ok(format!("{}_{}_{}.json.{}.temp", appid, classid, instanceid, timestamp))
+                },
+                Err(error) => {
+                    Err(FileError::SystemTime(error))
+                },
+            }
         },
-        false => format!("{}_{}_{}.json", appid, classid, instanceid),
-    };
+        false => {
+            Ok(format!("{}_{}_{}.json", appid, classid, instanceid))
+        },
+    }?;
     
-    data_directory.join(filename)
+    Ok(data_directory.join(filename))
 }
 
 /// Performs a basic atomic file write.
@@ -84,7 +88,7 @@ async fn save_classinfo(
         &class,
         true,
         data_directory,
-    );
+    )?;
     let mut temp_file = File::create(&temp_filepath).await?;
     
     match temp_file.write_all(classinfo.as_bytes()).await {
@@ -93,7 +97,7 @@ async fn save_classinfo(
                 &class,
                 false,
                 data_directory,
-            );
+            )?;
             
             temp_file.flush().await?;
             async_fs::rename(temp_filepath, filepath).await?;

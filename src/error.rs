@@ -1,6 +1,6 @@
 use crate::types::{AppId, ClassId, InstanceId, TradeOfferId};
 use reqwest_middleware;
-use std::{fmt, num::ParseIntError};
+use std::{fmt, num::ParseIntError, time::SystemTimeError};
 
 /// Any range of errors encountered when making requests.
 #[derive(thiserror::Error, Debug)]
@@ -67,6 +67,8 @@ pub enum FileError {
     // A path could not be converted to a string.
     #[error("Path conversion to string failed")]
     PathError,
+    #[error("System time failure: {}", .0)]
+    SystemTime(SystemTimeError),
 }
 
 /// An error received from a response when sending or acting of trade offers.
