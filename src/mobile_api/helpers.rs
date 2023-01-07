@@ -9,6 +9,8 @@ use sha1::{Sha1, Digest};
 use lazy_regex::regex_replace_all;
 use scraper::{Html, Selector, element_ref::ElementRef};
 
+const MALFORMED_DESCRIPTION: &str = "Unexpected description format";
+
 pub fn build_time_bytes(time: i64) -> [u8; 8] {
     time.to_be_bytes()
 }
@@ -43,35 +45,32 @@ pub fn get_device_id(steamid: &SteamID) -> String {
 
 pub fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlError> {
     fn parse_description(element: ElementRef, description_selector: &Selector) -> Result<Confirmation, ParseHtmlError> {
-        let description: Option<_> = element.select(description_selector).next();
-        let data_type = element.value().attr("data-type");
-        let id = element.value().attr("data-confid");
-        let key = element.value().attr("data-key");
-        let creator = element.value().attr("data-creator");
-        
-        // check contents before unwrapping
-        if description.is_none() || data_type.is_none() || key.is_none() || creator.is_none() {
-            return Err(ParseHtmlError::Malformed("Unexpected description format"));
-        }
-        
+        let description = element.select(description_selector).next()
+            .ok_or_else(|| ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+        let data_type = element.value().attr("data-type")
+            .ok_or_else(|| ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+        let id = element.value().attr("data-confid")
+            .ok_or_else(|| ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+        let key = element.value().attr("data-key")
+            .ok_or_else(|| ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+        let creator = element.value().attr("data-creator")
+            .ok_or_else(|| ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
         let description = description
-            .unwrap()
             .text()
             .map(|t| t.trim())
             .filter(|t| !t.is_empty())
             .collect::<Vec<_>>()
             .join(" ");
         let conf_type = data_type
-            .unwrap()
             .try_into()
             .unwrap_or(ConfirmationType::Unknown);
         
         Ok(Confirmation {
-            id: id.unwrap().parse::<u64>()?,
-            key: key.unwrap().parse::<u64>()?,
+            id: id.parse::<u64>()?,
+            key: key.parse::<u64>()?,
             conf_type,
             description,
-            creator: creator.unwrap().parse::<u64>()?,
+            creator: creator.parse::<u64>()?,
         })
     }
 
