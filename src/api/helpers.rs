@@ -33,7 +33,10 @@ pub fn from_raw_trade_offer(
     offer: raw::RawTradeOffer,
     map: &ClassInfoMap,
 ) -> Result<response::trade_offer::TradeOffer, MissingClassInfoError> {
-    fn collect_items(assets: Vec<raw::RawAsset>, map: &ClassInfoMap) -> Result<Vec<response::asset::Asset>, MissingClassInfoError> {
+    fn collect_items(
+        assets: Vec<raw::RawAsset>,
+        map: &ClassInfoMap,
+    ) -> Result<Vec<response::asset::Asset>, MissingClassInfoError> {
         assets
             .into_iter()
             .map(|asset| {
