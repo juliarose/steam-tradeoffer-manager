@@ -157,8 +157,8 @@ impl SteamTradeOfferAPI {
         }
 
         #[derive(Serialize, Debug)]
-        struct SendOfferParams<'a, 'b> {
-            sessionid: &'a String,
+        struct SendOfferParams<'b> {
+            sessionid: String,
             serverid: u32,
             json_tradeoffer: String,
             tradeoffermessage: &'b Option<String>,
@@ -181,12 +181,8 @@ impl SteamTradeOfferAPI {
             return Err(Error::Parameter("Cannot send an empty offer"));
         }
         
-        let sessionid = self.sessionid.read().unwrap().clone();
-        
-        if sessionid.is_none() {
-            return Err(Error::NotLoggedIn);
-        }
-        
+        let sessionid = self.sessionid.read().unwrap().clone()
+            .ok_or_else(|| Error::NotLoggedIn)?;
         let referer = {
             let pathname: String = match &counter_tradeofferid {
                 Some(id) => id.to_string(),
@@ -224,8 +220,7 @@ impl SteamTradeOfferAPI {
             })?;
             
             SendOfferParams {
-                // presence of sessionid was checked above - unwrap is safe here
-                sessionid: &sessionid.unwrap(),
+                sessionid,
                 serverid: 1,
                 captcha: "",
                 tradeoffermessage: &offer.message,
@@ -625,8 +620,8 @@ impl SteamTradeOfferAPI {
         partner: &SteamID,
     ) -> Result<response::accepted_offer::AcceptedOffer, Error> {
         #[derive(Serialize, Debug)]
-        struct AcceptOfferParams<'a, 'b> {
-            sessionid: &'a String,
+        struct AcceptOfferParams<'b> {
+            sessionid: String,
             serverid: u32,
             #[serde(with = "string")]
             tradeofferid: TradeOfferId,
@@ -635,15 +630,11 @@ impl SteamTradeOfferAPI {
             partner: &'b SteamID,
         }
         
-        let sessionid = self.sessionid.read().unwrap().clone();
-        
-        if sessionid.is_none() {
-            return Err(Error::NotLoggedIn);
-        }
-        
+        let sessionid = self.sessionid.read().unwrap().clone()
+            .ok_or_else(|| Error::NotLoggedIn)?;
         let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid));
         let params = AcceptOfferParams {
-            sessionid: &sessionid.unwrap(),
+            sessionid,
             tradeofferid,
             partner,
             serverid: 1,
@@ -665,8 +656,8 @@ impl SteamTradeOfferAPI {
         tradeofferid: TradeOfferId,
     ) -> Result<TradeOfferId, Error> {
         #[derive(Serialize, Debug)]
-        struct DeclineOfferParams<'a> {
-            sessionid: &'a String,
+        struct DeclineOfferParams {
+            sessionid: String,
         }
         
         #[derive(Deserialize, Debug)]
@@ -675,18 +666,14 @@ impl SteamTradeOfferAPI {
             tradeofferid: TradeOfferId,
         }
         
-        let sessionid = self.sessionid.read().unwrap().clone();
-        
-        if sessionid.is_none() {
-            return Err(Error::NotLoggedIn);
-        }
-        
+        let sessionid = self.sessionid.read().unwrap().clone()
+            .ok_or_else(|| Error::NotLoggedIn)?;
         let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid));
         let uri = self.get_uri(&format!("/tradeoffer/{}/decline", tradeofferid));
         let response = self.client.post(&uri)
             .header(REFERER, referer)
             .form(&DeclineOfferParams {
-                sessionid: &sessionid.unwrap(),
+                sessionid,
             })
             .send()
             .await?;
@@ -700,8 +687,8 @@ impl SteamTradeOfferAPI {
         tradeofferid: TradeOfferId,
     ) -> Result<TradeOfferId, Error> {
         #[derive(Serialize, Debug)]
-        struct CancelOfferParams<'a> {
-            sessionid: &'a String,
+        struct CancelOfferParams {
+            sessionid: String,
         }
         
         #[derive(Deserialize, Debug)]
@@ -710,18 +697,14 @@ impl SteamTradeOfferAPI {
             tradeofferid: TradeOfferId,
         }
         
-        let sessionid = self.sessionid.read().unwrap().clone();
-        
-        if sessionid.is_none() {
-            return Err(Error::NotLoggedIn);
-        }
-        
+        let sessionid = self.sessionid.read().unwrap().clone()
+            .ok_or_else(|| Error::NotLoggedIn)?;
         let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid));
         let uri = self.get_uri(&format!("/tradeoffer/{}/cancel", tradeofferid));
         let response = self.client.post(&uri)
             .header(REFERER, referer)
             .form(&CancelOfferParams {
-                sessionid: &sessionid.unwrap(),
+                sessionid,
             })
             .send()
             .await?;
