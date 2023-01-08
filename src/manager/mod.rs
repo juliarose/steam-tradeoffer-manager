@@ -369,6 +369,11 @@ impl TradeOfferManager {
             let mut poll_data = self.poll_data.write().unwrap();
                 
             for offer in offers {
+                // just don't do anything with this offer
+                if offer.is_glitched() {
+                    continue;
+                }
+                
                 offers_since = cmp::max(offers_since, offer.time_updated.timestamp());
 
                 match poll_data.state_map.get(&offer.tradeofferid) {

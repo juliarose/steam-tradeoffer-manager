@@ -66,6 +66,6 @@ impl TradeOffer {
     
     /// Checks whether the trade offer is glitched or not by checking if no items are present.
     pub fn is_glitched(&self) -> bool {
-        self.items_to_receive.is_empty() && self.items_to_receive.is_empty()
+        self.items_to_receive.is_empty() && self.items_to_give.is_empty()
     }
 }
