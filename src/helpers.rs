@@ -77,7 +77,7 @@ where
                 if let Some((_, message)) = regex_captures!("<h3>(.+)</h3>", &html) {
                     Err(Error::Response(message.into()))
                 } else {
-                    Err(Error::Response("Unexpected error".into()))
+                    Err(Error::MalformedResponse)
                 }
             } else if regex_is_match!(r#"<h1>Sign In</h1>"#, &html) && regex_is_match!(r#"g_steamID = false;"#, &html) {
                 Err(Error::NotLoggedIn)

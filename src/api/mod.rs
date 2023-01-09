@@ -21,7 +21,7 @@ use std::{
     sync::{Arc, RwLock, Mutex},
 };
 use crate::{
-    error::Error,
+    error::{Error, MissingClassInfoError},
     enums::OfferFilter,
     SteamID,
     time::{ServerTime, get_system_time},
@@ -272,12 +272,12 @@ impl SteamTradeOfferAPI {
                 },
                 Err(error) => {
                     Err(Error::Response(error.into()))
-                }
+                },
             }
         } else if regex_is_match!(r#"\{"success": ?false\}"#, &body) {
             Err(Error::NotLoggedIn)
         } else {
-            Err(Error::Response("Unexpected response".into()))
+            Err(Error::MalformedResponse)
         }
     }
     
@@ -497,7 +497,11 @@ impl SteamTradeOfferAPI {
                     
                     // we don't need to go any further...
                     if has_older {
-                        offers.append(&mut response_offers);
+                        // add the offers, filtering out older offers
+                        offers.extend(&mut response_offers
+                            .into_iter()
+                            .filter(|offer| offer.time_created < *historical_cutoff)
+                        );
                         break;
                     }
                 }
@@ -645,7 +649,7 @@ impl SteamTradeOfferAPI {
                 them_escrow,
             })
         } else {
-            Err(Error::Response("Malformed response".into()))
+            Err(Error::MalformedResponse)
         }
     }
 
@@ -781,11 +785,11 @@ impl SteamTradeOfferAPI {
             let body: GetInventoryOldResponse = parses_response(response).await?;
             
             if !body.success {
-                return Err(Error::Response("Bad response".into()));
+                return Err(Error::ResponseUnsuccessful);
             } else if body.more_items {
                 // shouldn't occur, but we wouldn't want to call this endlessly if it does...
                 if body.more_start == start {
-                    return Err(Error::Response("Bad response".into()));
+                    return Err(Error::MalformedResponse);
                 }
                 
                 start = body.more_start;
@@ -800,21 +804,20 @@ impl SteamTradeOfferAPI {
         
         for body in responses {
             for item in body.assets.values() {
-                if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
-                    inventory.push(response::asset::Asset {
-                        classinfo: Arc::clone(classinfo),
+                let classinfo = body.descriptions.get(&(item.classid, item.instanceid))
+                    .ok_or_else(|| Error::MissingClassInfo(MissingClassInfoError {
                         appid,
-                        contextid,
-                        assetid: item.assetid,
-                        amount: item.amount,
-                    });
-                } else {
-                    let instanceid =  item.instanceid.unwrap_or(0);
-                    
-                    return Err(Error::Response(
-                        format!("Missing descriptions for item {}:{}", item.classid, instanceid)
-                    ));
-                }
+                        classid: item.classid,
+                        instanceid: item.instanceid,
+                    }))?;
+                
+                inventory.push(response::asset::Asset {
+                    classinfo: Arc::clone(classinfo),
+                    appid,
+                    contextid,
+                    assetid: item.assetid,
+                    amount: item.amount,
+                });
             }
         }
         
@@ -854,11 +857,11 @@ impl SteamTradeOfferAPI {
             let body: GetInventoryResponse = parses_response(response).await?;
             
             if !body.success {
-                return Err(Error::Response("Bad response".into()));
+                return Err(Error::ResponseUnsuccessful);
             } else if body.more_items {
                 // shouldn't occur, but we wouldn't want to call this endlessly if it does...
                 if body.last_assetid == start_assetid {
-                    return Err(Error::Response("Bad response".into()));
+                    return Err(Error::MalformedResponse);
                 }
                 
                 start_assetid = body.last_assetid;
@@ -873,25 +876,24 @@ impl SteamTradeOfferAPI {
         
         for body in responses {
             for item in &body.assets {
-                if let Some(classinfo) = body.descriptions.get(&(item.classid, item.instanceid)) {
-                    if tradable_only && !classinfo.tradable {
-                        continue;
-                    }
-                    
-                    inventory.push(response::asset::Asset {
-                        appid: item.appid,
-                        contextid: item.contextid,
-                        assetid: item.assetid,
-                        amount: item.amount,
-                        classinfo: Arc::clone(classinfo),
-                    });
-                } else {
-                    let instanceid =  item.instanceid.unwrap_or(0);
-                    
-                    return Err(Error::Response(
-                        format!("Missing descriptions for item {}:{}", item.classid, instanceid)
-                    ));
+                let classinfo = body.descriptions.get(&(item.classid, item.instanceid))
+                    .ok_or_else(|| Error::MissingClassInfo(MissingClassInfoError {
+                        appid,
+                        classid: item.classid,
+                        instanceid: item.instanceid,
+                    }))?;
+                
+                if tradable_only && !classinfo.tradable {
+                    continue;
                 }
+                
+                inventory.push(response::asset::Asset {
+                    appid,
+                    contextid,
+                    assetid: item.assetid,
+                    amount: item.amount,
+                    classinfo: Arc::clone(classinfo),
+                });
             }
         }
         
@@ -931,11 +933,11 @@ impl SteamTradeOfferAPI {
             let body: GetInventoryResponseIgnoreDescriptions = parses_response(response).await?;
             
             if !body.success {
-                return Err(Error::Response("Bad response".into()));
+                return Err(Error::ResponseUnsuccessful);
             } else if body.more_items {
                 // shouldn't occur, but we wouldn't want to call this endlessly if it does...
                 if body.last_assetid == start_assetid {
-                    return Err(Error::Response("Bad response".into()));
+                    return Err(Error::MalformedResponse);
                 }
                 
                 start_assetid = body.last_assetid;
@@ -960,25 +962,24 @@ impl SteamTradeOfferAPI {
         let map = self.get_asset_classinfos(&classes).await?;
         
         for item in items {
-            if let Some(classinfo) = map.get(&(item.appid, item.classid, item.instanceid)) {
-                if tradable_only && !classinfo.tradable {
-                    continue;
-                }
-                
-                inventory.push(response::asset::Asset {
-                    appid: item.appid,
-                    contextid: item.contextid,
-                    assetid: item.assetid,
-                    amount: item.amount,
-                    classinfo: Arc::clone(classinfo),
-                });
-            } else {
-                let instanceid =  item.instanceid.unwrap_or(0);
-                
-                return Err(Error::Response(
-                    format!("Missing descriptions for item {}:{}", item.classid, instanceid)
-                ));
+            let classinfo = map.get(&(appid, item.classid, item.instanceid))
+                .ok_or_else(|| Error::MissingClassInfo(MissingClassInfoError {
+                    appid,
+                    classid: item.classid,
+                    instanceid: item.instanceid,
+                }))?;
+            
+            if tradable_only && !classinfo.tradable {
+                continue;
             }
+            
+            inventory.push(response::asset::Asset {
+                appid,
+                contextid,
+                assetid: item.assetid,
+                amount: item.amount,
+                classinfo: Arc::clone(classinfo),
+            });
         }
         
         Ok(inventory)

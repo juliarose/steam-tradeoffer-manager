@@ -8,7 +8,8 @@ pub enum Error {
     /// A paramter is missing or invalid.
     #[error("Invalid parameter: {}", .0)]
     Parameter(&'static str),
-    /// The response is not expected. The containing string provides a message with more details.
+    /// An unexpected response containing a message was received. Check the message for more 
+    /// details.
     #[error("Unexpected response: {}", .0)]
     Response(String),
     /// An error was encountered during the request.
@@ -57,6 +58,9 @@ pub enum Error {
     /// A confirmation could be confirmed.
     #[error("Confirmation unsuccessful. The confirmation may no longer exist or another trade may be going through. Check confirmations again to verify.")]
     ConfirmationUnsuccessful,
+    /// The response is not expected. The containing string provides a message with more details.
+    #[error("Malformed response")]
+    MalformedResponse,
 }
 
 /// An error occurred when working with the file system.
