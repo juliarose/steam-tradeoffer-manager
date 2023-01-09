@@ -75,6 +75,22 @@ pub struct RawTradeOffer {
     pub confirmation_method: ConfirmationMethod,
 }
 
+impl RawTradeOffer {
+    
+    /// Checks whether the trade offer is glitched or not by checking if no items are present.
+    pub fn is_glitched(&self) -> bool {
+        self.items_to_receive.is_empty() && self.items_to_give.is_empty()
+    }
+    
+    /// Whether the state of this offer can be modified. This is either active offers or offers 
+    /// that are in escrow.
+    pub fn state_is_changeable(&self) -> bool {
+        self.trade_offer_state == TradeOfferState::Active ||
+        self.trade_offer_state == TradeOfferState::InEscrow ||
+        self.trade_offer_state == TradeOfferState::CreatedNeedsConfirmation
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RawAsset {
     pub appid: AppId,

@@ -54,6 +54,9 @@ pub enum Error {
     /// not valid a valid base64 number.
     #[error("Invalid base64: {}", .0)]
     Base64Decode(#[from] base64::DecodeError),
+    /// A confirmation could be confirmed.
+    #[error("Confirmation unsuccessful. The confirmation may no longer exist or another trade may be going through. Check confirmations again to verify.")]
+    ConfirmationUnsuccessful,
 }
 
 /// An error occurred when working with the file system.
@@ -211,7 +214,7 @@ impl fmt::Display for MissingClassInfoError {
         write!(
             f,
             "Missing description for {}:{}:{:?})",
-            self.appid, self.classid, self.instanceid
+            self.appid, self.classid, self.instanceid.unwrap_or(0),
         )
     }
 }

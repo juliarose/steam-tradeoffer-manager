@@ -7,7 +7,12 @@ pub use builder::TradeOfferManagerBuilder;
 pub use poll::Poll;
 
 use poll_data::PollData;
-use std::{cmp, path::PathBuf, sync::{Arc, RwLock}};
+use std::{
+    cmp,
+    collections::HashMap,
+    path::PathBuf,
+    sync::{Arc, RwLock},
+};
 use chrono::Duration;
 use crate::{
     error::Error,
@@ -293,7 +298,7 @@ impl TradeOfferManager {
     /// Performs a poll for changes to offers.
     pub async fn do_poll(
         &self,
-        full_update: bool
+        mut full_update: bool
     ) -> Result<Poll, Error> {
         fn date_difference_from_now(date: &ServerTime) -> i64 {
             let current_timestamp = time::get_server_time_now().timestamp();
@@ -306,6 +311,39 @@ impl TradeOfferManager {
                 date_difference_from_now(&last_poll_full_update) >= 5 * 60
             } else {
                 true
+            }
+        }
+        
+        // since the logic in here is so complicated
+        fn update_polled_oldest_active_offer(
+            full_update: bool,
+            poll_data: &PollData,
+            offer: &crate::api::raw::RawTradeOffer,
+            polled_oldest_active_offer: &mut Option<ServerTime>,
+        ) {
+            // This offer cannot be changed - we don't care about it
+            if !offer.state_is_changeable() {
+                return;
+            }
+            
+            let is_updateable_by_full_update = {
+                // update it if we're doing a full update
+                full_update &&
+                {
+                    // and the time of the offer is older than the current oldest active offer
+                    Some(offer.time_created) < *polled_oldest_active_offer ||
+                    // or the current oldest active offer is not set
+                    polled_oldest_active_offer.is_none()
+                }
+            };
+            
+            if {
+                is_updateable_by_full_update ||
+                // if the poll data does not have an active offer set, this is fine too
+                poll_data.oldest_active_offer.is_none()
+            } {
+                // this is now the oldest active offer
+                *polled_oldest_active_offer = Some(offer.time_created);
             }
         }
         
@@ -328,19 +366,29 @@ impl TradeOfferManager {
         
             if full_update || last_poll_full_outdated(poll_data.last_poll_full_update) {
                 filter = OfferFilter::All;
-                offers_since = 1;
-                poll_data.last_poll_full_update = Some(time::get_server_time_now())
+                poll_data.last_poll_full_update = Some(time::get_server_time_now());
+                full_update = true;
+                
+                if let Some(oldest_active_offer) = poll_data.oldest_active_offer {
+                    // It looks like sometimes Steam can be dumb and backdate a modified offer. We 
+                    // need to handle this. Let's add a 30-minute buffer.
+                    offers_since = oldest_active_offer.timestamp() - 1800;
+                } else {
+                    offers_since = 1;
+                }
             } else if let Some(poll_offers_since) = poll_data.offers_since {
-                // It looks like sometimes Steam can be dumb and backdate a modified offer. We need to handle this.
-                // Let's add a 30-minute buffer.
+                // It looks like sometimes Steam can be dumb and backdate a modified offer. We 
+                // need to handle this. Let's add a 30-minute buffer.
                 offers_since = poll_offers_since.timestamp() - 1800;
             }
         }
-
+        
         let historical_cutoff = time::timestamp_to_server_time(offers_since);
-        let mut offers = self.api.get_trade_offers(&filter, &Some(historical_cutoff)).await?;
+        let mut offers = self.api.get_raw_trade_offers(
+            &filter,
+            &Some(historical_cutoff),
+        ).await?;
         let mut offers_since: i64 = 0;
-        let mut poll: Poll = Vec::new();
         
         if let Some(cancel_duration) = self.cancel_duration {
             let cancel_time = chrono::Utc::now() - cancel_duration;
@@ -357,7 +405,9 @@ impl TradeOfferManager {
                     offer.time_created < cancel_time
                 });
             let cancel_futures = offers_to_cancel
-                .map(|offer| async { self.cancel_offer(offer).await })
+                .map(|offer| async {
+                    self.api.cancel_offer(offer.tradeofferid).await
+                })
                 .collect::<Vec<_>>();
             
             // cancels all offers older than cancel_time
@@ -365,10 +415,23 @@ impl TradeOfferManager {
             futures::future::join_all(cancel_futures).await;
         }
         
+        // keep track of whether the state of poll data has changed
+        let mut poll_data_changed = false;
+        let mut prev_states_map: HashMap<TradeOfferId, TradeOfferState> = HashMap::new();
+        let mut poll: Vec<_> = Vec::new();
+        
         {
             let mut poll_data = self.poll_data.write().unwrap();
+            let mut polled_oldest_active_offer: Option<ServerTime> = None;
                 
             for offer in offers {
+                update_polled_oldest_active_offer(
+                    full_update,
+                    &poll_data,
+                    &offer,
+                    &mut polled_oldest_active_offer,
+                );
+                
                 // just don't do anything with this offer
                 if offer.is_glitched() {
                     continue;
@@ -377,26 +440,36 @@ impl TradeOfferManager {
                 offers_since = cmp::max(offers_since, offer.time_updated.timestamp());
 
                 match poll_data.state_map.get(&offer.tradeofferid) {
-                    Some(poll_trade_offer_state) => {
-                        if poll_trade_offer_state != &offer.trade_offer_state {
-                            let tradeofferid = offer.tradeofferid;
-                            let new_state = offer.trade_offer_state.clone();
-                            
-                            poll.push((offer, Some(poll_trade_offer_state.clone())));
-                            
-                            poll_data.state_map.insert(tradeofferid, new_state);
-                        }
-                    },
-                    None => {
-                        poll_data.state_map.insert(offer.tradeofferid, offer.trade_offer_state.clone());
+                    Some(
+                        poll_trade_offer_state
+                    ) if poll_trade_offer_state != &offer.trade_offer_state => {
+                        let tradeofferid = offer.tradeofferid;
+                        let new_state = offer.trade_offer_state.clone();
                         
-                        poll.push((offer, None));
+                        poll.push(offer);
+                        prev_states_map.insert(tradeofferid, *poll_trade_offer_state);
+                        poll_data.state_map.insert(tradeofferid, new_state);
+                        poll_data_changed = true;
+                    },
+                    // nothing has changed
+                    Some(_) => {},
+                    None => {
+                        // this is a new offer
+                        poll_data.state_map.insert(offer.tradeofferid, offer.trade_offer_state.clone());
+                        poll.push(offer);
+                        poll_data_changed = true;
                     },
                 }
             }
             
+            if polled_oldest_active_offer.is_some() {
+                poll_data.oldest_active_offer = polled_oldest_active_offer;
+                poll_data_changed = true;
+            }
+            
             // Clear poll data offers otherwise this could expand infinitely.
             // Using a higher number than is removed so this process needs to run less frequently.
+            // This could be better but it works.
             if poll_data.state_map.len() > 2500 {
                 let mut tradeofferids = poll_data.state_map
                     .keys()
@@ -413,15 +486,37 @@ impl TradeOfferManager {
                 
                 for tradeofferid in tradeofferids_to_remove {
                     poll_data.state_map.remove(tradeofferid);
+                    poll_data_changed = true;
                 }
             }
             
-            if offers_since > 0 {
-                poll_data.offers_since = Some(time::timestamp_to_server_time(offers_since));
+            let new_offers_since = Some(time::timestamp_to_server_time(offers_since));
+            
+            if
+                offers_since > 0 &&
+                {
+                    new_offers_since > poll_data.offers_since ||
+                    poll_data.offers_since.is_none() 
+                }
+            {
+                poll_data.offers_since = new_offers_since;
+                poll_data_changed = true;
             }
         }
         
-        let _ = self.save_poll_data().await;
+        if poll_data_changed {
+            // only save if changes were detected
+            let _ = self.save_poll_data().await;
+        }
+        
+        let poll = self.api.map_raw_trade_offers(poll).await?
+            .into_iter()
+            .map(|offer| {
+                let prev_state = prev_states_map.remove(&offer.tradeofferid);
+                
+                (offer, prev_state)
+            })
+            .collect::<Vec<_>>();
         
         Ok(poll)
     }

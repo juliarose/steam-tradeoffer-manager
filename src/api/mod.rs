@@ -1,4 +1,4 @@
-mod raw;
+pub mod raw;
 mod api_response;
 mod helpers;
 
@@ -8,7 +8,6 @@ use helpers::{
     from_raw_receipt_asset,
 };
 use api_response::{
-    GetTradeOffersResponseBody,
     GetTradeOffersResponse,
     GetInventoryResponse,
     GetInventoryResponseIgnoreDescriptions,
@@ -438,12 +437,12 @@ impl SteamTradeOfferAPI {
         
         Ok(map)
     }
-
-    pub async fn get_trade_offers(
+    
+    pub async fn get_raw_trade_offers(
         &self,
         filter: &OfferFilter,
         historical_cutoff: &Option<ServerTime>,
-    ) -> Result<Vec<response::trade_offer::TradeOffer>, Error> {
+    ) -> Result<Vec<raw::RawTradeOffer>, Error> {
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -458,12 +457,12 @@ impl SteamTradeOfferAPI {
         }
         
         let mut cursor = None;
-        let mut responses: Vec<GetTradeOffersResponseBody> = Vec::new();
         let time_historical_cutoff: u64 = match historical_cutoff {
             Some(cutoff) => cutoff.timestamp() as u64,
             None => get_system_time() + ONE_YEAR_SECS,
         };
         let uri = self.get_api_url("IEconService", "GetTradeOffers", 1);
+        let mut offers = Vec::new();
         
         loop {
             let response = self.client.get(&uri)
@@ -482,8 +481,29 @@ impl SteamTradeOfferAPI {
                 .await?;
             let body: GetTradeOffersResponse = parses_response(response).await?;
             let next_cursor = body.response.next_cursor;
+            let mut response = body.response;
+            let mut response_offers = response.trade_offers_received;
             
-            responses.push(body.response);
+            response_offers.append(&mut response.trade_offers_sent);
+            
+            if *filter != OfferFilter::ActiveOnly {
+                // The time_historical_cutoff parameter doesn't really do anything unless the
+                // offer filter is active only, we need to manually check when to stop.
+                if let Some(historical_cutoff) = historical_cutoff {
+                    // Is there an offer older than the cutoff?
+                    let has_older = response_offers
+                        .iter()
+                        .any(|offer| offer.time_created < *historical_cutoff);
+                    
+                    // we don't need to go any further...
+                    if has_older {
+                        offers.append(&mut response_offers);
+                        break;
+                    }
+                }
+            }
+            
+            offers.append(&mut response_offers);
             
             if next_cursor > Some(0) {
                 cursor = next_cursor;
@@ -492,14 +512,14 @@ impl SteamTradeOfferAPI {
             }
         }
         
-        let mut response_offers = Vec::new();
-        
-        for mut response in responses {
-            response_offers.append(&mut response.trade_offers_received);
-            response_offers.append(&mut response.trade_offers_sent);
-        }
-
-        let classes = response_offers
+        Ok(offers)
+    }
+    
+    pub async fn map_raw_trade_offers(
+        &self,
+        offers: Vec<raw::RawTradeOffer>,
+    ) -> Result<Vec<response::trade_offer::TradeOffer>, Error> {
+        let classes = offers
             .iter()
             .flat_map(|offer| {
                 offer.items_to_give
@@ -511,13 +531,27 @@ impl SteamTradeOfferAPI {
             .into_iter()
             .collect();
         let map = self.get_asset_classinfos(&classes).await?;
-        let offers = response_offers
+        let offers = offers
             .into_iter()
             // ignore offers where the classinfo cannot be obtained
             // attempts to load the missing classinfos will continue
             // but it will not cause the whole poll to fail
             .filter_map(|offer| from_raw_trade_offer(offer, &map).ok())
             .collect::<Vec<_>>();
+        
+        Ok(offers)
+    }
+    
+    pub async fn get_trade_offers(
+        &self,
+        filter: &OfferFilter,
+        historical_cutoff: &Option<ServerTime>,
+    ) -> Result<Vec<response::trade_offer::TradeOffer>, Error> {
+        let raw_offers = self.get_raw_trade_offers(
+            filter,
+            historical_cutoff,
+        ).await?;
+        let offers = self.map_raw_trade_offers(raw_offers).await?;
         
         Ok(offers)
     }

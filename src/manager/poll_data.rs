@@ -11,6 +11,9 @@ pub struct PollData {
     pub offers_since: Option<ServerTime>,
     pub last_poll: Option<ServerTime>,
     pub last_poll_full_update: Option<ServerTime>,
+    /// The oldest active offer. Polling will go back to this time. Used for full update and 
+    /// includes offers in escrow.
+    pub oldest_active_offer: Option<ServerTime>,
     pub state_map: HashMap<TradeOfferId, TradeOfferState>,
 }
 
@@ -20,6 +23,7 @@ impl PollData {
             offers_since: None,
             last_poll: None,
             last_poll_full_update: None,
+            oldest_active_offer: None,
             state_map: HashMap::new(),
         }
     }
