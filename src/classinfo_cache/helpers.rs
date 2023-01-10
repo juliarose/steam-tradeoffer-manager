@@ -6,6 +6,7 @@ use crate::{
         ClassInfoAppClass,
         AppId,
     },
+    helpers::write_file_atomic,
 };
 use super::types::ClassInfoFile;
 use std::{
@@ -14,9 +15,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 use futures::future::join_all;
-use async_fs::File;
 use tokio::task::JoinHandle;
-use futures_lite::io::AsyncWriteExt;
 use serde_json;
 
 async fn load_classinfo(
@@ -70,7 +69,7 @@ fn get_classinfo_file_path(
     Ok(data_directory.join(filename))
 }
 
-/// Performs a basic atomic file write.
+/// Saves the classinfo.
 async fn save_classinfo(
     class: ClassInfoClass,
     classinfo: String,
@@ -84,35 +83,18 @@ async fn save_classinfo(
         return Err(FileError::Parse(error));
     }
     
-    let temp_filepath = get_classinfo_file_path(
+    let filepath = get_classinfo_file_path(
         &class,
-        true,
+        false,
         data_directory,
     )?;
-    let mut temp_file = File::create(&temp_filepath).await?;
     
-    match temp_file.write_all(classinfo.as_bytes()).await {
-        Ok(_) => {
-            let filepath = get_classinfo_file_path(
-                &class,
-                false,
-                data_directory,
-            )?;
-            
-            temp_file.flush().await?;
-            async_fs::rename(temp_filepath, filepath).await?;
-
-            Ok(())
-        },
-        Err(error) => {
-            // something went wrong writing to this file...
-            async_fs::remove_file(&temp_filepath).await?;
-            
-            Err(error.into())
-        }
-    }
+    write_file_atomic(filepath, classinfo.as_bytes()).await?;
+    
+    Ok(())
 }
 
+/// Loads classinfos.
 pub async fn load_classinfos(
     classes: &HashSet<&ClassInfoClass>,
     data_directory: &PathBuf, 
@@ -141,6 +123,7 @@ pub async fn load_classinfos(
     results
 }
 
+/// Saves classinfos.
 pub async fn save_classinfos(
     appid: AppId,
     classinfos: &HashMap<ClassInfoAppClass, String>,

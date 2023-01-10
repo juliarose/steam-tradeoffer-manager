@@ -76,7 +76,96 @@ impl TradeOfferManager {
         Ok(())
     }
     
-    /// Counters an existing offer.
+    /// Accepts an offer. This checks if the offer can be acted on and updates the state of the 
+    /// offer upon success.
+    pub async fn accept_offer(
+        &self,
+        offer: &mut response::trade_offer::TradeOffer,
+    ) -> Result<response::accepted_offer::AcceptedOffer, Error> {
+        if offer.is_our_offer {
+            return Err(Error::Parameter("Cannot accept an offer that is ours"));
+        } else if offer.trade_offer_state != TradeOfferState::Active {
+            return Err(Error::Parameter("Cannot accept an offer that is not active"));
+        }
+        
+        let accepted_offer = self.api.accept_offer(offer.tradeofferid, &offer.partner).await?;
+        offer.trade_offer_state = TradeOfferState::Accepted;
+        
+        Ok(accepted_offer)
+    }
+    
+    /// Accepts an offer using its tradeofferid..
+    pub async fn accept_offer_id(
+        &self,
+        tradeofferid: TradeOfferId,
+        partner: &SteamID,
+    ) -> Result<response::accepted_offer::AcceptedOffer, Error> {
+        let accepted_offer = self.api.accept_offer(tradeofferid, &partner).await?;
+        
+        Ok(accepted_offer)
+    }
+    
+    /// Cancels an offer. This checks if the offer was not creating by us and updates the state of 
+    /// the offer upon success.
+    pub async fn cancel_offer(
+        &self,
+        offer: &mut response::trade_offer::TradeOffer,
+    ) -> Result<(), Error> {
+        if !offer.is_our_offer {
+            return Err(Error::Parameter("Cannot cancel an offer we did not create"));
+        }
+        
+        self.api.cancel_offer(offer.tradeofferid).await?;
+        offer.trade_offer_state = TradeOfferState::Canceled;
+        
+        Ok(())
+    }
+    
+    /// Cancels an offer using its tradeofferid.
+    pub async fn cancel_offer_id(
+        &self,
+        tradeofferid: TradeOfferId,
+    ) -> Result<(), Error> {
+        self.api.cancel_offer(tradeofferid).await?;
+        
+        Ok(())
+    }
+    
+    /// Declines an offer. This checks if the offer was creating by us and updates the state of 
+    /// the offer upon success.
+    pub async fn decline_offer(
+        &self,
+        offer: &mut response::trade_offer::TradeOffer,
+    ) -> Result<(), Error> {
+        if offer.is_our_offer {
+            return Err(Error::Parameter("Cannot decline an offer we created"));
+        }
+        
+        self.api.decline_offer(offer.tradeofferid).await?;
+        offer.trade_offer_state = TradeOfferState::Declined;
+        
+        Ok(())
+    }
+    
+    /// Declines an offer using its tradeofferid.
+    pub async fn decline_offer_id(
+        &self,
+        tradeofferid: TradeOfferId,
+    ) -> Result<(), Error> {
+        self.api.decline_offer(tradeofferid).await?;
+        
+        Ok(())
+    }
+    
+    /// Sends an offer.
+    pub async fn send_offer(
+        &self,
+        offer: &request::trade_offer::NewTradeOffer,
+    ) -> Result<response::sent_offer::SentOffer, Error> {
+        self.api.send_offer(offer, None).await
+    }
+    
+    /// Counters an existing offer. This updates the state of the offer upon success.
     pub async fn counter_offer(
         &self,
         offer: &mut response::trade_offer::TradeOffer,
@@ -92,59 +181,18 @@ impl TradeOfferManager {
         Ok(sent_offer)
     }
     
-    /// Sends an offer.
-    pub async fn send_offer(
+    /// Counters an existing offer using its tradeofferid.
+    pub async fn counter_offer_id(
         &self,
-        offer: &request::trade_offer::NewTradeOffer,
+        tradeofferid: TradeOfferId,
+        counter_offer: &request::trade_offer::NewTradeOffer,
     ) -> Result<response::sent_offer::SentOffer, Error> {
-        self.api.send_offer(offer, None).await
-    }
-    
-    /// Accepts an offer.
-    pub async fn accept_offer(
-        &self,
-        offer: &mut response::trade_offer::TradeOffer,
-    ) -> Result<response::accepted_offer::AcceptedOffer, Error> {
-        if offer.is_our_offer {
-            return Err(Error::Parameter("Cannot accept an offer that is ours"));
-        } else if offer.trade_offer_state != TradeOfferState::Active {
-            return Err(Error::Parameter("Cannot accept an offer that is not active"));
-        }
-
-        let accepted_offer = self.api.accept_offer(offer.tradeofferid, &offer.partner).await?;
-        offer.trade_offer_state = TradeOfferState::Accepted;
+        let sent_offer = self.api.send_offer(
+            counter_offer,
+            Some(tradeofferid),
+        ).await?;
         
-        Ok(accepted_offer)
-    }
-    
-    /// Cancels an offer.
-    pub async fn cancel_offer(
-        &self,
-        offer: &mut response::trade_offer::TradeOffer,
-    ) -> Result<(), Error> {
-        if !offer.is_our_offer {
-            return Err(Error::Parameter("Cannot cancel an offer we did not create"));
-        }
-        
-        self.api.cancel_offer(offer.tradeofferid).await?;
-        offer.trade_offer_state = TradeOfferState::Canceled;
-        
-        Ok(())
-    }
-    
-    /// Declines an offer.
-    pub async fn decline_offer(
-        &self,
-        offer: &mut response::trade_offer::TradeOffer,
-    ) -> Result<(), Error> {
-        if offer.is_our_offer {
-            return Err(Error::Parameter("Cannot decline an offer we created"));
-        }
-        
-        self.api.decline_offer(offer.tradeofferid).await?;
-        offer.trade_offer_state = TradeOfferState::Declined;
-        
-        Ok(())
+        Ok(sent_offer)
     }
 
     /// Gets a user's inventory using the old endpoint.
@@ -295,10 +343,13 @@ impl TradeOfferManager {
         self.api.get_trade_offers(filter, historical_cutoff).await
     }
     
-    /// Performs a poll for changes to offers.
+    /// Performs a poll for changes to offers. If full_update is set, the poll will get offers up 
+    /// to your oldest active offers. If force_update is set, this method will not return an error
+    /// with [`Error::PollCalledTooSoon`].
     pub async fn do_poll(
         &self,
-        mut full_update: bool
+        mut full_update: bool,
+        force_update: bool,
     ) -> Result<Poll, Error> {
         fn date_difference_from_now(date: &ServerTime) -> i64 {
             let current_timestamp = time::get_server_time_now().timestamp();
@@ -314,35 +365,36 @@ impl TradeOfferManager {
             }
         }
         
-        // since the logic in here is so complicated
+        // Updates the oldest active offer. Since this is quite complicated it deserves its 
+        // own function...
         fn update_polled_oldest_active_offer(
             full_update: bool,
             poll_data: &PollData,
             offer: &crate::api::raw::RawTradeOffer,
             polled_oldest_active_offer: &mut Option<ServerTime>,
         ) {
-            // This offer cannot be changed - we don't care about it
+            // This offer cannot be changed - we don't care about it.
             if !offer.state_is_changeable() {
                 return;
             }
             
             let is_updateable_by_full_update = {
-                // update it if we're doing a full update
+                // Update it only if we're doing a full update.
                 full_update &&
                 {
-                    // and the time of the offer is older than the current oldest active offer
+                    // And the time of the offer is older than the current oldest active offer.
                     Some(offer.time_created) < *polled_oldest_active_offer ||
-                    // or the current oldest active offer is not set
+                    // Unless the current oldest active offer is not set.
                     polled_oldest_active_offer.is_none()
                 }
             };
             
             if {
                 is_updateable_by_full_update ||
-                // if the poll data does not have an active offer set, this is fine too
+                // If the poll data does not have an active offer set, this is fine too.
                 poll_data.oldest_active_offer.is_none()
             } {
-                // this is now the oldest active offer
+                // This is now the oldest active offer.
                 *polled_oldest_active_offer = Some(offer.time_created);
             }
         }
@@ -352,26 +404,33 @@ impl TradeOfferManager {
         
         {
             let mut poll_data = self.poll_data.write().unwrap();
-
-            if let Some(last_poll) = poll_data.last_poll {
-                let seconds_since_last_poll = date_difference_from_now(&last_poll);
-                    
-                if seconds_since_last_poll <= 1 {
-                    // We last polled less than a second ago... we shouldn't spam the API
-                    return Err(Error::PollCalledTooSoon);
-                }            
+            
+            if !force_update {
+                if let Some(last_poll) = poll_data.last_poll {
+                    let seconds_since_last_poll = date_difference_from_now(&last_poll);
+                        
+                    if seconds_since_last_poll <= 1 {
+                        // We last polled less than a second ago... we shouldn't spam the API
+                        return Err(Error::PollCalledTooSoon);
+                    }            
+                }
             }
             
             poll_data.last_poll = Some(time::get_server_time_now());
         
-            if full_update || last_poll_full_outdated(poll_data.last_poll_full_update) {
+            if {
+                // If we're doing a full update.
+                full_update ||
+                // Or the date of the last full poll is outdated.
+                last_poll_full_outdated(poll_data.last_poll_full_update)
+            } {
                 filter = OfferFilter::All;
                 poll_data.last_poll_full_update = Some(time::get_server_time_now());
                 full_update = true;
                 
                 if let Some(oldest_active_offer) = poll_data.oldest_active_offer {
-                    // It looks like sometimes Steam can be dumb and backdate a modified offer. We 
-                    // need to handle this. Let's add a 30-minute buffer.
+                    // It looks like sometimes Steam can be dumb and backdate a modified offer.
+                    // We need to handle this. Let's add a 30-minute buffer.
                     offers_since = oldest_active_offer.timestamp() - 1800;
                 } else {
                     offers_since = 1;
@@ -389,6 +448,7 @@ impl TradeOfferManager {
             &Some(historical_cutoff),
         ).await?;
         let mut offers_since: i64 = 0;
+        let mut cancelled_offers = Vec::new();
         
         if let Some(cancel_duration) = self.cancel_duration {
             let cancel_time = chrono::Utc::now() - cancel_duration;
@@ -409,13 +469,16 @@ impl TradeOfferManager {
                     self.api.cancel_offer(offer.tradeofferid).await
                 })
                 .collect::<Vec<_>>();
+            // Cancels all offers older than cancel_time.
+            let results = futures::future::join_all(cancel_futures).await;
             
-            // cancels all offers older than cancel_time
-            // this will also update the state for the offers that were cancelled
-            futures::future::join_all(cancel_futures).await;
+            cancelled_offers.extend(&mut results
+                .into_iter()
+                .filter_map(|offer| offer.ok())
+            );
         }
         
-        // keep track of whether the state of poll data has changed
+        // For reducing file writes, keep track of whether the state of poll data has changed.
         let mut poll_data_changed = false;
         let mut prev_states_map: HashMap<TradeOfferId, TradeOfferState> = HashMap::new();
         let mut poll: Vec<_> = Vec::new();
@@ -423,8 +486,15 @@ impl TradeOfferManager {
         {
             let mut poll_data = self.poll_data.write().unwrap();
             let mut polled_oldest_active_offer: Option<ServerTime> = None;
+            
+            for mut offer in offers {
+                // This offer was successfully cancelled above...
+                // We need to update its state here.
+                if cancelled_offers.contains(&offer.tradeofferid) {
+                    offer.trade_offer_state = TradeOfferState::Canceled;
+                }
                 
-            for offer in offers {
+                // Detects the oldest active offer.
                 update_polled_oldest_active_offer(
                     full_update,
                     &poll_data,
@@ -432,7 +502,7 @@ impl TradeOfferManager {
                     &mut polled_oldest_active_offer,
                 );
                 
-                // just don't do anything with this offer
+                // Just don't do anything with this offer.
                 if offer.is_glitched() {
                     continue;
                 }
@@ -451,10 +521,10 @@ impl TradeOfferManager {
                         poll_data.state_map.insert(tradeofferid, new_state);
                         poll_data_changed = true;
                     },
-                    // nothing has changed
+                    // Nothing has changed...
                     Some(_) => {},
                     None => {
-                        // this is a new offer
+                        // This is a new offe.r
                         poll_data.state_map.insert(offer.tradeofferid, offer.trade_offer_state.clone());
                         poll.push(offer);
                         poll_data_changed = true;
@@ -476,7 +546,7 @@ impl TradeOfferManager {
                     .cloned()
                     .collect::<Vec<_>>();
                 
-                // high to low
+                // High to low.
                 tradeofferids.sort_by(|a, b| b.cmp(a));
                 
                 let (
@@ -505,12 +575,14 @@ impl TradeOfferManager {
         }
         
         if poll_data_changed {
-            // only save if changes were detected
+            // Only save if changes were detected.
             let _ = self.save_poll_data().await;
         }
         
+        // Maps raw offers to offers with classinfo descriptions.
         let poll = self.api.map_raw_trade_offers(poll).await?
             .into_iter()
+            // Combines changed state maps.
             .map(|offer| {
                 let prev_state = prev_states_map.remove(&offer.tradeofferid);
                 

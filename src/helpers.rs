@@ -3,7 +3,33 @@ use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest::{header, cookie::CookieStore};
 use serde::de::DeserializeOwned;
 use lazy_regex::{regex_is_match, regex_captures};
+use async_fs::File;
 use crate::error::{TradeOfferError, Error};
+use futures_lite::io::AsyncWriteExt;
+
+pub async fn write_file_atomic(
+    filepath: PathBuf,
+    bytes: &[u8],
+) -> std::io::Result<()> {
+    let mut temp_filepath = filepath.clone();
+    
+    temp_filepath.set_extension("tmp");
+    
+    let mut temp_file = File::create(&temp_filepath).await?;
+    
+    match temp_file.write_all(bytes).await {
+        Ok(_) => {
+            temp_file.flush().await?;
+            async_fs::rename(&temp_filepath,&filepath).await?;
+            Ok(())
+        },
+        Err(error) => {
+            // something went wrong writing to this file...
+            async_fs::remove_file(&temp_filepath).await?;
+            Err(error)
+        }
+    }
+}
 
 pub fn get_default_data_directory() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets")
