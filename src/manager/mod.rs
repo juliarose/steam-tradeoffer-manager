@@ -343,10 +343,27 @@ impl TradeOfferManager {
         self.api.get_trade_offers(filter, historical_cutoff).await
     }
     
+    /// Forces a pull. This will do a poll without checking whether the last poll occurred 
+    /// too recently (returning a [`Error::PollCalledTooSoon`] error).
+    pub async fn force_do_poll(
+        &self,
+        full_update: bool,
+    ) -> Result<Poll, Error> {
+        self.do_poll_request(full_update, true).await
+    }
+    
     /// Performs a poll for changes to offers. If full_update is set, the poll will get offers up 
-    /// to your oldest active offers. If force_update is set, this method will not return an error
-    /// with [`Error::PollCalledTooSoon`].
+    /// to your oldest active offers.
     pub async fn do_poll(
+        &self,
+        full_update: bool,
+    ) -> Result<Poll, Error> {
+        self.do_poll_request(full_update, false).await
+    }
+    
+    /// Performs a poll for changes to offers. If full_update is set, the poll will get offers up 
+    /// to your oldest active offers.
+    async fn do_poll_request(
         &self,
         mut full_update: bool,
         force_update: bool,

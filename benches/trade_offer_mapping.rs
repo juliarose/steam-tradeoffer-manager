@@ -37,7 +37,6 @@ fn get_classinfo_cache(
     offers: &Vec<raw::RawTradeOffer>,
 ) -> Arc<Mutex<ClassInfoCache>> {
     let classinfos_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("benches/fixtures/classinfos");
-    println!("{:?}", classinfos_path);
     let classes = offers
         .iter()
         .flat_map(|offer| {
