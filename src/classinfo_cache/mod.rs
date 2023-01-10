@@ -37,7 +37,7 @@ impl ClassInfoCache {
     }
     
     /// Gets a [`ClassInfo`] wrapped in an [`Arc`] from the cache.
-    pub fn get_classinfo(
+    pub fn get(
         &mut self,
         class: &ClassInfoClass,
     ) -> Option<Arc<ClassInfo>> {

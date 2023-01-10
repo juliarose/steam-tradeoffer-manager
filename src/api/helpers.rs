@@ -2,7 +2,6 @@ use super::raw;
 use lazy_regex::Regex;
 use std::sync::Arc;
 use crate::{
-    SteamID,
     error::MissingClassInfoError,
     types::ClassInfoMap,
     response,
@@ -27,60 +26,6 @@ pub fn from_raw_receipt_asset(
             instanceid: asset.instanceid,
         })
     }  
-}
-
-pub fn from_raw_trade_offer(
-    offer: raw::RawTradeOffer,
-    map: &ClassInfoMap,
-) -> Result<response::trade_offer::TradeOffer, MissingClassInfoError> {
-    fn collect_items(
-        assets: Vec<raw::RawAsset>,
-        map: &ClassInfoMap,
-    ) -> Result<Vec<response::asset::Asset>, MissingClassInfoError> {
-        assets
-            .into_iter()
-            .map(|asset| {
-                if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
-                    Ok(response::asset::Asset {
-                        classinfo: Arc::clone(classinfo),
-                        appid: asset.appid,
-                        contextid: asset.contextid,
-                        assetid: asset.assetid,
-                        amount: asset.amount,
-                    })
-                } else {
-                    // todo use a less broad error for this
-                    Err(MissingClassInfoError {
-                        appid: asset.appid,
-                        classid: asset.classid,
-                        instanceid: asset.instanceid,
-                    })
-                }
-            })
-            .collect::<Result<_, _>>()
-    }
-    
-    Ok(response::trade_offer::TradeOffer {
-        items_to_give: collect_items(offer.items_to_give, map)?,
-        items_to_receive: collect_items(offer.items_to_receive, map)?,
-        tradeofferid: offer.tradeofferid,
-        tradeid: offer.tradeid,
-        trade_offer_state: offer.trade_offer_state,
-        partner: SteamID::new(
-            offer.accountid_other,
-            steamid_ng::Instance::Desktop,
-            steamid_ng::AccountType::Individual,
-            steamid_ng::Universe::Public
-        ),
-        message: offer.message,
-        is_our_offer: offer.is_our_offer,
-        from_real_time_trade: offer.from_real_time_trade,
-        expiration_time: offer.expiration_time,
-        time_updated: offer.time_updated,
-        time_created: offer.time_created,
-        escrow_end_date: offer.escrow_end_date,
-        confirmation_method: offer.confirmation_method,
-    })
 }
 
 pub fn parse_receipt_script(

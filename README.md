@@ -13,6 +13,7 @@ Everything is working and tested, but you may find some issues. Please open an i
 - Automatically cancels offers past a set duration.
 - Loads descriptions (classinfos) for assets. Classinfos are cached to file and read when available. The manager holds a [Least frequently used (LFU) cache](https://en.wikipedia.org/wiki/Least_frequently_used) of classinfos in memory to reduce file reads.
 - Optimized API calls when performing full updates on polls.
+- Uses [tokio](https://crates.io/crates/tokio) asynchronous framework.
 - And of course the blazingly fast performance and data integrity you'd expect from Rust.
 
 ## Usage

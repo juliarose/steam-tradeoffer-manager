@@ -42,3 +42,8 @@ log = "0.4"
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
 dotenv = "0.15.0"
+criterion = "0.3"
+
+[[bench]]
+name = "trade_offer_mapping"
+harness = false

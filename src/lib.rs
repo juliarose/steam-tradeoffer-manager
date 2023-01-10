@@ -1,10 +1,10 @@
 mod manager;
-mod api;
 mod serializers;
-mod classinfo_cache;
 mod mobile_api;
 mod helpers;
 
+pub mod classinfo_cache;
+pub mod api;
 pub mod enums;
 pub mod types;
 pub mod time;

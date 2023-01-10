@@ -4,7 +4,6 @@ mod helpers;
 
 use helpers::{
     parse_receipt_script,
-    from_raw_trade_offer,
     from_raw_receipt_asset,
 };
 use api_response::{
@@ -375,7 +374,7 @@ impl SteamTradeOfferAPI {
                 needed = needed
                     .into_iter()
                     .filter(|class| {
-                        if let Some(classinfo) = classinfo_cache.get_classinfo(class) {
+                        if let Some(classinfo) = classinfo_cache.get(class) {
                             map.insert(**class, classinfo);
                             // we don't need it
                             false
@@ -540,7 +539,7 @@ impl SteamTradeOfferAPI {
             // ignore offers where the classinfo cannot be obtained
             // attempts to load the missing classinfos will continue
             // but it will not cause the whole poll to fail
-            .filter_map(|offer| from_raw_trade_offer(offer, &map).ok())
+            .filter_map(|offer| offer.try_combine_classinfos(&map).ok())
             .collect::<Vec<_>>();
         
         Ok(offers)
