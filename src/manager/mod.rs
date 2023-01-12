@@ -344,7 +344,8 @@ impl TradeOfferManager {
     }
     
     /// Forces a pull. This will do a poll without checking whether the last poll occurred 
-    /// too recently (returning a [`Error::PollCalledTooSoon`] error).
+    /// too recently (returning a [`Error::PollCalledTooSoon`] error). If full_update is false 
+    /// this will not do a full update even if the last full update is outdated.
     pub async fn force_do_poll(
         &self,
         full_update: bool,
@@ -353,7 +354,8 @@ impl TradeOfferManager {
     }
     
     /// Performs a poll for changes to offers. If full_update is set, the poll will get offers up 
-    /// to your oldest active offers.
+    /// to your oldest active offers. A full update will be forced if the last full update was 
+    /// more than 5 minutes ago.
     pub async fn do_poll(
         &self,
         full_update: bool,
@@ -438,8 +440,12 @@ impl TradeOfferManager {
             if {
                 // If we're doing a full update.
                 full_update ||
-                // Or the date of the last full poll is outdated.
-                last_poll_full_outdated(poll_data.last_poll_full_update)
+                {
+                    // Or the date of the last full poll is outdated.
+                    last_poll_full_outdated(poll_data.last_poll_full_update) &&
+                    // Unless force_update is set, then we only want active offers.
+                    !force_update
+                }
             } {
                 filter = OfferFilter::All;
                 poll_data.last_poll_full_update = Some(time::get_server_time_now());
