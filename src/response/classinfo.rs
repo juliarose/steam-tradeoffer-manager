@@ -62,12 +62,12 @@ pub type AppData = Option<serde_json::Map<String, serde_json::value::Value>>;
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct ClassInfo {
     #[serde(with = "string")]
-    /// The ID for this [`ClassInfo`].
+    /// The ID for this [`super::class_info::ClassInfo`].
     pub classid: ClassId,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "option_string_0_as_none")]
-    /// The specific instance of this [`ClassInfo`].
+    /// The specific instance of this [`super::class_info::ClassInfo`].
     pub instanceid: InstanceId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
