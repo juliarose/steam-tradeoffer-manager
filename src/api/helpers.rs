@@ -10,9 +10,9 @@ use crate::{
 pub fn from_raw_receipt_asset(
     asset: raw::RawReceiptAsset,
     map: &ClassInfoMap,
-) -> Result<response::asset::Asset, MissingClassInfoError> {
+) -> Result<response::Asset, MissingClassInfoError> {
     if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
-        Ok(response::asset::Asset {
+        Ok(response::Asset {
             classinfo: Arc::clone(classinfo),
             appid: asset.appid,
             contextid: asset.contextid,

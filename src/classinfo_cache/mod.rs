@@ -2,7 +2,7 @@ mod types;
 pub mod helpers;
 
 use crate::{
-    response::classinfo::ClassInfo,
+    response::ClassInfo,
     types::ClassInfoClass,
 };
 use std::{sync::Arc, collections::HashMap};

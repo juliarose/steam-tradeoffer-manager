@@ -29,8 +29,8 @@ impl NewTradeOffer {
     }
 }
 
-impl From<&response::trade_offer::TradeOffer> for NewTradeOffer {
-    fn from(offer: &response::trade_offer::TradeOffer) -> Self {
+impl From<&response::TradeOffer> for NewTradeOffer {
+    fn from(offer: &response::TradeOffer) -> Self {
         Self {
             partner: offer.partner,
             items_to_give: from_trade_offer_items(&offer.items_to_give),
@@ -41,8 +41,8 @@ impl From<&response::trade_offer::TradeOffer> for NewTradeOffer {
     }
 }
 
-impl From<response::trade_offer::TradeOffer> for NewTradeOffer {
-    fn from(offer: response::trade_offer::TradeOffer) -> Self {
+impl From<response::TradeOffer> for NewTradeOffer {
+    fn from(offer: response::TradeOffer) -> Self {
         Self {
             partner: offer.partner,
             items_to_give: from_trade_offer_items(&offer.items_to_give),
@@ -53,7 +53,7 @@ impl From<response::trade_offer::TradeOffer> for NewTradeOffer {
     }
 }
 
-fn from_trade_offer_items(items: &[response::asset::Asset]) -> Vec<Item> {
+fn from_trade_offer_items(items: &[response::Asset]) -> Vec<Item> {
     items.iter()
         .map(|item| item.into())
         .collect::<Vec<_>>()

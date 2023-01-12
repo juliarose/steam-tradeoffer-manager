@@ -1,10 +1,10 @@
-pub mod trade_offer;
-pub mod sent_offer;
-pub mod classinfo;
-pub mod asset;
-pub mod user_details;
-pub mod accepted_offer;
-pub mod currency;
+mod trade_offer;
+mod sent_offer;
+mod classinfo;
+mod asset;
+mod user_details;
+mod accepted_offer;
+mod currency;
 
 pub use currency::Currency;
 pub use accepted_offer::AcceptedOffer;

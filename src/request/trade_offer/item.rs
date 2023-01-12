@@ -7,7 +7,7 @@ use crate::{
         ContextId,
         AssetId,
         Amount,
-    }
+    },
 };
 
 /// An item to send in a trade offer.
@@ -21,8 +21,8 @@ pub struct Item {
     pub amount: Amount,
 }
 
-impl From<response::asset::Asset> for Item {
-    fn from(asset: response::asset::Asset) -> Item {
+impl From<response::Asset> for Item {
+    fn from(asset: response::Asset) -> Item {
         Item {
             appid: asset.appid,
             contextid: asset.contextid,
@@ -32,8 +32,8 @@ impl From<response::asset::Asset> for Item {
     }
 }
 
-impl From<&response::asset::Asset> for Item {
-    fn from(asset: &response::asset::Asset) -> Item {
+impl From<&response::Asset> for Item {
+    fn from(asset: &response::Asset) -> Item {
         Item {
             appid: asset.appid,
             contextid: asset.contextid,

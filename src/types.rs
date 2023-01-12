@@ -1,5 +1,5 @@
 use std::{sync::Arc, collections::HashMap};
-use crate::response::{asset::Asset, classinfo::ClassInfo};
+use crate::response::{Asset, ClassInfo};
 use reqwest_middleware::ClientWithMiddleware;
 
 pub type Client = ClientWithMiddleware;

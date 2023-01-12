@@ -85,16 +85,16 @@ impl RawTradeOffer {
     pub fn try_combine_classinfos(
         self,
         map: &ClassInfoMap,
-    ) -> Result<response::trade_offer::TradeOffer, MissingClassInfoError> {
+    ) -> Result<response::TradeOffer, MissingClassInfoError> {
         fn collect_items(
             assets: Vec<RawAsset>,
             map: &ClassInfoMap,
-        ) -> Result<Vec<response::asset::Asset>, MissingClassInfoError> {
+        ) -> Result<Vec<response::Asset>, MissingClassInfoError> {
             assets
                 .into_iter()
                 .map(|asset| {
                     if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
-                        Ok(response::asset::Asset {
+                        Ok(response::Asset {
                             classinfo: Arc::clone(classinfo),
                             appid: asset.appid,
                             contextid: asset.contextid,
@@ -113,7 +113,7 @@ impl RawTradeOffer {
                 .collect::<Result<_, _>>()
         }
         
-        Ok(response::trade_offer::TradeOffer {
+        Ok(response::TradeOffer {
             items_to_give: collect_items(self.items_to_give, map)?,
             items_to_receive: collect_items(self.items_to_receive, map)?,
             tradeofferid: self.tradeofferid,

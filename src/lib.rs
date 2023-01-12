@@ -19,7 +19,6 @@ pub use time::ServerTime;
 pub use manager::{
     TradeOfferManager,
     TradeOfferManagerBuilder,
-    Poll,
 };
 
 pub use steamid_ng::{self, SteamID};
