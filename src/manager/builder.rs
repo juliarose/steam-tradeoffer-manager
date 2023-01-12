@@ -116,12 +116,11 @@ impl TradeOfferManagerBuilder {
         TradeOfferManager {
             steamid: self.steamid,
             api: SteamTradeOfferAPI::new(
-                Arc::clone(&cookies),
                 client,
+                Arc::clone(&cookies),
                 steamid,
                 self.key,
                 language.clone(),
-                identity_secret.clone(),
                 self.classinfo_cache,
                 self.data_directory.clone(),
             ),

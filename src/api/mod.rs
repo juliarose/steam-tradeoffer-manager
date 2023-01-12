@@ -49,16 +49,24 @@ use lazy_regex::{regex_captures, regex_is_match};
 
 const ONE_YEAR_SECS: u64 = 31536000;
 
-#[derive(Debug)]
+/// The underlying API.for ['crate::SteamTradeOfferManager'].
+#[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPI {
     client: Client,
+    /// The API key.
     pub key: String,
+    /// The cookies to make requests with. Since the requests are made with the provided client, 
+    /// the cookies should be the same as what the client uses.
     pub cookies: Arc<Jar>,
+    /// The language for descriptions.
     pub language: String,
+    /// The SteamID of the account.
     pub steamid: SteamID,
-    pub identity_secret: Option<String>,
+    /// The session ID.
     pub sessionid: Arc<RwLock<Option<String>>>,
+    /// The cache for setting and getting [`ClassInfo`] data.
     pub classinfo_cache: Arc<Mutex<ClassInfoCache>>,
+    /// The directory to store [`ClassInfo`] data.
     pub data_directory: PathBuf,
 }
 
@@ -66,13 +74,13 @@ impl SteamTradeOfferAPI {
     pub const HOSTNAME: &str = "https://steamcommunity.com";
     pub const API_HOSTNAME: &str = "https://api.steampowered.com";
     
+    /// Creates a new [`SteamTradeOfferAPI`].
     pub fn new(
-        cookies: Arc<Jar>,
         client: ClientWithMiddleware,
+        cookies: Arc<Jar>,
         steamid: SteamID,
         key: String,
         language: String,
-        identity_secret: Option<String>,
         classinfo_cache: Arc<Mutex<ClassInfoCache>>,
         data_directory: PathBuf,
     ) -> Self {
@@ -80,7 +88,6 @@ impl SteamTradeOfferAPI {
             client,
             key,
             steamid,
-            identity_secret,
             language,
             cookies: Arc::clone(&cookies),
             sessionid: Arc::new(RwLock::new(None)),
@@ -105,7 +112,8 @@ impl SteamTradeOfferAPI {
         format!("{}/{}/{}/v{}", Self::API_HOSTNAME, interface, method, version)
     }
     
-    fn set_cookies(&self, cookies: &Vec<String>) -> Result<(), ParseError> {
+    /// Sets cookies.
+    pub fn set_cookies(&self, cookies: &Vec<String>) -> Result<(), ParseError> {
         let url = Self::HOSTNAME.parse::<Url>()?;
         
         for cookie_str in cookies {
@@ -115,6 +123,7 @@ impl SteamTradeOfferAPI {
         Ok(())
     }
     
+    /// Sets session.
     pub fn set_session(
         &self,
         sessionid: &str,
@@ -129,6 +138,7 @@ impl SteamTradeOfferAPI {
         Ok(())
     }
     
+    /// Sends an offer.
     pub async fn send_offer(
         &self,
         offer: &request::trade_offer::NewTradeOffer,
@@ -240,6 +250,7 @@ impl SteamTradeOfferAPI {
         Ok(body)
     }
     
+    /// Gets the trade receipt (new items) upon completion of a trade.
     pub async fn get_receipt(
         &self,
         trade_id: &TradeId,
@@ -280,6 +291,7 @@ impl SteamTradeOfferAPI {
         }
     }
     
+    /// Gets a chunk of [`response::class_info::ClassInfo`] data.
     pub async fn get_app_asset_classinfos_chunk(
         &self,
         appid: AppId,
@@ -338,6 +350,7 @@ impl SteamTradeOfferAPI {
         Ok(classinfos)
     }
     
+    /// Gets [`response::class_info::ClassInfo`] data for appid.
     async fn get_app_asset_classinfos(
         &self,
         appid: AppId,
@@ -354,6 +367,7 @@ impl SteamTradeOfferAPI {
         Ok(maps)
     }
     
+    /// Gets [`response::class_info::ClassInfo`] data for the given classes.
     pub async fn get_asset_classinfos(
         &self,
         classes: &Vec<ClassInfoClass>,
@@ -437,6 +451,7 @@ impl SteamTradeOfferAPI {
         Ok(map)
     }
     
+    /// Gets trade offer data before any descriptions are added.
     pub async fn get_raw_trade_offers(
         &self,
         filter: &OfferFilter,
@@ -518,6 +533,7 @@ impl SteamTradeOfferAPI {
         Ok(offers)
     }
     
+    /// Gets trade offer data with descriptions.
     pub async fn map_raw_trade_offers(
         &self,
         offers: Vec<raw::RawTradeOffer>,
@@ -545,6 +561,7 @@ impl SteamTradeOfferAPI {
         Ok(offers)
     }
     
+    /// Gets trade offers.
     pub async fn get_trade_offers(
         &self,
         filter: &OfferFilter,
@@ -558,7 +575,8 @@ impl SteamTradeOfferAPI {
         
         Ok(offers)
     }
-
+    
+    /// Gets a trade offer.
     pub async fn get_trade_offer(
         &self,
         tradeofferid: TradeOfferId,
@@ -591,7 +609,8 @@ impl SteamTradeOfferAPI {
         
         Ok(body.response.offer)
     }
-
+    
+    /// Gets details for user.
     pub async fn get_user_details(
         &self,
         tradeofferid: &Option<TradeOfferId>,
@@ -651,7 +670,8 @@ impl SteamTradeOfferAPI {
             Err(Error::MalformedResponse)
         }
     }
-
+    
+    /// Accepts an offer. 
     pub async fn accept_offer(
         &self,
         tradeofferid: TradeOfferId,
@@ -688,7 +708,8 @@ impl SteamTradeOfferAPI {
         
         Ok(body)
     }
-
+    
+    /// Declines an offer. 
     pub async fn decline_offer(
         &self,
         tradeofferid: TradeOfferId,
@@ -720,6 +741,7 @@ impl SteamTradeOfferAPI {
         Ok(body.tradeofferid)
     }
     
+    /// Cancels an offer. 
     pub async fn cancel_offer(
         &self,
         tradeofferid: TradeOfferId,
@@ -750,7 +772,8 @@ impl SteamTradeOfferAPI {
         
         Ok(body.tradeofferid)
     }
-
+    
+    /// Gets a user's inventory using the old endpoint.
     pub async fn get_inventory_old(
         &self,
         steamid: &SteamID,
@@ -823,6 +846,7 @@ impl SteamTradeOfferAPI {
         Ok(inventory)
     }
     
+    /// Gets a user's inventory.
     pub async fn get_inventory(
         &self,
         steamid: &SteamID,
@@ -899,6 +923,7 @@ impl SteamTradeOfferAPI {
         Ok(inventory)
     }
     
+    /// Gets a user's inventory with more detailed clasinfo data using the GetAssetClassInfo API.
     pub async fn get_inventory_with_classinfos(
         &self,
         steamid: &SteamID,

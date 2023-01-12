@@ -39,16 +39,21 @@ pub const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit
 /// inventories.
 #[derive(Debug)]
 pub struct TradeOfferManager {
-    steamid: SteamID,
-    // manager facades api
+    /// The account's SteamID.
+    pub steamid: SteamID,
+    pub cancel_duration: Option<Duration>,
+    /// The underlying API.
     api: SteamTradeOfferAPI,
+    /// The underlying API for mobile confirmations.
     mobile_api: MobileAPI,
+    /// Account poll data.
     poll_data: Arc<RwLock<PollData>>,
-    cancel_duration: Option<Duration>,
+    /// The directory to store poll data and [`response::class_info::ClassInfo`] data.
     data_directory: PathBuf,
 }
 
 impl TradeOfferManager {
+    /// Creates a new [`TradeOfferManager`].
     pub fn new(
         steamid: SteamID,
         key: String,

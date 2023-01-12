@@ -57,8 +57,7 @@ impl MobileAPI {
         format!("{}{}", Self::HOSTNAME, pathname)
     }
     
-    // probably would never fail
-    fn set_cookies(&self, cookies: &Vec<String>) -> Result<(), ParseError> {
+    pub fn set_cookies(&self, cookies: &Vec<String>) -> Result<(), ParseError> {
         let url = Self::HOSTNAME.parse::<Url>()?;
         
         for cookie_str in cookies {
