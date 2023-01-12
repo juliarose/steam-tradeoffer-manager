@@ -1,5 +1,6 @@
 mod manager;
 mod serializers;
+mod deserializers;
 mod mobile_api;
 mod helpers;
 

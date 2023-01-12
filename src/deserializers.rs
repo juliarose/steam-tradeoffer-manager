@@ -18,7 +18,7 @@ use serde::{
 };
 use serde_json::value::RawValue;
 use lazy_regex::{regex_is_match, regex_captures};
-use super::classinfo::ClassInfo;
+use crate::response::classinfo::ClassInfo;
 use crate::types::{
     ClassInfoAppClass,
     ClassInfoAppMap,

@@ -4,17 +4,15 @@ use std::{
     fmt,
 };
 use crate::{
+    response,
     types::ClassInfoAppClass,
-    response::{
-        self,
-        deserializers::{
-            from_int_to_bool,
-            to_classinfo_map,
-            option_str_to_number,
-            deserialize_classinfo_map_raw,
-            deserialize_classinfo_map,
-        }
-    }
+    deserializers::{
+        from_int_to_bool,
+        to_classinfo_map,
+        option_str_to_number,
+        deserialize_classinfo_map_raw,
+        deserialize_classinfo_map,
+    },
 };
 use super::raw;
 use serde::{

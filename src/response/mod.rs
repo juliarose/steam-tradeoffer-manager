@@ -4,7 +4,6 @@ pub mod classinfo;
 pub mod asset;
 pub mod user_details;
 pub mod accepted_offer;
-pub mod deserializers;
 pub mod currency;
 
 pub use currency::Currency;
