@@ -8,7 +8,7 @@ use std::{
     cmp,
     collections::HashMap,
     path::PathBuf,
-    sync::{Arc, RwLock},
+    sync::Arc,
 };
 use chrono::Duration;
 use crate::{
@@ -45,7 +45,7 @@ pub struct TradeOfferManager {
     /// The underlying API for mobile confirmations.
     mobile_api: MobileAPI,
     /// Account poll data.
-    poll_data: Arc<RwLock<PollData>>,
+    poll_data: Arc<tokio::sync::Mutex<PollData>>,
     /// The directory to store poll data and [`response::ClassInfo`] data.
     data_directory: PathBuf,
 }
@@ -421,64 +421,59 @@ impl TradeOfferManager {
             }
         }
         
-        let mut offers_since = 0;
-        let mut filter = OfferFilter::ActiveOnly;
+        let mut poll_data = self.poll_data.lock().await;
         
-        {
-            let mut poll_data = self.poll_data.write().unwrap();
-            
-            if !force_update {
-                if let Some(last_poll) = poll_data.last_poll {
-                    let seconds_since_last_poll = date_difference_from_now(&last_poll);
-                        
-                    if seconds_since_last_poll <= 1 {
-                        // We last polled less than a second ago... we shouldn't spam the API
-                        return Err(Error::PollCalledTooSoon);
-                    }            
-                }
-            }
-            
-            poll_data.last_poll = Some(time::get_server_time_now());
-        
-            if {
-                // If we're doing a full update.
-                full_update ||
-                {
-                    // Or the date of the last full poll is outdated.
-                    last_poll_full_outdated(poll_data.last_poll_full_update) &&
-                    // Unless force_update is set, then we only want active offers.
-                    !force_update
-                }
-            } {
-                filter = OfferFilter::All;
-                poll_data.last_poll_full_update = Some(time::get_server_time_now());
-                full_update = true;
-                
-                if let Some(oldest_active_offer) = poll_data.oldest_active_offer {
-                    // It looks like sometimes Steam can be dumb and backdate a modified offer.
-                    // We need to handle this. Let's add a 30-minute buffer.
-                    offers_since = oldest_active_offer.timestamp() - 1800;
-                } else {
-                    offers_since = 1;
-                }
-            } else if let Some(poll_offers_since) = poll_data.offers_since {
-                // It looks like sometimes Steam can be dumb and backdate a modified offer. We 
-                // need to handle this. Let's add a 30-minute buffer.
-                offers_since = poll_offers_since.timestamp() - 1800;
+        if !force_update {
+            if let Some(last_poll) = poll_data.last_poll {
+                let seconds_since_last_poll = date_difference_from_now(&last_poll);
+                    
+                if seconds_since_last_poll <= 1 {
+                    // We last polled less than a second ago... we shouldn't spam the API.
+                    return Err(Error::PollCalledTooSoon);
+                }            
             }
         }
         
-        let historical_cutoff = time::timestamp_to_server_time(offers_since);
+        poll_data.last_poll = Some(time::get_server_time_now());
+        
+        let mut filter = OfferFilter::ActiveOnly;
+        let offers_since = if {
+            // If we're doing a full update.
+            full_update ||
+            {
+                // Or the date of the last full poll is outdated.
+                last_poll_full_outdated(poll_data.last_poll_full_update) &&
+                // Unless force_update is set, then we only want active offers.
+                !force_update
+            }
+        } {
+            filter = OfferFilter::All;
+            poll_data.last_poll_full_update = Some(time::get_server_time_now());
+            full_update = true;
+            
+            if let Some(oldest_active_offer) = poll_data.oldest_active_offer {
+                // It looks like sometimes Steam can be dumb and backdate a modified offer.
+                // We need to handle this. Let's add a 30-minute buffer.
+                oldest_active_offer.timestamp() - 1800
+            } else {
+                1
+            }
+        } else if let Some(poll_offers_since) = poll_data.offers_since {
+            // It looks like sometimes Steam can be dumb and backdate a modified offer. We 
+            // need to handle this. Let's add a 30-minute buffer.
+            poll_offers_since.timestamp() - 1800
+        } else {
+            0
+        };
         let mut offers = self.api.get_raw_trade_offers(
             &filter,
-            &Some(historical_cutoff),
+            &Some(time::timestamp_to_server_time(offers_since)),
         ).await?;
-        let mut offers_since: i64 = 0;
-        let mut cancelled_offers = Vec::new();
-        
-        if let Some(cancel_duration) = self.cancel_duration {
+        // Vec of offers that were cancelled.
+        let cancelled_offers = if let Some(cancel_duration) = self.cancel_duration {
             let cancel_time = chrono::Utc::now() - cancel_duration;
-            let offers_to_cancel = offers
+            // Cancels all offers older than cancel_time.
+            let cancel_futures = offers
                 .iter_mut()
                 .filter(|offer| {
                     let is_active_state = {
@@ -489,145 +484,135 @@ impl TradeOfferManager {
                     is_active_state &&
                     offer.is_our_offer &&
                     offer.time_created < cancel_time
-                });
-            let cancel_futures = offers_to_cancel
+                })
                 .map(|offer| async {
                     self.api.cancel_offer(offer.tradeofferid).await
                 })
                 .collect::<Vec<_>>();
-            // Cancels all offers older than cancel_time.
-            let results = futures::future::join_all(cancel_futures).await;
             
-            cancelled_offers.extend(&mut results
+            futures::future::join_all(cancel_futures).await
                 .into_iter()
                 .filter_map(|offer| offer.ok())
-            );
-        }
-        
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
         // For reducing file writes, keep track of whether the state of poll data has changed.
         let mut poll_data_changed = false;
         let mut prev_states_map: HashMap<TradeOfferId, TradeOfferState> = HashMap::new();
         let mut poll: Vec<_> = Vec::new();
+        let mut polled_oldest_active_offer: Option<ServerTime> = None;
+        let mut polled_offers_since: i64 = 0;
         
-        {
-            let mut poll_data = self.poll_data.write().unwrap();
-            let mut polled_oldest_active_offer: Option<ServerTime> = None;
-            
-            for mut offer in offers {
-                // This offer was successfully cancelled above...
-                // We need to update its state here.
-                if cancelled_offers.contains(&offer.tradeofferid) {
-                    offer.trade_offer_state = TradeOfferState::Canceled;
-                }
-                
-                // Detects the oldest active offer.
-                update_polled_oldest_active_offer(
-                    full_update,
-                    &poll_data,
-                    &offer,
-                    &mut polled_oldest_active_offer,
-                );
-                
-                // Just don't do anything with this offer.
-                if offer.is_glitched() {
-                    continue;
-                }
-                
-                offers_since = cmp::max(offers_since, offer.time_updated.timestamp());
-
-                match poll_data.state_map.get(&offer.tradeofferid) {
-                    Some(
-                        poll_trade_offer_state
-                    ) if poll_trade_offer_state != &offer.trade_offer_state => {
-                        let tradeofferid = offer.tradeofferid;
-                        let new_state = offer.trade_offer_state.clone();
-                        
-                        poll.push(offer);
-                        prev_states_map.insert(tradeofferid, *poll_trade_offer_state);
-                        poll_data.state_map.insert(tradeofferid, new_state);
-                        poll_data_changed = true;
-                    },
-                    // Nothing has changed...
-                    Some(_) => {},
-                    None => {
-                        // This is a new offe.r
-                        poll_data.state_map.insert(offer.tradeofferid, offer.trade_offer_state.clone());
-                        poll.push(offer);
-                        poll_data_changed = true;
-                    },
-                }
+        for mut offer in offers {
+            // This offer was successfully cancelled above...
+            // We need to update its state here.
+            if cancelled_offers.contains(&offer.tradeofferid) {
+                offer.trade_offer_state = TradeOfferState::Canceled;
             }
             
-            if polled_oldest_active_offer.is_some() {
-                poll_data.oldest_active_offer = polled_oldest_active_offer;
-                poll_data_changed = true;
+            // Detects the oldest active offer.
+            update_polled_oldest_active_offer(
+                full_update,
+                &poll_data,
+                &offer,
+                &mut polled_oldest_active_offer,
+            );
+            
+            // Just don't do anything with this offer.
+            if offer.is_glitched() {
+                continue;
             }
             
-            // Clear poll data offers otherwise this could expand infinitely.
-            // Using a higher number than is removed so this process needs to run less frequently.
-            // This could be better but it works.
-            if poll_data.state_map.len() > 2500 {
-                let mut tradeofferids = poll_data.state_map
-                    .keys()
-                    .cloned()
-                    .collect::<Vec<_>>();
-                
-                // High to low.
-                tradeofferids.sort_by(|a, b| b.cmp(a));
-                
-                let (
-                    _tradeofferids,
-                    tradeofferids_to_remove,
-                ) = tradeofferids.split_at(2000);
-                
-                for tradeofferid in tradeofferids_to_remove {
-                    poll_data.state_map.remove(tradeofferid);
-                    poll_data_changed = true;
-                }
+            // Update the offers_since to the most recent trade offer trade offer.
+            polled_offers_since = cmp::max(polled_offers_since, offer.time_updated.timestamp());
+            
+            match poll_data.state_map.get(&offer.tradeofferid) {
+                // State has changed.
+                Some(
+                    poll_trade_offer_state
+                ) if poll_trade_offer_state != &offer.trade_offer_state => {
+                    prev_states_map.insert(offer.tradeofferid, *poll_trade_offer_state);
+                    poll.push(offer);
+                },
+                // Nothing has changed...
+                Some(_) => {},
+                // This is a new offer
+                None => poll.push(offer),
             }
+        }
+        
+        if polled_oldest_active_offer.is_some() {
+            poll_data.oldest_active_offer = polled_oldest_active_offer;
+            poll_data_changed = true;
+        }
+        
+        // Clear poll data offers otherwise this could expand infinitely.
+        // Using a higher number than is removed so this process needs to run less frequently.
+        // This could be better but it works.
+        if poll_data.state_map.len() > 2500 {
+            let mut tradeofferids = poll_data.state_map
+                .keys()
+                .cloned()
+                .collect::<Vec<_>>();
             
-            let new_offers_since = Some(time::timestamp_to_server_time(offers_since));
+            // High to low.
+            tradeofferids.sort_by(|a, b| b.cmp(a));
             
-            if
-                offers_since > 0 &&
-                {
-                    new_offers_since > poll_data.offers_since ||
-                    poll_data.offers_since.is_none() 
-                }
-            {
-                poll_data.offers_since = new_offers_since;
+            let (
+                _tradeofferids,
+                tradeofferids_to_remove,
+            ) = tradeofferids.split_at(2000);
+            
+            for tradeofferid in tradeofferids_to_remove {
+                poll_data.state_map.remove(tradeofferid);
                 poll_data_changed = true;
             }
         }
         
-        if poll_data_changed {
-            // Only save if changes were detected.
-            let _ = self.save_poll_data().await;
+        if
+        polled_offers_since > 0 &&
+            {
+                Some(time::timestamp_to_server_time(polled_offers_since)) > poll_data.offers_since ||
+                poll_data.offers_since.is_none() 
+            }
+        {
+            poll_data.offers_since = Some(time::timestamp_to_server_time(polled_offers_since));
+            poll_data_changed = true;
         }
         
         // Maps raw offers to offers with classinfo descriptions.
-        let poll = self.api.map_raw_trade_offers(poll).await?
-            .into_iter()
-            // Combines changed state maps.
-            .map(|offer| {
-                let prev_state = prev_states_map.remove(&offer.tradeofferid);
-                
-                (offer, prev_state)
-            })
-            .collect::<Vec<_>>();
+        let offers = self.api.map_raw_trade_offers(poll).await?;
+        let poll = if offers.is_empty() {
+            // map_raw_trade_offers may have excluded some offers - the state of the poll data
+            // is not updated until all descriptions are loaded for the offer
+            Vec::new()
+        } else {
+            poll_data_changed = true;
+            offers
+                .into_iter()
+                // Combines changed state maps.
+                .map(|offer| {
+                    let prev_state = prev_states_map.remove(&offer.tradeofferid);
+                    
+                    // insert new state into map
+                    poll_data.state_map.insert(offer.tradeofferid, offer.trade_offer_state.clone());
+                    
+                    (offer, prev_state)
+                })
+                .collect::<Vec<_>>()
+        };
+        
+        if poll_data_changed {
+            // Only save if changes were detected.
+            let data = serde_json::to_string(&*poll_data)?;
+            let _ =file::save_poll_data(
+                &self.steamid,
+                &data,
+                &self.data_directory,
+            ).await;
+        }
         
         Ok(poll)
-    }
-    
-    async fn save_poll_data(&self) -> Result<(), FileError> {
-        // we clone this so we don't hold it across an await
-        let poll_data = self.poll_data.read().unwrap().clone();
-        let data = serde_json::to_string(&poll_data)?;
-        
-        file::save_poll_data(
-            &self.steamid,
-            &data,
-            &self.data_directory,
-        ).await
     }
 }

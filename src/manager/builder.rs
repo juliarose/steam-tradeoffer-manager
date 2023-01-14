@@ -6,7 +6,7 @@ use crate::{
     ClassInfoCache,
     helpers::{get_default_middleware, get_default_data_directory},
 };
-use std::{path::PathBuf, sync::{Mutex, RwLock, Arc}};
+use std::{path::PathBuf, sync::{Mutex, Arc}};
 use chrono::Duration;
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
@@ -131,7 +131,7 @@ impl TradeOfferManagerBuilder {
                 language,
                 identity_secret,
             ),
-            poll_data: Arc::new(RwLock::new(poll_data)),
+            poll_data: Arc::new(tokio::sync::Mutex::new(poll_data)),
             cancel_duration: self.cancel_duration,
             data_directory: self.data_directory,
         }
