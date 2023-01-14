@@ -19,7 +19,6 @@ use crate::{
     response,
     request,
     api::SteamTradeOfferAPI,
-    error::FileError,
     mobile_api::{MobileAPI, Confirmation},
     types::{
         AppId,
