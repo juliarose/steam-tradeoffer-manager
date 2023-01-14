@@ -12,19 +12,15 @@ use std::{
 };
 use chrono::Duration;
 use crate::{
-    error::Error,
-    ServerTime,
-    enums::{OfferFilter, TradeOfferState},
     time,
     response,
     request,
+    error::Error,
+    ServerTime,
     api::SteamTradeOfferAPI,
+    enums::{OfferFilter, TradeOfferState},
     mobile_api::{MobileAPI, Confirmation},
-    types::{
-        AppId,
-        ContextId,
-        TradeOfferId,
-    },
+    types::{AppId, ContextId, TradeOfferId},
 };
 use steamid_ng::SteamID;
 use url::ParseError;
