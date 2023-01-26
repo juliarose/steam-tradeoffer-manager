@@ -11,7 +11,7 @@ use chrono::Duration;
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
 
-/// Builder for constring a trade offer manager.
+/// Builder for constructing a trade offer manager.
 pub struct TradeOfferManagerBuilder {
     /// Your account's Steam ID.
     pub steamid: SteamID,
@@ -27,11 +27,14 @@ pub struct TradeOfferManagerBuilder {
     /// The duration after a sent offer has been active to cancel during a poll. Offers will 
     /// not be cancelled if this is not set.
     pub cancel_duration: Option<Duration>,
+    /// The duration after the last poll becomes stale and a new one must be obtained when 
+    /// polling using [`crate::PollType::Auto`]. Default is 5 minutes.
+    pub full_poll_update_duration: Duration,
     /// The location to save data to.
     pub data_directory: PathBuf,
     /// Request cookies.
     pub cookies: Option<Arc<Jar>>,
-    /// Client to use for requests.
+    /// Client to use for requests. Remember to also include the cookies connected to this client.
     pub client: Option<ClientWithMiddleware>,
     /// User agent for requests.
     pub user_agent: &'static str,
@@ -49,6 +52,7 @@ impl TradeOfferManagerBuilder {
             language: String::from("english"),
             classinfo_cache: Arc::new(Mutex::new(ClassInfoCache::default())),
             cancel_duration: None,
+            full_poll_update_duration: Duration::minutes(5),
             data_directory: get_default_data_directory(),
             cookies: None,
             client: None,
@@ -97,43 +101,6 @@ impl TradeOfferManagerBuilder {
     }
     
     pub fn build(self) -> TradeOfferManager {
-        let cookies = self.cookies.unwrap_or_else(|| Arc::new(Jar::default()));
-        let client = self.client.unwrap_or_else(|| {
-            get_default_middleware(
-                Arc::clone(&cookies),
-                self.user_agent,
-            )
-        });
-        let steamid = self.steamid;
-        let identity_secret = self.identity_secret;
-        let poll_data = file::load_poll_data(
-            &steamid,
-            &self.data_directory,
-        ).unwrap_or_else(|_| PollData::new());
-        let language = self.language;
-        let mobile_api_client = client.clone();
-        
-        TradeOfferManager {
-            steamid: self.steamid,
-            api: SteamTradeOfferAPI::new(
-                client,
-                Arc::clone(&cookies),
-                steamid,
-                self.key,
-                language.clone(),
-                self.classinfo_cache,
-                self.data_directory.clone(),
-            ),
-            mobile_api: MobileAPI::new(
-                cookies,
-                mobile_api_client,
-                steamid,
-                language,
-                identity_secret,
-            ),
-            poll_data: Arc::new(tokio::sync::Mutex::new(poll_data)),
-            cancel_duration: self.cancel_duration,
-            data_directory: self.data_directory,
-        }
+        self.into()
     }
 }

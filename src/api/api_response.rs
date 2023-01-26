@@ -5,10 +5,11 @@ use std::{
 };
 use crate::{
     response,
-    types::ClassInfoAppClass,
+    types::{ClassInfoAppClass, ClassInfoMap},
     deserializers::{
         from_int_to_bool,
         to_classinfo_map,
+        to_trade_offers_classinfo_map,
         option_str_to_number,
         deserialize_classinfo_map_raw,
         deserialize_classinfo_map,
@@ -72,6 +73,9 @@ pub struct GetTradeOffersResponseBody {
     pub trade_offers_sent: Vec<raw::RawTradeOffer>,
     #[serde(default)]
     pub trade_offers_received: Vec<raw::RawTradeOffer>,
+    #[serde(default)]
+    #[serde(deserialize_with = "to_trade_offers_classinfo_map")]
+    pub descriptions: Option<ClassInfoMap>,
     pub next_cursor: Option<u32>,
 }
 

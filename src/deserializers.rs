@@ -22,6 +22,7 @@ use crate::response::ClassInfo;
 use crate::types::{
     ClassInfoAppClass,
     ClassInfoAppMap,
+    ClassInfoMap,
 };
 
 pub fn string_or_number<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -167,11 +168,11 @@ where
 
     impl<'de> de::Visitor<'de> for DeserializeBoolVisitor {
         type Value = bool;
-
+        
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
             formatter.write_str("an integer or a string")
-        }
-
+        }   
+        
         fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
         where
             E: de::Error,
@@ -185,7 +186,7 @@ where
                 )),
             }
         }
-
+        
         fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
         where
             E: de::Error,
@@ -199,7 +200,7 @@ where
                 )),
             }
         }
-
+        
         fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
         where
             E: de::Error,
@@ -211,30 +212,70 @@ where
     deserializer.deserialize_any(DeserializeBoolVisitor)
 }
 
-pub fn to_classinfo_map<'de, D>(deserializer: D) -> Result<HashMap<ClassInfoAppClass, Arc<ClassInfo>>, D::Error>
+pub fn to_classinfo_map<'de, D>(deserializer: D) -> Result<ClassInfoAppMap, D::Error>
 where
     D: Deserializer<'de>,
 {
     struct ClassInfoVisitor;
-
+    
     impl<'de> Visitor<'de> for ClassInfoVisitor {
-        type Value = HashMap<ClassInfoAppClass, Arc<ClassInfo>>;
-
+        type Value = ClassInfoAppMap;
+        
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
             formatter.write_str("a sequence of classinfos")
         }
-
-        fn visit_seq<V>(self, mut seq: V) -> Result<HashMap<ClassInfoAppClass, Arc<ClassInfo>>, V::Error>
+        
+        fn visit_seq<V>(self, mut seq: V) -> Result<Self::Value, V::Error>
         where
             V: SeqAccess<'de>,
         {
-            let mut map: HashMap<(u64, Option<u64>), Arc<ClassInfo>> = HashMap::with_capacity(seq.size_hint().unwrap_or(0));
+            let mut map: Self::Value = HashMap::with_capacity(seq.size_hint().unwrap_or(0));
 
             while let Some(classinfo) = seq.next_element::<ClassInfo>()? {
                 map.insert((classinfo.classid, classinfo.instanceid), Arc::new(classinfo));
             }
 
             Ok(map)
+        }
+    }
+
+    deserializer.deserialize_seq(ClassInfoVisitor)
+}
+
+pub fn to_trade_offers_classinfo_map<'de, D>(deserializer: D) -> Result<Option<ClassInfoMap>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct ClassInfoVisitor;
+    
+    impl<'de> Visitor<'de> for ClassInfoVisitor {
+        type Value = Option<ClassInfoMap>;
+        
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("a sequence of classinfos")
+        }
+        
+        fn visit_seq<V>(self, mut seq: V) -> Result<Self::Value, V::Error>
+        where
+            V: SeqAccess<'de>,
+        {
+            let mut map: ClassInfoMap = HashMap::with_capacity(seq.size_hint().unwrap_or(0));
+
+            while let Some(classinfo) = seq.next_element::<ClassInfo>()? {
+                if let Some(appid) = classinfo.appid {
+                    map.insert((appid, classinfo.classid, classinfo.instanceid), Arc::new(classinfo));
+                }
+            }
+
+            Ok(Some(map))
+        }
+        
+        fn visit_none<E>(self) -> Result<Self::Value, E> {
+            Ok(None)
+        }
+        
+        fn visit_unit<E>(self) -> Result<Self::Value, E> {
+            Ok(None)
         }
     }
 

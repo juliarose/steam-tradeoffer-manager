@@ -6,13 +6,16 @@ use crate::deserializers::{
     string_or_number,
 };
 use crate::{
-    types::{ClassId, InstanceId},
+    types::{AppId, ClassId, InstanceId},
     serializers::{string, option_string_0_as_none},
 };
 
 /// Contains details about an item including names and descriptions.
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct ClassInfo {
+    // in some cases this is included
+    #[serde(default)]
+    pub appid: Option<AppId>,
     #[serde(with = "string")]
     /// The ID for this classinfo.
     pub classid: ClassId,

@@ -1,5 +1,5 @@
 use std::time::{SystemTime, UNIX_EPOCH};
-use chrono::{NaiveDateTime, DateTime, Utc};
+use chrono::{NaiveDateTime, DateTime, Utc, Duration};
 
 pub type ServerTime = DateTime<Utc>;
 
@@ -28,4 +28,9 @@ pub fn get_system_time() -> u64 {
         // should never occur
         Err(_) => 0,
     }
+}
+
+/// Date difference from now.
+pub fn date_difference_from_now(date: &ServerTime) -> Duration {
+    Duration::seconds(get_server_time_now().timestamp() - date.timestamp())
 }

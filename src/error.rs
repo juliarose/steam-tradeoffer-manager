@@ -56,7 +56,7 @@ pub enum Error {
     #[error("Invalid base64: {}", .0)]
     Base64Decode(#[from] base64::DecodeError),
     /// A confirmation could be confirmed.
-    #[error("Confirmation unsuccessful. The confirmation may no longer exist or another trade may be going through. Check confirmations again to verify.")]
+    #[error("Confirmation unsuccessful. The confirmation may have actually succeeded, the confirmation no longer exist, or another trade may be going through. Check confirmations again to verify.")]
     ConfirmationUnsuccessful,
     /// The response is not expected. The containing string provides a message with more details.
     #[error("Malformed response")]

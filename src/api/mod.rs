@@ -21,9 +21,8 @@ use std::{
 };
 use crate::{
     error::{Error, MissingClassInfoError},
-    enums::OfferFilter,
     SteamID,
-    time::{ServerTime, get_system_time},
+    time::ServerTime,
     classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
     types::{
         ClassInfoMap,
@@ -454,9 +453,13 @@ impl SteamTradeOfferAPI {
     /// Gets trade offer data before any descriptions are added.
     pub async fn get_raw_trade_offers(
         &self,
-        filter: &OfferFilter,
+        active_only: bool,
+        historical_only: bool,
+        get_sent_offers: bool,
+        get_received_offers: bool,
+        get_descriptions: bool,
         historical_cutoff: &Option<ServerTime>,
-    ) -> Result<Vec<raw::RawTradeOffer>, Error> {
+    ) -> Result<(Vec<raw::RawTradeOffer>, Option<ClassInfoMap>), Error> {
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -466,28 +469,27 @@ impl SteamTradeOfferAPI {
             get_sent_offers: bool,
             get_received_offers: bool,
             get_descriptions: bool,
-            time_historical_cutoff: u64,
+            time_historical_cutoff: Option<u64>,
             cursor: Option<u32>,
         }
         
         let mut cursor = None;
-        let time_historical_cutoff: u64 = match historical_cutoff {
-            Some(cutoff) => cutoff.timestamp() as u64,
-            None => get_system_time() + ONE_YEAR_SECS,
-        };
+        let time_historical_cutoff = historical_cutoff
+            .map(|cutoff| cutoff.timestamp() as u64);
         let uri = self.get_api_url("IEconService", "GetTradeOffers", 1);
         let mut offers = Vec::new();
+        let mut descriptions = Vec::new();
         
         loop {
             let response = self.client.get(&uri)
                 .query(&Form {
                     key: &self.key,
                     language: &self.language,
-                    active_only: *filter == OfferFilter::ActiveOnly,
-                    historical_only: *filter == OfferFilter::HistoricalOnly,
-                    get_sent_offers: true,
-                    get_received_offers: true,
-                    get_descriptions: false,
+                    active_only,
+                    historical_only,
+                    get_sent_offers,
+                    get_received_offers,
+                    get_descriptions,
                     time_historical_cutoff,
                     cursor,
                 })
@@ -498,26 +500,23 @@ impl SteamTradeOfferAPI {
             let mut response = body.response;
             let mut response_offers = response.trade_offers_received;
             
+            if let Some(response_descriptions) = response.descriptions {
+                descriptions.push(response_descriptions);
+            }
+            
             response_offers.append(&mut response.trade_offers_sent);
             
-            if *filter != OfferFilter::ActiveOnly {
-                // The time_historical_cutoff parameter doesn't really do anything unless the
-                // offer filter is active only, we need to manually check when to stop.
-                if let Some(historical_cutoff) = historical_cutoff {
-                    // Is there an offer older than the cutoff?
-                    let has_older = response_offers
-                        .iter()
-                        .any(|offer| offer.time_created < *historical_cutoff);
-                    
-                    // we don't need to go any further...
-                    if has_older {
-                        // add the offers, filtering out older offers
-                        offers.extend(&mut response_offers
-                            .into_iter()
-                            .filter(|offer| offer.time_created < *historical_cutoff)
-                        );
-                        break;
-                    }
+            if let Some(historical_cutoff) = historical_cutoff {
+                // Is there an offer older than the cutoff?
+                let has_older = response_offers
+                    .iter()
+                    .any(|offer| offer.time_created < *historical_cutoff);
+                
+                // we don't need to go any further...
+                if has_older {
+                    // add the offers, filtering out older offers
+                    offers.append(&mut response_offers);
+                    break;
                 }
             }
             
@@ -530,7 +529,18 @@ impl SteamTradeOfferAPI {
             }
         }
         
-        Ok(offers)
+        let descriptions = if !descriptions.is_empty() {
+            let combined = descriptions
+                .into_iter()
+                .flatten()
+                .collect::<HashMap<_, _>>();
+            
+            Some(combined)
+        } else {
+            None
+        };
+        
+        Ok((offers, descriptions))
     }
     
     /// Gets trade offer data with descriptions.
@@ -564,11 +574,19 @@ impl SteamTradeOfferAPI {
     /// Gets trade offers.
     pub async fn get_trade_offers(
         &self,
-        filter: &OfferFilter,
+        active_only: bool,
+        historical_only: bool,
+        get_sent_offers: bool,
+        get_received_offers: bool,
+        get_descriptions: bool,
         historical_cutoff: &Option<ServerTime>,
     ) -> Result<Vec<response::TradeOffer>, Error> {
-        let raw_offers = self.get_raw_trade_offers(
-            filter,
+        let (raw_offers, _descriptions) = self.get_raw_trade_offers(
+            active_only,
+            historical_only,
+            get_sent_offers,
+            get_received_offers,
+            get_descriptions,
             historical_cutoff,
         ).await?;
         let offers = self.map_raw_trade_offers(raw_offers).await?;

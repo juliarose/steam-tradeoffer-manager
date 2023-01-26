@@ -1,5 +1,6 @@
 use steam_tradeoffer_manager::{
     TradeOfferManager,
+    PollType,
     response::{TradeOffer, Asset},
     enums::TradeOfferState,
     error::Error,
@@ -93,7 +94,7 @@ async fn main() {
     
     // gets changes to trade offers for account
     loop {
-        match manager.do_poll(true).await {
+        match manager.do_poll(PollType::Auto).await {
             Ok(offers) => {
                 for (mut offer, old_state) in offers {
                     if let Some(state) = old_state {

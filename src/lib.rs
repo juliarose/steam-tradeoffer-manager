@@ -20,6 +20,7 @@ pub use manager::{
     TradeOfferManager,
     TradeOfferManagerBuilder,
     Poll,
+    PollType,
 };
 
 pub use steamid_ng::{self, SteamID};
