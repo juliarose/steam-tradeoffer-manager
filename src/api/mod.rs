@@ -12,11 +12,11 @@ use crate::{
     SteamID,
     time::ServerTime,
     types::*,
-    serializers::string,
+    serializers::{string, steamid_as_string},
     helpers::parses_response,
     error::{Error, MissingClassInfoError},
     classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
-    request::{NewTradeOffer, NewTradeOfferItem, serializers::steamid_as_string},
+    request::{NewTradeOffer, NewTradeOfferItem},
 };
 use serde::{Deserialize, Serialize};
 use url::{Url, ParseError};
