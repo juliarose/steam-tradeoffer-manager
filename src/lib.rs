@@ -4,11 +4,11 @@ mod deserializers;
 mod mobile_api;
 mod helpers;
 mod classinfo_cache;
+mod time;
 
 pub mod api;
 pub mod enums;
 pub mod types;
-pub mod time;
 pub mod request;
 pub mod response;
 pub mod error;
