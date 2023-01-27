@@ -4,17 +4,11 @@ mod helpers;
 
 pub use response::*;
 
+use response_wrappers::*;
 use crate::response::*;
 use helpers::{
     parse_receipt_script,
     from_raw_receipt_asset,
-};
-use response_wrappers::{
-    GetTradeOffersResponse,
-    GetInventoryResponse,
-    GetInventoryResponseIgnoreDescriptions,
-    GetInventoryOldResponse,
-    GetAssetClassInfoResponse,
 };
 use reqwest_middleware::ClientWithMiddleware;
 use std::{
@@ -27,17 +21,7 @@ use crate::{
     SteamID,
     time::ServerTime,
     classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
-    types::{
-        ClassInfoMap,
-        ClassInfoAppClass,
-        ClassInfoClass,
-        Inventory,
-        TradeOfferId,
-        AppId,
-        ContextId,
-        TradeId,
-        Client,
-    },
+    types::*,
     request::{self, serializers::steamid_as_string},
     serializers::string,
     helpers::parses_response,
