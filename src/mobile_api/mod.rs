@@ -26,6 +26,7 @@ pub struct MobileAPI {
 impl MobileAPI {
     pub const HOSTNAME: &str = "https://steamcommunity.com";
     
+    /// Creates a new [`MobileAPI`].
     pub fn new(
         cookies: Arc<Jar>,
         client: ClientWithMiddleware,
@@ -56,6 +57,7 @@ impl MobileAPI {
         format!("{}{}", Self::HOSTNAME, pathname)
     }
     
+    /// Sets cookies.
     pub fn set_cookies(&self, cookies: &Vec<String>) -> Result<(), ParseError> {
         let url = Self::HOSTNAME.parse::<Url>()?;
         
@@ -66,6 +68,7 @@ impl MobileAPI {
         Ok(())
     }
     
+    /// Sets session.
     pub fn set_session(&self, sessionid: &str, cookies: &Vec<String>) -> Result<(), ParseError> {
         *self.sessionid.write().unwrap() = Some(sessionid.to_string());
         self.set_cookies(cookies)?;
@@ -73,7 +76,32 @@ impl MobileAPI {
         Ok(())
     }
     
-    async fn get_confirmation_query_params<'a>(&self, tag: &str) -> Result<HashMap<&'a str, String>, Error> {
+    /// Accepts a confirmation.
+    pub async fn accept_confirmation(&self, confirmation: &Confirmation) -> Result<(), Error> {
+        self.send_confirmation_ajax(confirmation, "allow".into()).await
+    }
+
+    /// Cancels a confirmation.
+    pub async fn cancel_confirmation(&self, confirmation: &Confirmation) -> Result<(), Error> {
+        self.send_confirmation_ajax(confirmation, "cancel".into()).await
+    }
+    
+    /// Gets the trade confirmations.
+    pub async fn get_trade_confirmations(&self) -> Result<Vec<Confirmation>, Error> {
+        let uri = self.get_uri("/mobileconf/conf");
+        let query = self.get_confirmation_query_params("conf")?;
+        let response = self.client.get(&uri)
+            .header("X-Requested-With", "com.valvesoftware.android.steam.community")
+            .query(&query)
+            .send()
+            .await?;
+        let body = response.text().await?;
+        let confirmations = helpers::parse_confirmations(body)?;
+        
+        Ok(confirmations)
+    }
+    
+    fn get_confirmation_query_params<'a>(&self, tag: &str) -> Result<HashMap<&'a str, String>, Error> {
         let identity_secret = self.identity_secret.as_ref()
             .ok_or_else(|| Error::Parameter("No identity secret"))?;
         // let time = self.get_server_time().await?;
@@ -96,18 +124,18 @@ impl MobileAPI {
         Ok(params)
     }
     
-    pub async fn send_confirmation_ajax(&self, confirmation: &Confirmation, operation: String) -> Result<(), Error>  {
+    async fn send_confirmation_ajax(&self, confirmation: &Confirmation, operation: String) -> Result<(), Error>  {
         #[derive(Debug, Clone, Copy, Deserialize)]
         struct SendConfirmationResponse {
             pub success: bool,
         }
         
-        let mut query = self.get_confirmation_query_params("conf").await?;
+        let mut query = self.get_confirmation_query_params("conf")?;
         
         query.insert("op", operation);
         query.insert("cid", confirmation.id.to_string());
         query.insert("ck", confirmation.key.to_string());
-
+        
         let uri = self.get_uri("/mobileconf/ajaxop");
         let response = self.client.get(&uri)
             .header("X-Requested-With", "com.valvesoftware.android.steam.community")
@@ -122,27 +150,5 @@ impl MobileAPI {
         }
         
         Ok(())
-    }
-
-    pub async fn accept_confirmation(&self, confirmation: &Confirmation) -> Result<(), Error> {
-        self.send_confirmation_ajax(confirmation, "allow".into()).await
-    }
-
-    pub async fn deny_confirmation(&self, confirmation: &Confirmation) -> Result<(), Error> {
-        self.send_confirmation_ajax(confirmation, "cancel".into()).await
-    }
-    
-    pub async fn get_trade_confirmations(&self) -> Result<Vec<Confirmation>, Error> {
-        let uri = self.get_uri("/mobileconf/conf");
-        let query = self.get_confirmation_query_params("conf").await?;
-        let response = self.client.get(&uri)
-            .header("X-Requested-With", "com.valvesoftware.android.steam.community")
-            .query(&query)
-            .send()
-            .await?;
-        let body = response.text().await?;
-        let confirmations = helpers::parse_confirmations(body)?;
-        
-        Ok(confirmations)
     }
 }

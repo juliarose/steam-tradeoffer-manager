@@ -26,6 +26,7 @@ use lazy_regex::{regex_captures, regex_is_match};
 /// The underlying API.for ['crate::SteamTradeOfferManager'].
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPI {
+    /// The client for making requests.
     client: Client,
     /// The API key.
     pub key: String,
@@ -665,12 +666,12 @@ impl SteamTradeOfferAPI {
             .await?;
         
         if regex_is_match!(r#"/\n\W*<script type="text/javascript">\W*\r?\n?(\W*var g_rgAppContextData[\s\S]*)</script>"#, &body) {
-            let my_escrow = get_days(regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, &body));
-            let them_escrow = get_days(regex_captures!(r#"var g_daysTheirEscrow = (\d+);"#, &body));
+            let my_escrow_days = get_days(regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, &body));
+            let them_escrow_days = get_days(regex_captures!(r#"var g_daysTheirEscrow = (\d+);"#, &body));
 
             Ok(UserDetails {
-                my_escrow,
-                them_escrow,
+                my_escrow_days,
+                them_escrow_days,
             })
         } else {
             Err(Error::MalformedResponse)

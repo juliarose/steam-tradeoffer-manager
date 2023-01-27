@@ -1,6 +1,6 @@
 use crate::types::{AppId, ClassId, InstanceId, TradeOfferId};
-use reqwest_middleware;
 use std::{fmt, num::ParseIntError, time::SystemTimeError};
+use reqwest_middleware;
 
 /// Any range of errors encountered when making requests.
 #[derive(thiserror::Error, Debug)]
@@ -150,6 +150,7 @@ pub enum TradeOfferError {
 }
 
 impl TradeOfferError {
+    /// Transforms the code number into the corresponding error.
     pub fn from_code(code: i32) -> Self {
         match code {
             2 => Self::Fail,
@@ -164,6 +165,7 @@ impl TradeOfferError {
         }
     }
     
+    /// Gets the code number for this error.
     pub fn code(&self) -> Option<i32> {
         match self {
             Self::Fail => Some(2),
@@ -211,11 +213,14 @@ impl From<reqwest_middleware::Error> for Error {
     }
 }
 
-/// Details the missing classinfo.
+/// Details of the missing classinfo.
 #[derive(thiserror::Error, Debug)]
 pub struct MissingClassInfoError {
+    /// The app ID of the missing classinfo.
     pub appid: AppId,
+    /// The class ID of the missing classinfo.
     pub classid: ClassId,
+    /// The instance ID of the missing classinfo.
     pub instanceid: InstanceId,
 }
 

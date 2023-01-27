@@ -12,7 +12,7 @@ use crate::{
     api::SteamTradeOfferAPI,
     helpers::get_default_middleware,
     request::NewTradeOffer,
-    enums::{OfferFilter, TradeOfferState},
+    enums::TradeOfferState,
     mobile_api::{MobileAPI, Confirmation},
     types::{AppId, ContextId, TradeOfferId},
     response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer},
@@ -286,12 +286,12 @@ impl TradeOfferManager {
         Ok(())
     }
     
-    /// Declines a confirmation.
-    pub async fn decline_confirmation(
+    /// Cancels a confirmation.
+    pub async fn cancel_confirmation(
         &self,
         confirmation: &Confirmation,
     ) -> Result<(), Error> {
-        self.mobile_api.deny_confirmation(confirmation).await
+        self.mobile_api.cancel_confirmation(confirmation).await
     }
     
     /// Gets the trade receipt (new items) upon completion of a trade.
@@ -329,7 +329,8 @@ impl TradeOfferManager {
     ) -> Result<Vec<TradeOffer>, Error> {
         let historical_cutoff = time::timestamp_to_server_time(u32::MAX as i64);
         let offers = self.get_trade_offers(
-            OfferFilter::ActiveOnly,
+            true,
+            false,
             Some(historical_cutoff),
         ).await?;
         
@@ -339,11 +340,10 @@ impl TradeOfferManager {
     /// Gets trade offers. This will trim responses based on the filter. 
     pub async fn get_trade_offers(
         &self,
-        filter: OfferFilter,
+        active_only: bool,
+        historical_only: bool,
         historical_cutoff: Option<ServerTime>,
     ) -> Result<Vec<TradeOffer>, Error> {
-        let active_only = filter == OfferFilter::ActiveOnly;
-        let historical_only = filter == OfferFilter::HistoricalOnly;
         let offers = self.api.get_trade_offers(
             active_only,
             historical_only,
@@ -354,20 +354,18 @@ impl TradeOfferManager {
         ).await?;
         
         // trim responses since these don't always return what we want
-        Ok(match filter {
-            OfferFilter::All => offers,
-            OfferFilter::ActiveOnly => {
-                offers
-                    .into_iter()
-                    .filter(|offer| offer.trade_offer_state == TradeOfferState::Active)
-                    .collect::<_>()
-            },
-            OfferFilter::HistoricalOnly => {
-                offers
-                    .into_iter()
-                    .filter(|offer| offer.trade_offer_state != TradeOfferState::Active)
-                    .collect::<_>()
-            },
+        Ok(if active_only {
+            offers
+                .into_iter()
+                .filter(|offer| offer.trade_offer_state == TradeOfferState::Active)
+                .collect::<_>()
+        } else if historical_only {
+            offers
+                .into_iter()
+                .filter(|offer| offer.trade_offer_state != TradeOfferState::Active)
+                .collect::<_>()
+        } else {
+            offers
         })
     }
     

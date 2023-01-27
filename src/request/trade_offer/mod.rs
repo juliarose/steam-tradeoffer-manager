@@ -1,7 +1,7 @@
 mod item;
 mod builder;
 
-pub use item::Item;
+pub use item::NewTradeOfferItem;
 pub use builder::NewTradeOfferBuilder;
 use steamid_ng::SteamID;
 use crate::response::{TradeOffer, Asset};
@@ -10,16 +10,22 @@ use crate::response::{TradeOffer, Asset};
 /// created by calling `from` on the offer.
 #[derive(Debug, Clone, PartialEq)]
 pub struct NewTradeOffer {
+    /// The partner's [`SteamID`] for this offer.
     pub partner: SteamID,
-    pub items_to_give: Vec<Item>,
-    pub items_to_receive: Vec<Item>,
+    /// The items to give in this offer.
+    pub items_to_give: Vec<NewTradeOfferItem>,
+    /// The items to received in this offer.
+    pub items_to_receive: Vec<NewTradeOfferItem>,
+    /// The message to send in this offer.
     pub message: Option<String>,
+    /// The token for sending an offer if you are not friends with the partner.
     pub token: Option<String>,
 }
 
 impl NewTradeOffer {
-    pub fn builder(steamid: SteamID) -> NewTradeOfferBuilder {
-        NewTradeOfferBuilder::new(steamid)
+    /// The builder for creating a [`NewTradeOffer`].
+    pub fn builder(partner: SteamID) -> NewTradeOfferBuilder {
+        NewTradeOfferBuilder::new(partner)
     }
     
     /// Checks if any items are included in the offer.
@@ -53,7 +59,7 @@ impl From<TradeOffer> for NewTradeOffer {
     }
 }
 
-fn from_trade_offer_items(items: &[Asset]) -> Vec<Item> {
+fn from_trade_offer_items(items: &[Asset]) -> Vec<NewTradeOfferItem> {
     items
         .iter()
         .map(|item| item.into())

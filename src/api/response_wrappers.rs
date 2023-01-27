@@ -97,7 +97,7 @@ pub struct GetInventoryResponse {
     pub last_assetid: Option<u64>,
 }
 
-// this ignores parsing the descriptions
+// This ignores parsing the descriptions.
 #[derive(Deserialize, Debug)]
 pub struct GetInventoryResponseIgnoreDescriptions {
     #[serde(default)]

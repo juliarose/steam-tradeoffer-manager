@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use serde::{Serialize, Deserialize};
-use chrono::serde::ts_seconds;
 use steamid_ng::SteamID;
+use chrono::serde::ts_seconds;
 use crate::{
     response,
     ServerTime,
@@ -10,7 +10,11 @@ use crate::{
     serializers::{
         string,
         option_string,
-        option_string_0_as_none
+        option_string_0_as_none,
+    },
+    deserializers::{
+        ts_seconds_option_none_when_zero,
+        empty_string_is_none,
     },
     types::{
         AppId,
@@ -20,67 +24,59 @@ use crate::{
         ClassId,
         InstanceId,
         TradeOfferId,
-        TradeId, ClassInfoMap
+        TradeId,
+        ClassInfoMap,
     },
 };
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RawTradeOfferNoItems {
-    #[serde(with = "string")]
-    pub tradeofferid: TradeOfferId,
-    #[serde(with = "option_string")]
-    pub tradeid: Option<TradeId>,
-    pub accountid_other: u32,
-    pub message: Option<String>,
-    #[serde(default)]
-    pub is_our_offer: bool,
-    #[serde(default)]
-    pub from_real_time_trade: bool,
-    #[serde(with = "ts_seconds")]
-    pub expiration_time: ServerTime,
-    #[serde(with = "ts_seconds")]
-    pub time_created: ServerTime,
-    #[serde(with = "ts_seconds")]
-    pub time_updated: ServerTime,
-    pub trade_offer_state: TradeOfferState,
-    // todo parse 0 responses as null
-    #[serde(with = "ts_seconds")]
-    pub escrow_end_date: ServerTime,
-    pub confirmation_method: ConfirmationMethod,
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RawTradeOffer {
     #[serde(with = "string")]
+    /// The ID for this offer.
     pub tradeofferid: TradeOfferId,
     #[serde(default)]
     #[serde(with = "option_string")]
+    /// The trade ID for this offer. This should be present when the state of the offer is
+    /// "Accepted".
     pub tradeid: Option<TradeId>,
+    /// The [`SteamID`] of our partner.
     pub accountid_other: u32,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_string_is_none")]
+    /// The message included in the offer. If the message is empty or not present this will
+    /// be `None`.
     pub message: Option<String>,
     #[serde(default)]
+    /// The items we're receiving in this offer.
     pub items_to_receive: Vec<RawAsset>,
     #[serde(default)]
+    /// The items we're giving in this offer.
     pub items_to_give: Vec<RawAsset>,
     #[serde(default)]
+    /// Whether this offer was created by us or not.
     pub is_our_offer: bool,
     #[serde(default)]
+    /// Whether this offer originated from a real time trade.
     pub from_real_time_trade: bool,
     #[serde(with = "ts_seconds")]
+    /// The time before the offer expires if it has not been acted on.
     pub expiration_time: ServerTime,
     #[serde(with = "ts_seconds")]
+    /// The time this offer was created.
     pub time_created: ServerTime,
     #[serde(with = "ts_seconds")]
+    /// The time this offer last had an action e.g. accepting or declining the offer.
     pub time_updated: ServerTime,
+    /// The state of this offer.
     pub trade_offer_state: TradeOfferState,
-    // todo parse 0 responses as null
-    #[serde(with = "ts_seconds")]
-    pub escrow_end_date: ServerTime,
+    #[serde(with = "ts_seconds_option_none_when_zero")]
+    /// The end date if this trade is in escrow. `None` when this offer is not in escrow.
+    pub escrow_end_date: Option<ServerTime>,
+    /// The confirmation method for this offer.
     pub confirmation_method: ConfirmationMethod,
 }
 
 impl RawTradeOffer {
-    
     /// Attempts to combine this [`RawTradeOffer`] into a [`response::trade_offer::TradeOffer`] using the given map.
     pub fn try_combine_classinfos(
         self,
@@ -152,41 +148,57 @@ impl RawTradeOffer {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RawAsset {
+    /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
     #[serde(with = "string")]
+    /// The context id.
     pub contextid: ContextId,
     #[serde(with = "string")]
+    /// The unique asset ID. This value is unique to the item's appid and contextid.
     pub assetid: AssetId,
     #[serde(with = "string")]
+    /// The ID of the classinfo.
     pub classid: ClassId,
     #[serde(with = "option_string_0_as_none")]
+    /// The specific instance ID of the classinfo.
     pub instanceid: InstanceId,
     #[serde(with = "string")]
+    /// The amount. If this item is not stackable the amount will be 1.
     pub amount: Amount,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RawReceiptAsset {
+    /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
+    /// The context id.
     pub contextid: ContextId,
     #[serde(with = "string", rename = "id")]
+    /// The unique asset ID. This value is unique to the item's appid and contextid.
     pub assetid: AssetId,
     #[serde(with = "string")]
+    /// The ID of the classinfo.
     pub classid: ClassId,
     #[serde(with = "option_string_0_as_none")]
+    /// The specific instance ID of the classinfo.
     pub instanceid: InstanceId,
     #[serde(with = "string")]
+    /// The amount. If this item is not stackable the amount will be 1.
     pub amount: Amount,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RawAssetOld {
     #[serde(with = "string", rename = "id")]
+    /// The unique asset ID.
     pub assetid: AssetId,
     #[serde(with = "string")]
+    /// The ID of the classinfo.
     pub classid: ClassId,
     #[serde(with = "option_string_0_as_none")]
+    /// The specific instance ID of the classinfo.
     pub instanceid: InstanceId,
     #[serde(with = "string")]
+    /// The amount. If this item is not stackable the amount will be 1.
     pub amount: Amount,
 }

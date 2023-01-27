@@ -1,19 +1,24 @@
 use std::cmp;
 use serde::Deserialize;
 
+/// Details for user.
 #[derive(Deserialize, Debug)]
 pub struct UserDetails {
-    pub them_escrow: u32,
-    pub my_escrow: u32,
+    /// Their escrow duration in days.
+    pub them_escrow_days: u32,
+    /// Your escrow duration in days.
+    pub my_escrow_days: u32,
 }
 
 impl UserDetails {
+    /// Whether the trade would result in escrow or not.
     pub fn has_escrow(&self) -> bool {
-        self.them_escrow > 0 || self.my_escrow > 0
+        self.them_escrow_days > 0 || self.my_escrow_days > 0
     }
     
+    /// The number of days the trade would be held in escrow.
     pub fn hold_duration_days(&self) -> u32 {
-        cmp::max(self.them_escrow, self.my_escrow)
+        cmp::max(self.them_escrow_days, self.my_escrow_days)
     }
 }
 
@@ -24,8 +29,8 @@ mod tests {
     #[test]
     fn escrow_works() {
         let details = UserDetails {
-            them_escrow: 0,
-            my_escrow: 3,
+            them_escrow_days: 0,
+            my_escrow_days: 3,
         };
 
         assert_eq!(true, details.has_escrow());
@@ -34,10 +39,10 @@ mod tests {
     #[test]
     fn hold_duration_days_works() {
         let details = UserDetails {
-            them_escrow: 0,
-            my_escrow: 3,
+            them_escrow_days: 0,
+            my_escrow_days: 15,
         };
 
-        assert_eq!(3, details.hold_duration_days());
+        assert_eq!(15, details.hold_duration_days());
     }
 }

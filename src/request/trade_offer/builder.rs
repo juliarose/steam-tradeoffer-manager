@@ -1,16 +1,22 @@
-use super::{Item, NewTradeOffer};
+use super::{NewTradeOfferItem, NewTradeOffer};
 use crate::SteamID;
 
+/// Builder for constructing new trade offers.
 pub struct NewTradeOfferBuilder {
+    /// The partner's [`SteamID`] for this offer.
     pub partner: SteamID,
-    pub items_to_give: Vec<Item>,
-    pub items_to_receive: Vec<Item>,
+    /// The items to give in this offer.
+    pub items_to_give: Vec<NewTradeOfferItem>,
+    /// The items to received in this offer.
+    pub items_to_receive: Vec<NewTradeOfferItem>,
+    /// The message to send in this offer.
     pub message: Option<String>,
+    /// The token for sending an offer if you are not friends with the partner.
     pub token: Option<String>,
 }
 
 impl NewTradeOfferBuilder {
-    
+    /// Creates a new [`NewTradeOfferBuilder`] with the given partner.
     pub fn new(partner: SteamID) -> Self {
         Self {
             partner,
@@ -20,27 +26,32 @@ impl NewTradeOfferBuilder {
             token: None,
         }
     }
-
-    pub fn items_to_give(mut self, items: Vec<Item>) -> Self {
+    
+    /// The items to give in this offer.
+    pub fn items_to_give(mut self, items: Vec<NewTradeOfferItem>) -> Self {
         self.items_to_give = items;
         self
     }
-
-    pub fn items_to_receive(mut self, items: Vec<Item>) -> Self {
+    
+    /// The items to received in this offer.
+    pub fn items_to_receive(mut self, items: Vec<NewTradeOfferItem>) -> Self {
         self.items_to_receive = items;
         self
     }
-
+    
+    /// The token for sending an offer if you are not friends with the partner.
     pub fn token(mut self, token: String) -> Self {
         self.token = Some(token);
         self
     }
-
+    
+    /// The message to send in this offer.
     pub fn message(mut self, message: String) -> Self {
         self.message = Some(message);
         self
     }
     
+    /// Builds into [`NewTradeOffer`].
     pub fn build(self) -> NewTradeOffer {
         NewTradeOffer {
             partner: self.partner,

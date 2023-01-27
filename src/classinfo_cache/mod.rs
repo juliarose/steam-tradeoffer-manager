@@ -7,7 +7,7 @@ use lfu_cache::LfuCache;
 
 type LfuClassInfoMap = LfuCache<ClassInfoClass, Arc<ClassInfo>>;
 
-/// Used for storing caches for [`ClassInfo`] data. Data is stored using an [`LfuCache`]
+/// Used for storing caches of [`ClassInfo`] data. Data is stored using an [`LfuCache`]
 /// to limit how many elements are stored in memory.
 #[derive(Debug)]
 pub struct ClassInfoCache {

@@ -25,6 +25,82 @@ use crate::types::{
     ClassInfoMap,
 };
 
+pub fn empty_string_is_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    
+    if s.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(s))
+    }
+}
+
+pub mod ts_seconds_option_none_when_zero {
+    use core::fmt;
+    use serde::{de, ser};
+    use chrono::{DateTime, Utc, serde::SecondsTimestampVisitor};
+    
+    pub fn serialize<S>(opt: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        match *opt {
+            Some(ref dt) => {
+                match dt.timestamp() {
+                    0 => serializer.serialize_none(),
+                    dt => serializer.serialize_some(&dt)
+                }
+            },
+            None => serializer.serialize_none(),
+        }
+    }
+    
+    pub fn deserialize<'de, D>(d: D) -> Result<Option<DateTime<Utc>>, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        d.deserialize_option(OptionSecondsTimestampVisitor)
+    }
+    
+    struct OptionSecondsTimestampVisitor;
+    
+    impl<'de> de::Visitor<'de> for OptionSecondsTimestampVisitor {
+        type Value = Option<DateTime<Utc>>;
+        
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a unix timestamp in seconds or none")
+        }
+        
+        /// Deserialize a timestamp in seconds since the epoch
+        fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            d.deserialize_i64(SecondsTimestampVisitor).map(Some)
+        }
+        
+        /// Deserialize a timestamp in seconds since the epoch
+        fn visit_none<E>(self) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(None)
+        }
+        
+        /// Deserialize a timestamp in seconds since the epoch
+        fn visit_unit<E>(self) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(None)
+        }
+    }
+}
+
+
 pub fn string_or_number<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
     D: Deserializer<'de>,

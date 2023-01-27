@@ -18,7 +18,7 @@ pub struct TradeOfferManagerBuilder {
     pub identity_secret: Option<String>,
     /// The language for API responses.
     pub language: String,
-    /// The [ClassInfoCache] to use for this manager. Useful if instantiation multiple managers 
+    /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
     /// to share state.
     pub classinfo_cache: Arc<Mutex<ClassInfoCache>>,
     /// The location to save data to.
@@ -32,6 +32,7 @@ pub struct TradeOfferManagerBuilder {
 }
 
 impl TradeOfferManagerBuilder {
+    /// Creates a new [`TradeOfferManagerBuilder`].
     pub fn new(
         steamid: SteamID,
         api_key: String,
@@ -49,41 +50,51 @@ impl TradeOfferManagerBuilder {
         }
     }
     
+    /// The identity secret for the account (optional). Required for mobile confirmations.
     pub fn identity_secret(mut self, identity_secret: String) -> Self {
         self.identity_secret = Some(identity_secret);
         self
     }
-
+    
+    /// The language for API responses.
     pub fn language(mut self, language: String) -> Self {
         self.language = language;
         self
     }
     
+    /// The [ClassInfoCache] to use for this manager. Useful if instantiation multiple managers 
+    /// to share state.
     pub fn classinfo_cache(mut self, classinfo_cache: Arc<Mutex<ClassInfoCache>>) -> Self {
         self.classinfo_cache = classinfo_cache;
         self
     }
     
+    /// The location to save data to.
     pub fn data_directory(mut self, data_directory: PathBuf) -> Self {
         self.data_directory = data_directory;
         self
     }
     
+    /// Client to use for requests. Remember to also include the cookies connected to this client
+    /// or you will need to set the cookies outside of the module.
     pub fn client(mut self, client: ClientWithMiddleware) -> Self {
         self.client = Some(client);
         self
     }
     
+    /// Request cookies.
     pub fn cookies(mut self, cookies: Arc<Jar>) -> Self {
         self.cookies = Some(cookies);
         self
     }
     
+    /// User agent for requests. If you provided a client this is not needed.
     pub fn user_agent(mut self, user_agent: &'static str) -> Self {
         self.user_agent = user_agent;
         self
     }
     
+    /// Builds the [`TradeOfferManager`].
     pub fn build(self) -> TradeOfferManager {
         self.into()
     }

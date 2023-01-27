@@ -30,7 +30,6 @@ pub struct PollOptions {
 }
 
 impl Default for PollOptions {
-    
     fn default() -> Self {
         Self {
             cancel_duration: None,
@@ -41,7 +40,7 @@ impl Default for PollOptions {
 }
 
 impl PollOptions {
-    
+    /// Uses the default values but includes a cancel duration.
     pub fn default_with_cancel_duration(duration: Duration) -> Self {
         Self {
             cancel_duration: Some(duration),
