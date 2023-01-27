@@ -1,4 +1,4 @@
-use super::raw;
+use super::response as api_response;
 use lazy_regex::Regex;
 use std::sync::Arc;
 use crate::{
@@ -8,7 +8,7 @@ use crate::{
 };
 
 pub fn from_raw_receipt_asset(
-    asset: raw::RawReceiptAsset,
+    asset: api_response::RawReceiptAsset,
     map: &ClassInfoMap,
 ) -> Result<response::Asset, MissingClassInfoError> {
     if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
@@ -30,7 +30,7 @@ pub fn from_raw_receipt_asset(
 
 pub fn parse_receipt_script(
     script: &str,
-) -> Result<Vec<raw::RawReceiptAsset>, &'static str> {
+) -> Result<Vec<api_response::RawReceiptAsset>, &'static str> {
     Regex::new(r#"oItem\s*=\s*(\{.*\});\s*\n"#)
         .map_err(|_| "Invalid regexp")?
         .captures_iter(script)
@@ -38,7 +38,7 @@ pub fn parse_receipt_script(
         // and filter out the matches that can't be parsed (e.g. if there are too many digits to store in an i64).
         .map(|capture| {
             if let Some(m) = capture.get(1) {
-                if let Ok(asset) = serde_json::from_str::<raw::RawReceiptAsset>(m.as_str()) {
+                if let Ok(asset) = serde_json::from_str::<api_response::RawReceiptAsset>(m.as_str()) {
                     Ok(asset)
                 } else {
                     Err("Failed to deserialize item")

@@ -1,8 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::Arc,
-    fmt,
-};
+use std::{collections::HashMap, sync::Arc, fmt};
 use crate::{
     response,
     types::{ClassInfoAppClass, ClassInfoMap},
@@ -15,7 +11,7 @@ use crate::{
         deserialize_classinfo_map,
     },
 };
-use super::raw;
+use super::response as api_response;
 use serde::{
     Deserialize,
     de::{
@@ -26,7 +22,7 @@ use serde::{
     },
 };
 
-type RgInventory = HashMap<String, raw::RawAssetOld>;
+type RgInventory = HashMap<String, api_response::RawAssetOld>;
 
 fn deserialize_rg_inventory<'de, D>(deserializer: D) -> Result<RgInventory, D::Error>
 where
@@ -55,7 +51,7 @@ where
             let mut map = Self::Value::new();
             
             while let Some(key) = access.next_key::<String>()? {
-                let asset = access.next_value::<raw::RawAssetOld>()?;
+                let asset = access.next_value::<api_response::RawAssetOld>()?;
                 
                 map.insert(key, asset);
             }
@@ -70,9 +66,9 @@ where
 #[derive(Deserialize, Debug)]
 pub struct GetTradeOffersResponseBody {
     #[serde(default)]
-    pub trade_offers_sent: Vec<raw::RawTradeOffer>,
+    pub trade_offers_sent: Vec<api_response::RawTradeOffer>,
     #[serde(default)]
-    pub trade_offers_received: Vec<raw::RawTradeOffer>,
+    pub trade_offers_received: Vec<api_response::RawTradeOffer>,
     #[serde(default)]
     #[serde(deserialize_with = "to_trade_offers_classinfo_map")]
     pub descriptions: Option<ClassInfoMap>,
@@ -93,7 +89,7 @@ pub struct GetInventoryResponse {
     #[serde(deserialize_with = "from_int_to_bool")]
     pub more_items: bool,
     #[serde(default)]
-    pub assets: Vec<raw::RawAsset>,
+    pub assets: Vec<api_response::RawAsset>,
     #[serde(deserialize_with = "to_classinfo_map")]
     pub descriptions: HashMap<ClassInfoAppClass, Arc<response::ClassInfo>>,
     #[serde(default)]
@@ -111,7 +107,7 @@ pub struct GetInventoryResponseIgnoreDescriptions {
     #[serde(deserialize_with = "from_int_to_bool")]
     pub more_items: bool,
     #[serde(default)]
-    pub assets: Vec<raw::RawAsset>,
+    pub assets: Vec<api_response::RawAsset>,
     #[serde(default)]
     #[serde(deserialize_with = "option_str_to_number")]
     pub last_assetid: Option<u64>,

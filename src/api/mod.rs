@@ -1,12 +1,15 @@
-pub mod raw;
-mod api_response;
+mod response;
+mod response_wrappers;
 mod helpers;
 
+pub use response::*;
+
+use crate::response::*;
 use helpers::{
     parse_receipt_script,
     from_raw_receipt_asset,
 };
-use api_response::{
+use response_wrappers::{
     GetTradeOffersResponse,
     GetInventoryResponse,
     GetInventoryResponseIgnoreDescriptions,
@@ -35,7 +38,6 @@ use crate::{
         TradeId,
         Client,
     },
-    response,
     request::{self, serializers::steamid_as_string},
     serializers::string,
     helpers::parses_response,
@@ -140,11 +142,11 @@ impl SteamTradeOfferAPI {
         &self,
         offer: &request::trade_offer::NewTradeOffer,
         counter_tradeofferid: Option<TradeOfferId>,
-    ) -> Result<response::SentOffer, Error> {
+    ) -> Result<SentOffer, Error> {
         #[derive(Serialize, Debug)]
         struct OfferFormUser<'b> {
             assets: &'b Vec<request::trade_offer::Item>,
-            currency: Vec<response::Currency>,
+            currency: Vec<Currency>,
             ready: bool,
         }
 
@@ -242,7 +244,7 @@ impl SteamTradeOfferAPI {
             .form(&params)
             .send()
             .await?;
-        let body: response::SentOffer = parses_response(response).await?;
+        let body: SentOffer = parses_response(response).await?;
         
         Ok(body)
     }
@@ -251,7 +253,7 @@ impl SteamTradeOfferAPI {
     pub async fn get_receipt(
         &self,
         trade_id: &TradeId,
-    ) -> Result<Vec<response::Asset>, Error> {
+    ) -> Result<Vec<Asset>, Error> {
         let uri = self.get_uri(&format!("/trade/{}/receipt", trade_id));
         let response = self.client.get(&uri)
             .send()
@@ -329,7 +331,7 @@ impl SteamTradeOfferAPI {
         let classinfos = classinfos
             .into_iter()
             .map(|((classid, instanceid), classinfo_string)| {
-                serde_json::from_str::<response::ClassInfo>(&classinfo_string)
+                serde_json::from_str::<ClassInfo>(&classinfo_string)
                     // ignore classinfos that failed parsed
                     .ok()
                     .map(|classinfo| {
@@ -370,7 +372,7 @@ impl SteamTradeOfferAPI {
         classes: &Vec<ClassInfoClass>,
     ) -> Result<ClassInfoMap, Error> {
         let mut apps: HashMap<AppId, Vec<ClassInfoAppClass>> = HashMap::new();
-        let mut map: HashMap<ClassInfoClass, Arc<response::ClassInfo>> = HashMap::new();
+        let mut map: HashMap<ClassInfoClass, Arc<ClassInfo>> = HashMap::new();
         let mut needed: HashSet<&ClassInfoClass> = HashSet::from_iter(classes.iter());
         
         if classes.is_empty() {
@@ -457,7 +459,7 @@ impl SteamTradeOfferAPI {
         get_received_offers: bool,
         get_descriptions: bool,
         historical_cutoff: Option<ServerTime>,
-    ) -> Result<(Vec<raw::RawTradeOffer>, Option<ClassInfoMap>), Error> {
+    ) -> Result<(Vec<response::RawTradeOffer>, Option<ClassInfoMap>), Error> {
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -545,8 +547,8 @@ impl SteamTradeOfferAPI {
     /// missing descriptions.
     pub async fn map_raw_trade_offers(
         &self,
-        offers: Vec<raw::RawTradeOffer>,
-    ) -> Result<Vec<response::TradeOffer>, Error> {
+        offers: Vec<RawTradeOffer>,
+    ) -> Result<Vec<TradeOffer>, Error> {
         let classes = offers
             .iter()
             .flat_map(|offer| {
@@ -568,9 +570,9 @@ impl SteamTradeOfferAPI {
     /// Maps trade offer data with given descriptions. Ignores offers with missing descriptions.
     pub fn map_raw_trade_offers_with_descriptions(
         &self,
-        offers: Vec<raw::RawTradeOffer>,
+        offers: Vec<response::RawTradeOffer>,
         map: ClassInfoMap,
-    ) -> Vec<response::TradeOffer> {
+    ) -> Vec<TradeOffer> {
         let offers = offers
             .into_iter()
             // ignore offers where the classinfo cannot be obtained
@@ -591,7 +593,7 @@ impl SteamTradeOfferAPI {
         get_received_offers: bool,
         get_descriptions: bool,
         historical_cutoff: Option<ServerTime>,
-    ) -> Result<Vec<response::TradeOffer>, Error> {
+    ) -> Result<Vec<TradeOffer>, Error> {
         let (raw_offers, _descriptions) = self.get_raw_trade_offers(
             active_only,
             historical_only,
@@ -609,7 +611,7 @@ impl SteamTradeOfferAPI {
     pub async fn get_trade_offer(
         &self,
         tradeofferid: TradeOfferId,
-    ) -> Result<raw::RawTradeOffer, Error> {
+    ) -> Result<response::RawTradeOffer, Error> {
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -618,7 +620,7 @@ impl SteamTradeOfferAPI {
 
         #[derive(Deserialize, Debug)]
         struct Body {
-            offer: raw::RawTradeOffer,
+            offer: response::RawTradeOffer,
         }
 
         #[derive(Deserialize, Debug)]
@@ -645,7 +647,7 @@ impl SteamTradeOfferAPI {
         tradeofferid: &Option<TradeOfferId>,
         partner: &SteamID,
         token: &Option<String>,
-    ) -> Result<response::UserDetails, Error> {
+    ) -> Result<UserDetails, Error> {
         #[derive(Serialize, Debug)]
         struct Params<'b> {
             partner: u32,
@@ -691,7 +693,7 @@ impl SteamTradeOfferAPI {
             let my_escrow = get_days(regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, &body));
             let them_escrow = get_days(regex_captures!(r#"var g_daysTheirEscrow = (\d+);"#, &body));
 
-            Ok(response::UserDetails {
+            Ok(UserDetails {
                 my_escrow,
                 them_escrow,
             })
@@ -705,7 +707,7 @@ impl SteamTradeOfferAPI {
         &self,
         tradeofferid: TradeOfferId,
         partner: &SteamID,
-    ) -> Result<response::AcceptedOffer, Error> {
+    ) -> Result<AcceptedOffer, Error> {
         #[derive(Serialize, Debug)]
         struct AcceptOfferParams<'b> {
             sessionid: String,
@@ -733,7 +735,7 @@ impl SteamTradeOfferAPI {
             .form(&params)
             .send()
             .await?;
-        let body: response::AcceptedOffer = parses_response(response).await?;
+        let body: AcceptedOffer = parses_response(response).await?;
         
         Ok(body)
     }
@@ -809,7 +811,7 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<response::Asset>, Error> { 
+    ) -> Result<Vec<Asset>, Error> { 
         #[derive(Serialize, Debug)]
         struct Query<'a> {
             l: &'a str,
@@ -862,7 +864,7 @@ impl SteamTradeOfferAPI {
                         instanceid: item.instanceid,
                     }))?;
                 
-                inventory.push(response::Asset {
+                inventory.push(Asset {
                     classinfo: Arc::clone(classinfo),
                     appid,
                     contextid,
@@ -882,7 +884,7 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<response::Asset>, Error> { 
+    ) -> Result<Vec<Asset>, Error> { 
         #[derive(Serialize, Debug)]
         struct Query<'a> {
             l: &'a str,
@@ -939,7 +941,7 @@ impl SteamTradeOfferAPI {
                     continue;
                 }
                 
-                inventory.push(response::Asset {
+                inventory.push(Asset {
                     appid,
                     contextid,
                     assetid: item.assetid,
@@ -959,7 +961,7 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<response::Asset>, Error> { 
+    ) -> Result<Vec<Asset>, Error> { 
         #[derive(Serialize, Debug)]
         struct Query<'a> {
             l: &'a str,
@@ -1026,7 +1028,7 @@ impl SteamTradeOfferAPI {
                 continue;
             }
             
-            inventory.push(response::Asset {
+            inventory.push(Asset {
                 appid,
                 contextid,
                 assetid: item.assetid,

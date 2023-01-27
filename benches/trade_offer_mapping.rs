@@ -4,7 +4,7 @@ use steam_tradeoffer_manager::{
     types::{ClassInfoMap, ClassInfoClass},
     ClassInfoCache,
     response::ClassInfo,
-    api::raw, 
+    api::RawTradeOffer,
     error::FileError,
 };
 use std::{
@@ -67,13 +67,13 @@ fn load_classinfo_sync(
     }
 }
 
-fn get_offers() -> Vec<raw::RawTradeOffer> {
+fn get_offers() -> Vec<RawTradeOffer> {
     #[derive(Deserialize, Debug)]
     pub struct GetTradeOffersResponseBody {
         #[serde(default)]
-        pub trade_offers_sent: Vec<raw::RawTradeOffer>,
+        pub trade_offers_sent: Vec<RawTradeOffer>,
         #[serde(default)]
-        pub trade_offers_received: Vec<raw::RawTradeOffer>,
+        pub trade_offers_received: Vec<RawTradeOffer>,
         pub next_cursor: Option<u32>,
     }
     
@@ -82,7 +82,9 @@ fn get_offers() -> Vec<raw::RawTradeOffer> {
         pub response: GetTradeOffersResponseBody,
     }
     
-    let mut response = serde_json::from_str::<GetTradeOffersResponse>(include_str!("fixtures/offers.json")).unwrap().response;
+    let mut response = serde_json::from_str::<GetTradeOffersResponse>(
+        include_str!("fixtures/offers.json")
+    ).unwrap().response;
     let mut offers = Vec::new();
     
     offers.append(&mut response.trade_offers_received);
@@ -91,7 +93,7 @@ fn get_offers() -> Vec<raw::RawTradeOffer> {
 }
 
 fn get_classinfo_cache(
-    offers: &Vec<raw::RawTradeOffer>,
+    offers: &Vec<RawTradeOffer>,
 ) -> Arc<Mutex<ClassInfoCache>> {
     let classinfos_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("benches/fixtures/classinfos");
     let classes = offers
