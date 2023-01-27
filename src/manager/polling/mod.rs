@@ -30,9 +30,21 @@ pub struct PollOptions {
 }
 
 impl Default for PollOptions {
+    
     fn default() -> Self {
         Self {
             cancel_duration: None,
+            full_poll_update_duration: Duration::minutes(5),
+            poll_interval: Duration::seconds(30),
+        }
+    }
+}
+
+impl PollOptions {
+    
+    pub fn default_with_cancel_duration(duration: Duration) -> Self {
+        Self {
+            cancel_duration: Some(duration),
             full_poll_update_duration: Duration::minutes(5),
             poll_interval: Duration::seconds(30),
         }

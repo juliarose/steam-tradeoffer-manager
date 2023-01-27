@@ -5,6 +5,7 @@ use steam_tradeoffer_manager::{
     enums::TradeOfferState,
     error::Error,
     polling::PollOptions,
+    chrono::Duration,
 };
 
 async fn accept_offer(
@@ -53,11 +54,14 @@ async fn main() {
     let manager = TradeOfferManager::builder(steamid, api_key)
         .identity_secret(String::from("secret"))
         .build();
+    let mut options = PollOptions::default();
     
+    // Cookies and sessionid are required to interact with trade offers.
     manager.set_session(&sessionid, &cookies).expect("Could not set session");
+    // By default PollOptions does not have a cancel duration.
+    options.cancel_duration = Some(Duration::minutes(30));
     
-    // Starts polling in a tokio task.
-    let mut rx = manager.start_polling(PollOptions::default());
+    let mut rx = manager.start_polling(options);
     
     // Listen to the receiver for events.
     while let Some(message) = rx.recv().await {
@@ -71,15 +75,20 @@ async fn main() {
                             state,
                             offer.trade_offer_state
                         );
-                    } else if
-                        offer.trade_offer_state == TradeOfferState::Active &&
-                        !offer.is_our_offer
-                    {
+                    }
+                    
+                    // This isn't our offer.
+                    if !offer.is_our_offer {
+                        continue;
+                    }
+                    
+                    if offer.trade_offer_state == TradeOfferState::Active {
                         handle_offer(&manager, &mut offer).await;
                     }
                 }
             },
             Err(error) => {
+                // If an error occurred during the poll.
                 println!("Error encountered polling offers: {}", error);
             },
         }
