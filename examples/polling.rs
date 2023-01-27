@@ -1,14 +1,11 @@
 use steam_tradeoffer_manager::{
+    SteamID,
     TradeOfferManager,
-    PollType,
     response::{TradeOffer, Asset},
     enums::TradeOfferState,
     error::Error,
-    SteamID,
-    chrono::Duration,
+    polling::PollOptions,
 };
-use dotenv::dotenv;
-use std::env;
 
 fn assets_item_names<'a>(
     assets: &'a Vec<Asset>,
@@ -50,51 +47,21 @@ async fn handle_offer(
     }
 }
 
-/// Gets session from environment variable.
-fn get_session() -> (String, Vec<String>) {
-    let mut sessionid = None;
-    let mut cookies: Vec<String> = Vec::new();
-    let cookies_str = env::var("COOKIES")
-        .expect("COOKIES missing");
-    
-    for cookie in cookies_str.split('&') {
-        let mut split = cookie.split('=');
-        
-        if split.next().unwrap() == "sessionid" {
-            sessionid = Some(split.next().unwrap().to_string());
-        }
-        
-        cookies.push(cookie.to_string());
-    }
-    
-    (sessionid.unwrap(), cookies)
-}
-
-/// Gets steamid from environment variable.
-fn get_steamid(key: &str) -> SteamID {
-    let sid_str = env::var(key)
-        .unwrap_or_else(|_| panic!("{} missing", key));
-    
-    SteamID::from(sid_str.parse::<u64>().unwrap())
-}
-
 #[tokio::main]
 async fn main() {
-    dotenv().ok();
-    
-    let steamid = get_steamid("STEAMID");
-    let key = env::var("API_KEY").expect("API_KEY missing");
-    let manager = TradeOfferManager::builder(steamid, key)
+    let (steamid, api_key, sessionid, cookies) = get_session();
+    let manager = TradeOfferManager::builder(steamid, api_key)
         .identity_secret(String::from("secret"))
-        .cancel_duration(Duration::minutes(30))
         .build();
-    let (sessionid, cookies) = get_session();
     
     manager.set_session(&sessionid, &cookies).expect("Could not set session");
     
-    // gets changes to trade offers for account
-    loop {
-        match manager.do_poll(PollType::Auto).await {
+    // Starts polling in a tokio task.
+    let mut rx = manager.start_polling(PollOptions::default());
+    
+    // Listen to the receiver for events.
+    while let Some(message) = rx.recv().await {
+        match message {
             Ok(offers) => {
                 for (mut offer, old_state) in offers {
                     if let Some(state) = old_state {
@@ -113,12 +80,34 @@ async fn main() {
                 }
             },
             Err(error) => {
-                println!("Error polling offers: {}", error);
+                println!("Error encountered polling offers: {}", error);
             },
         }
-        
-        // poll every 30 seconds
-        // use async_std sleep if you need a non-blocking sleep
-        std::thread::sleep(std::time::Duration::from_secs(30));
     }
+}
+
+/// Gets session from environment variable.
+fn get_session() -> (SteamID, String, String, Vec<String>) {
+    dotenv::dotenv().ok();
+    
+    let api_key = std::env::var("API_KEY").expect("API_KEY missing");
+    let sid_str = std::env::var("STEAMID")
+        .unwrap_or_else(|_| panic!("STEAMID missing"));
+    let steamid = SteamID::from(sid_str.parse::<u64>().unwrap());
+    let mut sessionid = None;
+    let mut cookies: Vec<String> = Vec::new();
+    let cookies_str = std::env::var("COOKIES")
+        .expect("COOKIES missing");
+    
+    for cookie in cookies_str.split('&') {
+        let mut split = cookie.split('=');
+        
+        if split.next().unwrap() == "sessionid" {
+            sessionid = Some(split.next().unwrap().to_string());
+        }
+        
+        cookies.push(cookie.to_string());
+    }
+    
+    (steamid, api_key, sessionid.unwrap(), cookies)
 }

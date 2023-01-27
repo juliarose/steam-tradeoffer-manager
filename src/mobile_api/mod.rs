@@ -14,7 +14,7 @@ use crate::{
     helpers::parses_response,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MobileAPI {
     client: ClientWithMiddleware,
     pub cookies: Arc<Jar>,

@@ -45,6 +45,13 @@ impl PollData {
         }
     }
     
+    pub fn clear_offers(&mut self, tradeofferids_to_remove: &[TradeOfferId]) {
+        for tradeofferid in tradeofferids_to_remove {
+            self.state_map.remove(tradeofferid);
+            self.changed = true;
+        }
+    }
+    
     pub fn set_offers_since(&mut self, date: ServerTime) {
         if self.offers_since != Some(date) {
             self.offers_since = Some(date);

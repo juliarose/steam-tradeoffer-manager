@@ -61,6 +61,12 @@ pub enum Error {
     /// The response is not expected. The containing string provides a message with more details.
     #[error("Malformed response")]
     MalformedResponse,
+    /// An action was taken that depended on polling be setup.
+    #[error("No action was taken because polling is not setup.")]
+    PollingNotSetup,
+    /// An action resulted in the buffer going over its limit.
+    #[error("Failed to enqueue action. The polling buffer is full. A maximum of 10 messages can be queued at a time.")]
+    PollingBufferFull,
 }
 
 /// An error occurred when working with the file system.

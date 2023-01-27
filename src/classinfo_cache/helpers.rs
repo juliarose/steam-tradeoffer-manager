@@ -38,57 +38,6 @@ pub fn load_classinfo_sync(
     }
 }
 
-async fn load_classinfo(
-    class: ClassInfoClass,
-    data_directory: &PathBuf, 
-) -> Result<ClassInfoFile, FileError> {
-    let filepath = get_classinfo_file_path(&class, false, data_directory)?;
-    let data = async_fs::read_to_string(&filepath).await?;
-    
-    match serde_json::from_str::<ClassInfo>(&data) {
-        Ok(classinfo) => {
-            Ok((class, classinfo))
-        },
-        Err(error) => {
-            // remove the file...
-            let _ = async_fs::remove_file(&filepath).await;
-            
-            Err(FileError::Parse(error))
-        },
-    }
-}
-
-fn get_classinfo_file_path(
-    class: &ClassInfoClass,
-    is_temp: bool,
-    data_directory: &PathBuf, 
-) -> Result<PathBuf, FileError> {
-    let (appid, classid, instanceid) = class;
-    let instanceid = match instanceid {
-        Some(instanceid) => *instanceid,
-        None => 0,
-    };
-    let filename: String = match is_temp {
-        true => {
-            match SystemTime::now().duration_since(UNIX_EPOCH) {
-                Ok(system_time) => {
-                    let timestamp = system_time.as_millis();
-                    
-                    Ok(format!("{}_{}_{}.json.{}.temp", appid, classid, instanceid, timestamp))
-                },
-                Err(error) => {
-                    Err(FileError::SystemTime(error))
-                },
-            }
-        },
-        false => {
-            Ok(format!("{}_{}_{}.json", appid, classid, instanceid))
-        },
-    }?;
-    
-    Ok(data_directory.join(filename))
-}
-
 /// Saves the classinfo.
 async fn save_classinfo(
     class: ClassInfoClass,
@@ -172,4 +121,55 @@ pub async fn save_classinfos(
     }
 
     results
+}
+
+async fn load_classinfo(
+    class: ClassInfoClass,
+    data_directory: &PathBuf, 
+) -> Result<ClassInfoFile, FileError> {
+    let filepath = get_classinfo_file_path(&class, false, data_directory)?;
+    let data = async_fs::read_to_string(&filepath).await?;
+    
+    match serde_json::from_str::<ClassInfo>(&data) {
+        Ok(classinfo) => {
+            Ok((class, classinfo))
+        },
+        Err(error) => {
+            // remove the file...
+            let _ = async_fs::remove_file(&filepath).await;
+            
+            Err(FileError::Parse(error))
+        },
+    }
+}
+
+fn get_classinfo_file_path(
+    class: &ClassInfoClass,
+    is_temp: bool,
+    data_directory: &PathBuf, 
+) -> Result<PathBuf, FileError> {
+    let (appid, classid, instanceid) = class;
+    let instanceid = match instanceid {
+        Some(instanceid) => *instanceid,
+        None => 0,
+    };
+    let filename: String = match is_temp {
+        true => {
+            match SystemTime::now().duration_since(UNIX_EPOCH) {
+                Ok(system_time) => {
+                    let timestamp = system_time.as_millis();
+                    
+                    Ok(format!("{}_{}_{}.json.{}.temp", appid, classid, instanceid, timestamp))
+                },
+                Err(error) => {
+                    Err(FileError::SystemTime(error))
+                },
+            }
+        },
+        false => {
+            Ok(format!("{}_{}_{}.json", appid, classid, instanceid))
+        },
+    }?;
+    
+    Ok(data_directory.join(filename))
 }

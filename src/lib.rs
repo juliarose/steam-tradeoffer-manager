@@ -19,9 +19,13 @@ pub use time::ServerTime;
 pub use manager::{
     TradeOfferManager,
     TradeOfferManagerBuilder,
-    Poll,
-    PollType,
 };
 
-pub use steamid_ng::{self, SteamID};
+pub mod polling {
+    pub use super::manager::{Poll, PollResult, PollType, PollOptions};
+}
+
+pub use reqwest;
+pub use reqwest_middleware;
 pub use chrono;
+pub use steamid_ng::{self, SteamID};

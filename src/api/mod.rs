@@ -46,8 +46,6 @@ use url::{Url, ParseError};
 use reqwest::header::REFERER;
 use lazy_regex::{regex_captures, regex_is_match};
 
-const ONE_YEAR_SECS: u64 = 31536000;
-
 /// The underlying API.for ['crate::SteamTradeOfferManager'].
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPI {
@@ -543,7 +541,8 @@ impl SteamTradeOfferAPI {
         Ok((offers, descriptions))
     }
     
-    /// Gets trade offer data with descriptions.
+    /// Maps trade offer data with descriptions from the cache and API. Ignores offers with 
+    /// missing descriptions.
     pub async fn map_raw_trade_offers(
         &self,
         offers: Vec<raw::RawTradeOffer>,
@@ -556,10 +555,22 @@ impl SteamTradeOfferAPI {
                     .chain(offer.items_to_receive.iter())
                     .map(|item| (item.appid, item.classid, item.instanceid))
             })
+            // make unique
             .collect::<HashSet<_>>()
             .into_iter()
             .collect();
         let map = self.get_asset_classinfos(&classes).await?;
+        let offers = self.map_raw_trade_offers_with_descriptions(offers, map);
+        
+        Ok(offers)
+    }
+    
+    /// Maps trade offer data with given descriptions. Ignores offers with missing descriptions.
+    pub fn map_raw_trade_offers_with_descriptions(
+        &self,
+        offers: Vec<raw::RawTradeOffer>,
+        map: ClassInfoMap,
+    ) -> Vec<response::TradeOffer> {
         let offers = offers
             .into_iter()
             // ignore offers where the classinfo cannot be obtained
@@ -568,7 +579,7 @@ impl SteamTradeOfferAPI {
             .filter_map(|offer| offer.try_combine_classinfos(&map).ok())
             .collect::<Vec<_>>();
         
-        Ok(offers)
+        offers
     }
     
     /// Gets trade offers.
