@@ -330,7 +330,7 @@ impl TradeOfferManager {
         let historical_cutoff = time::timestamp_to_server_time(u32::MAX as i64);
         let offers = self.get_trade_offers(
             OfferFilter::ActiveOnly,
-            &Some(historical_cutoff),
+            Some(historical_cutoff),
         ).await?;
         
         Ok(offers)
@@ -340,7 +340,7 @@ impl TradeOfferManager {
     pub async fn get_trade_offers(
         &self,
         filter: OfferFilter,
-        historical_cutoff: &Option<ServerTime>,
+        historical_cutoff: Option<ServerTime>,
     ) -> Result<Vec<response::TradeOffer>, Error> {
         let active_only = filter == OfferFilter::ActiveOnly;
         let historical_only = filter == OfferFilter::HistoricalOnly;

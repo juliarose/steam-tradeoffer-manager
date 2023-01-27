@@ -456,7 +456,7 @@ impl SteamTradeOfferAPI {
         get_sent_offers: bool,
         get_received_offers: bool,
         get_descriptions: bool,
-        historical_cutoff: &Option<ServerTime>,
+        historical_cutoff: Option<ServerTime>,
     ) -> Result<(Vec<raw::RawTradeOffer>, Option<ClassInfoMap>), Error> {
         #[derive(Serialize, Debug)]
         struct Form<'a> {
@@ -508,7 +508,7 @@ impl SteamTradeOfferAPI {
                 // Is there an offer older than the cutoff?
                 let has_older = response_offers
                     .iter()
-                    .any(|offer| offer.time_created < *historical_cutoff);
+                    .any(|offer| offer.time_created < historical_cutoff);
                 
                 // we don't need to go any further...
                 if has_older {
@@ -590,7 +590,7 @@ impl SteamTradeOfferAPI {
         get_sent_offers: bool,
         get_received_offers: bool,
         get_descriptions: bool,
-        historical_cutoff: &Option<ServerTime>,
+        historical_cutoff: Option<ServerTime>,
     ) -> Result<Vec<response::TradeOffer>, Error> {
         let (raw_offers, _descriptions) = self.get_raw_trade_offers(
             active_only,

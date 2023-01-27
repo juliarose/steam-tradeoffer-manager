@@ -16,10 +16,6 @@ pub struct PollData {
     #[serde(default)]
     pub last_poll_full_update: Option<ServerTime>,
     #[serde(default)]
-    /// The oldest active offer. Polling will go back to this time. Used for full update and 
-    /// includes offers in escrow.
-    pub oldest_active_offer: Option<ServerTime>,
-    #[serde(default)]
     pub state_map: HashMap<TradeOfferId, TradeOfferState>,
     #[serde(default, skip_serializing)]
     pub changed: bool,
@@ -31,13 +27,12 @@ impl PollData {
             offers_since: None,
             last_poll: None,
             last_poll_full_update: None,
-            oldest_active_offer: None,
             state_map: HashMap::new(),
             changed: false,
         }
     }
     
-    pub fn last_poll_is_stale(&self, update_interval: &Duration) -> bool {
+    pub fn last_full_poll_is_stale(&self, update_interval: &Duration) -> bool {
         if let Some(last_poll_full_update) = self.last_poll_full_update {
             date_difference_from_now(&last_poll_full_update) >= *update_interval
         } else {
@@ -66,13 +61,6 @@ impl PollData {
     pub fn set_last_poll_full_update(&mut self, date: ServerTime) {
         if self.last_poll_full_update != Some(date) {
             self.last_poll_full_update = Some(date);
-            self.changed = true;
-        }
-    }
-    
-    pub fn set_oldest_active_offer(&mut self, date: ServerTime) {
-        if self.oldest_active_offer != Some(date) {
-            self.offers_since = Some(date);
             self.changed = true;
         }
     }

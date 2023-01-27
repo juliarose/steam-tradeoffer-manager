@@ -7,15 +7,6 @@ use steam_tradeoffer_manager::{
     polling::PollOptions,
 };
 
-fn assets_item_names<'a>(
-    assets: &'a Vec<Asset>,
-) -> Vec<&'a str> {
-    assets
-        .iter()
-        .map(|item| item.classinfo.market_hash_name.as_ref())
-        .collect::<Vec<_>>()
-}
-
 async fn accept_offer(
     manager: &TradeOfferManager,
     offer: &mut TradeOffer,
@@ -33,6 +24,15 @@ async fn handle_offer(
     manager: &TradeOfferManager,
     mut offer: &mut TradeOffer,
 ) {
+    fn assets_item_names<'a>(
+        assets: &'a Vec<Asset>,
+    ) -> Vec<&'a str> {
+        assets
+            .iter()
+            .map(|item| item.classinfo.market_hash_name.as_ref())
+            .collect()
+    }
+    
     println!("New offer {}", offer);
     println!("Receiving: {:?}", assets_item_names(&offer.items_to_receive));
     println!("Giving: {:?}", assets_item_names(&offer.items_to_give));
