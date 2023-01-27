@@ -1,6 +1,6 @@
 # steam-tradeoffer-manager
 
-Makes steam trade offers easy.
+Makes Steam trade offers easy.
 
 Everything is working and tested, but you may find some issues. Please open an issue if you do. This crate is being actively developed and is prone to change.
 

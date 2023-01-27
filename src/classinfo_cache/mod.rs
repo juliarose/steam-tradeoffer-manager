@@ -17,7 +17,7 @@ pub struct ClassInfoCache {
 impl Default for ClassInfoCache {
     fn default() -> Self {
         Self {
-            map: create_map(500),
+            map: create_map(2000),
         }
     }
 }
