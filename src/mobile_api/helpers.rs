@@ -12,17 +12,13 @@ use scraper::{Html, Selector, element_ref::ElementRef};
 const MALFORMED_CONTENT: &str = "Unexpected content format";
 const MALFORMED_DESCRIPTION: &str = "Unexpected description format";
 
-pub fn build_time_bytes(time: i64) -> [u8; 8] {
-    time.to_be_bytes()
-}
-    
 pub fn generate_confirmation_hash_for_time(
     time: i64,
     tag: &str,
     identity_secret: &String,
 ) -> Result<String, base64::DecodeError> {
     let decode: &[u8] = &base64::decode(&identity_secret)?;
-    let time_bytes = build_time_bytes(time);
+    let time_bytes = time.to_be_bytes();
     let tag_bytes = tag.as_bytes();
     let array = [&time_bytes, tag_bytes].concat();
     let hash = hmac_sha1(decode, &array);

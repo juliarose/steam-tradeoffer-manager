@@ -1,3 +1,6 @@
+// Most of the code here is taken from https://github.com/dyc3/steamguard-cli with some 
+// modifications to fit with the rest of this crate.
+
 mod confirmation;
 mod helpers;
 

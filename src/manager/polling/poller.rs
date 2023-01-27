@@ -222,6 +222,8 @@ impl Poller {
         // Only save if changes were detected.
         if self.poll_data.changed {
             self.poll_data.changed = false;
+            // It's really not a problem to await on this.
+            // Saving the file takes under a millisecond.
             let _ = file::save_poll_data(
                 &self.steamid,
                 &serde_json::to_string(&self.poll_data)?,
