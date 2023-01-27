@@ -620,14 +620,14 @@ impl SteamTradeOfferAPI {
     /// Gets details for user.
     pub async fn get_user_details(
         &self,
-        tradeofferid: &Option<TradeOfferId>,
         partner: &SteamID,
-        token: &Option<String>,
+        tradeofferid: Option<TradeOfferId>,
+        token: Option<&str>,
     ) -> Result<UserDetails, Error> {
         #[derive(Serialize, Debug)]
         struct Params<'b> {
             partner: u32,
-            token: &'b Option<String>,
+            token: Option<&'b str>,
         }
 
         fn get_days(group: Option<(&str, &str)>) -> u32 {

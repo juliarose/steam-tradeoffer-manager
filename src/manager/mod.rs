@@ -224,14 +224,22 @@ impl TradeOfferManager {
         self.api.get_inventory_with_classinfos(steamid, appid, contextid, tradable_only).await
     }
     
-    /// Gets the user's details for trading.
-    pub async fn get_user_details(
+    /// Gets the user's details for trading using a tradeofferid.
+    pub async fn get_user_details_with_tradeofferid(
         &self,
-        tradeofferid: &Option<TradeOfferId>,
         partner: &SteamID,
-        token: &Option<String>,
+        tradeofferid: TradeOfferId,
     ) -> Result<UserDetails, Error> {
-        self.api.get_user_details(tradeofferid, partner, token).await
+        self.api.get_user_details(partner, Some(tradeofferid), None).await
+    }
+    
+    /// Gets the user's details for trading using an access token.
+    pub async fn get_user_details_with_access_token(
+        &self,
+        partner: &SteamID,
+        token: &str,
+    ) -> Result<UserDetails, Error> {
+        self.api.get_user_details(partner, None, Some(token)).await
     }
     
     /// Gets trade confirmations.
