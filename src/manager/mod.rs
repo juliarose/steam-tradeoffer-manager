@@ -7,15 +7,15 @@ pub use builder::TradeOfferManagerBuilder;
 use std::{sync::Mutex, path::PathBuf, sync::Arc};
 use crate::{
     time,
-    response,
-    request,
     error::Error,
     ServerTime,
     api::SteamTradeOfferAPI,
     helpers::get_default_middleware,
+    request::NewTradeOffer,
     enums::{OfferFilter, TradeOfferState},
     mobile_api::{MobileAPI, Confirmation},
     types::{AppId, ContextId, TradeOfferId},
+    response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer},
 };
 use steamid_ng::SteamID;
 use url::ParseError;
@@ -34,7 +34,7 @@ pub struct TradeOfferManager {
     api: SteamTradeOfferAPI,
     /// The underlying API for mobile confirmations.
     mobile_api: MobileAPI,
-    /// The directory to store poll data and [`response::ClassInfo`] data.
+    /// The directory to store poll data and [`ClassInfo`] data.
     data_directory: PathBuf,
     /// The sender for sending messages to polling
     polling: Arc<Mutex<Option<(mpsc::Sender<PollAction>, JoinHandle<()>)>>>,
@@ -76,8 +76,8 @@ impl TradeOfferManager {
     /// offer upon success.
     pub async fn accept_offer(
         &self,
-        offer: &mut response::TradeOffer,
-    ) -> Result<response::AcceptedOffer, Error> {
+        offer: &mut TradeOffer,
+    ) -> Result<AcceptedOffer, Error> {
         if offer.is_our_offer {
             return Err(Error::Parameter("Cannot accept an offer that is ours"));
         } else if offer.trade_offer_state != TradeOfferState::Active {
@@ -95,7 +95,7 @@ impl TradeOfferManager {
         &self,
         tradeofferid: TradeOfferId,
         partner: &SteamID,
-    ) -> Result<response::AcceptedOffer, Error> {
+    ) -> Result<AcceptedOffer, Error> {
         let accepted_offer = self.api.accept_offer(tradeofferid, &partner).await?;
         
         Ok(accepted_offer)
@@ -105,7 +105,7 @@ impl TradeOfferManager {
     /// the offer upon success.
     pub async fn cancel_offer(
         &self,
-        offer: &mut response::TradeOffer,
+        offer: &mut TradeOffer,
     ) -> Result<(), Error> {
         if !offer.is_our_offer {
             return Err(Error::Parameter("Cannot cancel an offer we did not create"));
@@ -131,7 +131,7 @@ impl TradeOfferManager {
     /// the offer upon success.
     pub async fn decline_offer(
         &self,
-        offer: &mut response::TradeOffer,
+        offer: &mut TradeOffer,
     ) -> Result<(), Error> {
         if offer.is_our_offer {
             return Err(Error::Parameter("Cannot decline an offer we created"));
@@ -156,17 +156,17 @@ impl TradeOfferManager {
     /// Sends an offer.
     pub async fn send_offer(
         &self,
-        offer: &request::trade_offer::NewTradeOffer,
-    ) -> Result<response::SentOffer, Error> {
+        offer: &NewTradeOffer,
+    ) -> Result<SentOffer, Error> {
         self.api.send_offer(offer, None).await
     }
     
     /// Counters an existing offer. This updates the state of the offer upon success.
     pub async fn counter_offer(
         &self,
-        offer: &mut response::TradeOffer,
-        counter_offer: &request::trade_offer::NewTradeOffer,
-    ) -> Result<response::SentOffer, Error> {
+        offer: &mut TradeOffer,
+        counter_offer: &NewTradeOffer,
+    ) -> Result<SentOffer, Error> {
         let sent_offer = self.api.send_offer(
             counter_offer,
             Some(offer.tradeofferid),
@@ -181,8 +181,8 @@ impl TradeOfferManager {
     pub async fn counter_offer_id(
         &self,
         tradeofferid: TradeOfferId,
-        counter_offer: &request::trade_offer::NewTradeOffer,
-    ) -> Result<response::SentOffer, Error> {
+        counter_offer: &NewTradeOffer,
+    ) -> Result<SentOffer, Error> {
         let sent_offer = self.api.send_offer(
             counter_offer,
             Some(tradeofferid),
@@ -198,7 +198,7 @@ impl TradeOfferManager {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<response::Asset>, Error> {
+    ) -> Result<Vec<Asset>, Error> {
         self.api.get_inventory_old(steamid, appid, contextid, tradable_only).await
     }
     
@@ -209,7 +209,7 @@ impl TradeOfferManager {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<response::Asset>, Error> {
+    ) -> Result<Vec<Asset>, Error> {
         self.api.get_inventory(steamid, appid, contextid, tradable_only).await
     }
     
@@ -220,7 +220,7 @@ impl TradeOfferManager {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<response::Asset>, Error> {
+    ) -> Result<Vec<Asset>, Error> {
         self.api.get_inventory_with_classinfos(steamid, appid, contextid, tradable_only).await
     }
     
@@ -230,7 +230,7 @@ impl TradeOfferManager {
         tradeofferid: &Option<TradeOfferId>,
         partner: &SteamID,
         token: &Option<String>,
-    ) -> Result<response::UserDetails, Error> {
+    ) -> Result<UserDetails, Error> {
         self.api.get_user_details(tradeofferid, partner, token).await
     }
     
@@ -244,7 +244,7 @@ impl TradeOfferManager {
     /// Confirms a trade offer.
     pub async fn confirm_offer(
         &self,
-        trade_offer: &response::TradeOffer,
+        trade_offer: &TradeOffer,
     ) -> Result<(), Error> {
         self.confirm_offer_id(trade_offer.tradeofferid).await
     }
@@ -295,7 +295,7 @@ impl TradeOfferManager {
     }
     
     /// Gets the trade receipt (new items) upon completion of a trade.
-    pub async fn get_receipt(&self, offer: &response::TradeOffer) -> Result<Vec<response::Asset>, Error> {
+    pub async fn get_receipt(&self, offer: &TradeOffer) -> Result<Vec<Asset>, Error> {
         if offer.trade_offer_state != TradeOfferState::Accepted {
             Err(Error::Parameter(r#"Offer is not in "accepted" state"#))
         } else if offer.items_to_receive.is_empty() {
@@ -308,7 +308,7 @@ impl TradeOfferManager {
     }
     
     /// Updates the offer to the most recent state against the API.
-    pub async fn update_offer(&self, offer: &mut response::TradeOffer) -> Result<(), Error> {
+    pub async fn update_offer(&self, offer: &mut TradeOffer) -> Result<(), Error> {
         let updated = self.api.get_trade_offer(offer.tradeofferid).await?;
         
         offer.tradeofferid = updated.tradeofferid;
@@ -326,7 +326,7 @@ impl TradeOfferManager {
     /// Gets active trade offers.
     pub async fn get_active_trade_offers(
         &self
-    ) -> Result<Vec<response::TradeOffer>, Error> {
+    ) -> Result<Vec<TradeOffer>, Error> {
         let historical_cutoff = time::timestamp_to_server_time(u32::MAX as i64);
         let offers = self.get_trade_offers(
             OfferFilter::ActiveOnly,
@@ -341,7 +341,7 @@ impl TradeOfferManager {
         &self,
         filter: OfferFilter,
         historical_cutoff: Option<ServerTime>,
-    ) -> Result<Vec<response::TradeOffer>, Error> {
+    ) -> Result<Vec<TradeOffer>, Error> {
         let active_only = filter == OfferFilter::ActiveOnly;
         let historical_only = filter == OfferFilter::HistoricalOnly;
         let offers = self.api.get_trade_offers(

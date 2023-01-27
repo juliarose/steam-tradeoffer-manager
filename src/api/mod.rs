@@ -16,7 +16,7 @@ use crate::{
     helpers::parses_response,
     error::{Error, MissingClassInfoError},
     classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
-    request::{self, serializers::steamid_as_string},
+    request::{NewTradeOffer, NewTradeOfferItem, serializers::steamid_as_string},
 };
 use serde::{Deserialize, Serialize};
 use url::{Url, ParseError};
@@ -115,12 +115,12 @@ impl SteamTradeOfferAPI {
     /// Sends an offer.
     pub async fn send_offer(
         &self,
-        offer: &request::trade_offer::NewTradeOffer,
+        offer: &NewTradeOffer,
         counter_tradeofferid: Option<TradeOfferId>,
     ) -> Result<SentOffer, Error> {
         #[derive(Serialize, Debug)]
         struct OfferFormUser<'b> {
-            assets: &'b Vec<request::trade_offer::Item>,
+            assets: &'b Vec<NewTradeOfferItem>,
             currency: Vec<Currency>,
             ready: bool,
         }

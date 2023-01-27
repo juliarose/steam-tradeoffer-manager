@@ -1,6 +1,6 @@
 use steam_tradeoffer_manager::{
     TradeOfferManager,
-    request::trade_offer::{NewTradeOffer, Item},
+    request::{NewTradeOffer, NewTradeOfferItem},
     SteamID,
 };
 
@@ -12,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build();
     let offer = NewTradeOffer::builder(steamid_other)
         .items_to_receive(vec![
-            Item {
+            NewTradeOfferItem {
                 appid: 440,
                 contextid: 2,
                 amount: 1,

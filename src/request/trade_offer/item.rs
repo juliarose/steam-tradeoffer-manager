@@ -1,13 +1,8 @@
 use serde::{Serialize, Deserialize};
 use crate::{
-    response,
     serializers::string,
-    types::{
-        AppId,
-        ContextId,
-        AssetId,
-        Amount,
-    },
+    response::Asset,
+    types::{AppId, ContextId, AssetId, Amount},
 };
 
 /// An item to send in a trade offer.
@@ -21,8 +16,8 @@ pub struct Item {
     pub amount: Amount,
 }
 
-impl From<response::Asset> for Item {
-    fn from(asset: response::Asset) -> Item {
+impl From<Asset> for Item {
+    fn from(asset: Asset) -> Item {
         Item {
             appid: asset.appid,
             contextid: asset.contextid,
@@ -32,8 +27,8 @@ impl From<response::Asset> for Item {
     }
 }
 
-impl From<&response::Asset> for Item {
-    fn from(asset: &response::Asset) -> Item {
+impl From<&Asset> for Item {
+    fn from(asset: &Asset) -> Item {
         Item {
             appid: asset.appid,
             contextid: asset.contextid,

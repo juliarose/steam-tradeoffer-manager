@@ -4,7 +4,7 @@ mod builder;
 pub use item::Item;
 pub use builder::NewTradeOfferBuilder;
 use steamid_ng::SteamID;
-use crate::response;
+use crate::response::{TradeOffer, Asset};
 
 /// Represents a trade offer not yet sent. A template including items from an existing offer can
 /// created by calling `from` on the offer.
@@ -29,8 +29,8 @@ impl NewTradeOffer {
     }
 }
 
-impl From<&response::TradeOffer> for NewTradeOffer {
-    fn from(offer: &response::TradeOffer) -> Self {
+impl From<&TradeOffer> for NewTradeOffer {
+    fn from(offer: &TradeOffer) -> Self {
         Self {
             partner: offer.partner,
             items_to_give: from_trade_offer_items(&offer.items_to_give),
@@ -41,8 +41,8 @@ impl From<&response::TradeOffer> for NewTradeOffer {
     }
 }
 
-impl From<response::TradeOffer> for NewTradeOffer {
-    fn from(offer: response::TradeOffer) -> Self {
+impl From<TradeOffer> for NewTradeOffer {
+    fn from(offer: TradeOffer) -> Self {
         Self {
             partner: offer.partner,
             items_to_give: from_trade_offer_items(&offer.items_to_give),
@@ -53,8 +53,9 @@ impl From<response::TradeOffer> for NewTradeOffer {
     }
 }
 
-fn from_trade_offer_items(items: &[response::Asset]) -> Vec<Item> {
-    items.iter()
+fn from_trade_offer_items(items: &[Asset]) -> Vec<Item> {
+    items
+        .iter()
         .map(|item| item.into())
-        .collect::<Vec<_>>()
+        .collect()
 }
