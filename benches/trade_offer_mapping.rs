@@ -1,14 +1,71 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use serde::Deserialize;
 use steam_tradeoffer_manager::{
-    classinfo_cache::{ClassInfoCache, helpers::load_classinfo_sync},
-    api::raw, types::{ClassInfoMap, ClassInfoClass},
+    types::{ClassInfoMap, ClassInfoClass},
+    ClassInfoCache,
+    response::ClassInfo,
+    api::raw, 
+    error::FileError,
 };
 use std::{
     path::PathBuf,
     collections::HashSet,
+    time::{SystemTime, UNIX_EPOCH},
     sync::{Arc, Mutex},
 };
+
+type ClassInfoFile = (ClassInfoClass, ClassInfo);
+
+fn get_classinfo_file_path(
+    class: &ClassInfoClass,
+    is_temp: bool,
+    data_directory: &PathBuf, 
+) -> Result<PathBuf, FileError> {
+    let (appid, classid, instanceid) = class;
+    let instanceid = match instanceid {
+        Some(instanceid) => *instanceid,
+        None => 0,
+    };
+    let filename: String = match is_temp {
+        true => {
+            match SystemTime::now().duration_since(UNIX_EPOCH) {
+                Ok(system_time) => {
+                    let timestamp = system_time.as_millis();
+                    
+                    Ok(format!("{}_{}_{}.json.{}.temp", appid, classid, instanceid, timestamp))
+                },
+                Err(error) => {
+                    Err(FileError::SystemTime(error))
+                },
+            }
+        },
+        false => {
+            Ok(format!("{}_{}_{}.json", appid, classid, instanceid))
+        },
+    }?;
+    
+    Ok(data_directory.join(filename))
+}
+
+fn load_classinfo_sync(
+    class: ClassInfoClass,
+    data_directory: &PathBuf, 
+) -> Result<ClassInfoFile, FileError> {
+    let filepath = get_classinfo_file_path(&class, false, data_directory)?;
+    let data = std::fs::read_to_string(&filepath)?;
+    
+    match serde_json::from_str::<ClassInfo>(&data) {
+        Ok(classinfo) => {
+            Ok((class, classinfo))
+        },
+        Err(error) => {
+            // remove the file...
+            let _ = std::fs::remove_file(&filepath);
+            
+            Err(FileError::Parse(error))
+        },
+    }
+}
 
 fn get_offers() -> Vec<raw::RawTradeOffer> {
     #[derive(Deserialize, Debug)]

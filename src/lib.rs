@@ -3,8 +3,8 @@ mod serializers;
 mod deserializers;
 mod mobile_api;
 mod helpers;
+mod classinfo_cache;
 
-pub mod classinfo_cache;
 pub mod api;
 pub mod enums;
 pub mod types;

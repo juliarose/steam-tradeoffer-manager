@@ -18,26 +18,6 @@ use futures::future::join_all;
 use tokio::task::JoinHandle;
 use serde_json;
 
-pub fn load_classinfo_sync(
-    class: ClassInfoClass,
-    data_directory: &PathBuf, 
-) -> Result<ClassInfoFile, FileError> {
-    let filepath = get_classinfo_file_path(&class, false, data_directory)?;
-    let data = std::fs::read_to_string(&filepath)?;
-    
-    match serde_json::from_str::<ClassInfo>(&data) {
-        Ok(classinfo) => {
-            Ok((class, classinfo))
-        },
-        Err(error) => {
-            // remove the file...
-            let _ = std::fs::remove_file(&filepath);
-            
-            Err(FileError::Parse(error))
-        },
-    }
-}
-
 /// Saves the classinfo.
 async fn save_classinfo(
     class: ClassInfoClass,
