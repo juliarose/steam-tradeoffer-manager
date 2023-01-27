@@ -6,30 +6,21 @@ pub use response::*;
 
 use response_wrappers::*;
 use crate::response::*;
-use helpers::{
-    parse_receipt_script,
-    from_raw_receipt_asset,
-};
 use reqwest_middleware::ClientWithMiddleware;
-use std::{
-    path::PathBuf,
-    collections::{HashMap, HashSet},
-    sync::{Arc, RwLock, Mutex},
-};
+use std::{path::PathBuf, collections::{HashMap, HashSet}, sync::{Arc, RwLock, Mutex}};
 use crate::{
-    error::{Error, MissingClassInfoError},
     SteamID,
     time::ServerTime,
-    classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
     types::*,
-    request::{self, serializers::steamid_as_string},
     serializers::string,
     helpers::parses_response,
+    error::{Error, MissingClassInfoError},
+    classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
+    request::{self, serializers::steamid_as_string},
 };
 use serde::{Deserialize, Serialize};
-use reqwest::cookie::Jar;
 use url::{Url, ParseError};
-use reqwest::header::REFERER;
+use reqwest::{cookie::Jar, header::REFERER};
 use lazy_regex::{regex_captures, regex_is_match};
 
 /// The underlying API.for ['crate::SteamTradeOfferManager'].
@@ -247,7 +238,7 @@ impl SteamTradeOfferAPI {
         if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &body) {
            Err(Error::Response(message.trim().into()))
         } else if let Some((_, script)) = regex_captures!(r#"(var oItem;[\s\S]*)</script>"#, &body) {
-            match parse_receipt_script(script) {
+            match helpers::parse_receipt_script(script) {
                 Ok(raw_assets) => {
                     let classes = raw_assets
                         .iter()
@@ -258,7 +249,7 @@ impl SteamTradeOfferAPI {
                     let map = self.get_asset_classinfos(&classes).await?;
                     let assets = raw_assets
                         .into_iter()
-                        .map(|asset| from_raw_receipt_asset(asset, &map))
+                        .map(|asset| helpers::from_raw_receipt_asset(asset, &map))
                         .collect::<Result<Vec<_>, _>>()?;
                     
                     Ok(assets)

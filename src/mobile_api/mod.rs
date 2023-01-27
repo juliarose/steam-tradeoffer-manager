@@ -11,11 +11,7 @@ use reqwest::cookie::Jar;
 use url::{Url, ParseError};
 use reqwest_middleware::ClientWithMiddleware;
 use std::{collections::HashMap, sync::{Arc, RwLock}};
-use crate::{
-    SteamID,
-    error::Error,
-    helpers::parses_response,
-};
+use crate::{SteamID, error::Error, helpers::parses_response};
 
 #[derive(Debug, Clone)]
 pub struct MobileAPI {
