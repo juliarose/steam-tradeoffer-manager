@@ -53,12 +53,18 @@ impl MobileAPI {
         }
     }
     
-    fn get_uri(&self, pathname: &str) -> String {
+    fn get_uri(
+        &self,
+        pathname: &str,
+    ) -> String {
         format!("{}{}", Self::HOSTNAME, pathname)
     }
     
     /// Sets cookies.
-    pub fn set_cookies(&self, cookies: &Vec<String>) -> Result<(), ParseError> {
+    pub fn set_cookies(
+        &self,
+        cookies: &Vec<String>,
+    ) -> Result<(), ParseError> {
         let url = Self::HOSTNAME.parse::<Url>()?;
         
         for cookie_str in cookies {
@@ -69,7 +75,11 @@ impl MobileAPI {
     }
     
     /// Sets session.
-    pub fn set_session(&self, sessionid: &str, cookies: &Vec<String>) -> Result<(), ParseError> {
+    pub fn set_session(
+        &self,
+        sessionid: &str,
+        cookies: &Vec<String>,
+    ) -> Result<(), ParseError> {
         *self.sessionid.write().unwrap() = Some(sessionid.to_string());
         self.set_cookies(cookies)?;
         
@@ -77,17 +87,25 @@ impl MobileAPI {
     }
     
     /// Accepts a confirmation.
-    pub async fn accept_confirmation(&self, confirmation: &Confirmation) -> Result<(), Error> {
-        self.send_confirmation_ajax(confirmation, "allow".into()).await
+    pub async fn accept_confirmation(
+        &self,
+        confirmation: &Confirmation,
+    ) -> Result<(), Error> {
+        self.send_confirmation_ajax(confirmation, "allow").await
     }
 
     /// Cancels a confirmation.
-    pub async fn cancel_confirmation(&self, confirmation: &Confirmation) -> Result<(), Error> {
-        self.send_confirmation_ajax(confirmation, "cancel".into()).await
+    pub async fn cancel_confirmation(
+        &self,
+        confirmation: &Confirmation,
+    ) -> Result<(), Error> {
+        self.send_confirmation_ajax(confirmation, "cancel").await
     }
     
     /// Gets the trade confirmations.
-    pub async fn get_trade_confirmations(&self) -> Result<Vec<Confirmation>, Error> {
+    pub async fn get_trade_confirmations(
+        &self,
+    ) -> Result<Vec<Confirmation>, Error> {
         let uri = self.get_uri("/mobileconf/conf");
         let query = self.get_confirmation_query_params("conf")?;
         let response = self.client.get(&uri)
@@ -101,7 +119,10 @@ impl MobileAPI {
         Ok(confirmations)
     }
     
-    fn get_confirmation_query_params<'a>(&self, tag: &str) -> Result<HashMap<&'a str, String>, Error> {
+    fn get_confirmation_query_params<'a>(
+        &self,
+        tag: &str,
+    ) -> Result<HashMap<&'a str, String>, Error> {
         let identity_secret = self.identity_secret.as_ref()
             .ok_or_else(|| Error::Parameter("No identity secret"))?;
         // let time = self.get_server_time().await?;
@@ -124,7 +145,11 @@ impl MobileAPI {
         Ok(params)
     }
     
-    async fn send_confirmation_ajax(&self, confirmation: &Confirmation, operation: String) -> Result<(), Error>  {
+    async fn send_confirmation_ajax(
+        &self,
+        confirmation: &Confirmation,
+        operation: &str,
+    ) -> Result<(), Error>  {
         #[derive(Debug, Clone, Copy, Deserialize)]
         struct SendConfirmationResponse {
             pub success: bool,
@@ -132,7 +157,7 @@ impl MobileAPI {
         
         let mut query = self.get_confirmation_query_params("conf")?;
         
-        query.insert("op", operation);
+        query.insert("op", operation.into());
         query.insert("cid", confirmation.id.to_string());
         query.insert("ck", confirmation.key.to_string());
         
