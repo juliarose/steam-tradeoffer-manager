@@ -7,21 +7,19 @@ pub fn from_raw_receipt_asset(
     asset: api_response::RawReceiptAsset,
     map: &ClassInfoMap,
 ) -> Result<response::Asset, MissingClassInfoError> {
-    if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
-        Ok(response::Asset {
+    map.get(&(asset.appid, asset.classid, asset.instanceid))
+        .map(|classinfo| response::Asset {
             classinfo: Arc::clone(classinfo),
             appid: asset.appid,
             contextid: asset.contextid,
             assetid: asset.assetid,
             amount: asset.amount,
         })
-    } else {
-        Err(MissingClassInfoError {
+        .ok_or_else(|| MissingClassInfoError {
             appid: asset.appid,
             classid: asset.classid,
             instanceid: asset.instanceid,
         })
-    }  
 }
 
 pub fn parse_receipt_script(
@@ -30,23 +28,18 @@ pub fn parse_receipt_script(
     Regex::new(r#"oItem\s*=\s*(\{.*\});\s*\n"#)
         .map_err(|_| "Invalid regexp")?
         .captures_iter(script)
-        // try to parse the string matches as i64 (inferred from fn type signature)
-        // and filter out the matches that can't be parsed (e.g. if there are too many digits to store in an i64).
-        .map(|capture| {
-            if let Some(m) = capture.get(1) {
-                if let Ok(asset) = serde_json::from_str::<api_response::RawReceiptAsset>(m.as_str()) {
-                    Ok(asset)
-                } else {
-                    Err("Failed to deserialize item")
-                }
+        // filter out the matches that can't be parsed (e.g. if there are too many digits to store in an i64).
+        .map(|capture| if let Some(m) = capture.get(1) {
+            if let Ok(asset) = serde_json::from_str::<api_response::RawReceiptAsset>(m.as_str()) {
+                Ok(asset)
             } else {
-                // shouldn't happen...
-                Err("Missing capture group in match")
+                Err("Failed to deserialize item")
             }
-            
+        } else {
+            // shouldn't happen...
+            Err("Missing capture group in match")
         })
-        // collect the results in to a Vec<i64> (inferred from fn type signature)
-        .collect::<Result<_, _>>()
+        .collect()
 }
 
 #[cfg(test)]
