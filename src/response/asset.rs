@@ -7,7 +7,7 @@ use crate::{
 };
 
 /// An asset which includes its related [`ClassInfo`] mapping.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Asset {
     /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,

@@ -1,6 +1,6 @@
 /// A mobile confirmation. Used primarily for confirming trade offers or listing 
 /// items on the market.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Confirmation {
     /// The ID of the confirmation.
     pub id: u64,
@@ -22,7 +22,7 @@ impl Confirmation {
 }
 
 /// The type of confirmation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ConfirmationType {
     Generic = 1,
     Trade = 2,

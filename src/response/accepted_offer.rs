@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 
 /// The result returned after accepting a trade offer.
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AcceptedOffer {
     #[serde(default)]
     /// Whether the offer needs to be confirmed on mobile or not.

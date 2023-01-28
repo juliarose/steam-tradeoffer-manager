@@ -1,17 +1,9 @@
 use serde::{Serialize, Deserialize};
-use crate::deserializers::{
-    into_bool,
-    hashmap_or_vec,
-    from_fraudwarnings,
-    string_or_number,
-};
-use crate::{
-    types::{AppId, ClassId, InstanceId},
-    serializers::{string, option_string_0_as_none},
-};
+use crate::deserializers::{into_bool, hashmap_or_vec, from_fraudwarnings, string_or_number};
+use crate::{types::{AppId, ClassId, InstanceId}, serializers::{string, option_string_0_as_none}};
 
 /// Contains details about an item including names and descriptions.
-#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ClassInfo {
     #[serde(default)]
     /// The item's app ID. some cases this is included
@@ -122,7 +114,7 @@ impl ClassInfo {
 pub type Color = String;
 
 /// A description.
-#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Description {
     pub value: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -147,7 +139,7 @@ impl Description {
 }
 
 /// A tag.
-#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Tag {
     /// The game's internal name of this tag; e.g. for Team Fortress 2 items: "Unique" for items 
     /// under the "Quality" category or "primary" for items under the "Type" category.

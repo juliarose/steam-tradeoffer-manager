@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
 
 /// Currency.
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Currency {}

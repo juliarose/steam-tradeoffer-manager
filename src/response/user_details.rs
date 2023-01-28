@@ -1,8 +1,8 @@
 use std::cmp;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 /// Details for user.
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct UserDetails {
     /// Their escrow duration in days.
     pub them_escrow_days: u32,

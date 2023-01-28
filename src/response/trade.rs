@@ -10,7 +10,8 @@ use chrono::serde::ts_seconds;
 use serde::{self, Deserialize, Serialize};
 use std::sync::Arc;
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+/// A trade.
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Trade {
     pub tradeid: TradeId,
     /// The [`SteamID`] of our partner.
@@ -28,7 +29,8 @@ pub struct Trade {
     pub assets_received: Vec<TradeAsset>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+/// An asset belonging to a trade.
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TradeAsset {
     #[serde(with = "string")]
     /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.

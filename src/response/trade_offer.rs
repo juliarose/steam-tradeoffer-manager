@@ -6,12 +6,12 @@ use crate::{
     types::{TradeId, TradeOfferId},
     serializers::{string, option_string},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use chrono::serde::{ts_seconds, ts_seconds_option};
 use super::asset::Asset;
 
 /// A trade offer.
-#[derive(Serialize, Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TradeOffer {
     #[serde(with = "string")]
     /// The ID for this offer.

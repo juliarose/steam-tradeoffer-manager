@@ -7,29 +7,12 @@ use crate::{
     ServerTime,
     error::MissingClassInfoError,
     enums::{TradeStatus, ConfirmationMethod, TradeOfferState},
-    serializers::{
-        string,
-        option_string,
-        option_string_0_as_none,
-    },
-    deserializers::{
-        ts_seconds_option_none_when_zero,
-        empty_string_is_none,
-    },
-    types::{
-        AppId,
-        ContextId,
-        AssetId,
-        Amount,
-        ClassId,
-        InstanceId,
-        TradeOfferId,
-        TradeId,
-        ClassInfoMap,
-    },
+    serializers::{string, option_string, option_string_0_as_none},
+    deserializers::{ts_seconds_option_none_when_zero, empty_string_is_none},
+    types::*,
 };
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTradeOffer {
     #[serde(with = "string")]
     /// The ID for this offer.
@@ -146,7 +129,7 @@ impl RawTradeOffer {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RawAsset {
     /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
@@ -167,7 +150,7 @@ pub struct RawAsset {
     pub amount: Amount,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RawReceiptAsset {
     /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
@@ -187,7 +170,7 @@ pub struct RawReceiptAsset {
     pub amount: Amount,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RawAssetOld {
     #[serde(with = "string", rename = "id")]
     /// The unique asset ID.
@@ -203,7 +186,7 @@ pub struct RawAssetOld {
     pub amount: Amount,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTrade {
     #[serde(with = "string")]
     pub tradeid: TradeId,
@@ -222,7 +205,7 @@ pub struct RawTrade {
     pub assets_received: Vec<RawTradeAsset>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTradeAsset {
     /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
