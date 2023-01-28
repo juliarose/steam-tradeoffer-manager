@@ -236,26 +236,20 @@ impl SteamTradeOfferAPI {
         if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &body) {
            Err(Error::Response(message.trim().into()))
         } else if let Some((_, script)) = regex_captures!(r#"(var oItem;[\s\S]*)</script>"#, &body) {
-            match helpers::parse_receipt_script(script) {
-                Ok(raw_assets) => {
-                    let classes = raw_assets
-                        .iter()
-                        .map(|item| (item.appid, item.classid, item.instanceid))
-                        .collect::<HashSet<_>>()
-                        .into_iter()
-                        .collect::<Vec<_>>();
-                    let map = self.get_asset_classinfos(&classes).await?;
-                    let assets = raw_assets
-                        .into_iter()
-                        .map(|asset| helpers::from_raw_receipt_asset(asset, &map))
-                        .collect::<Result<Vec<_>, _>>()?;
-                    
-                    Ok(assets)
-                },
-                Err(error) => {
-                    Err(Error::Response(error.into()))
-                },
-            }
+            let raw_assets = helpers::parse_receipt_script(script)?;
+            let classes = raw_assets
+                .iter()
+                .map(|item| (item.appid, item.classid, item.instanceid))
+                .collect::<HashSet<_>>()
+                .into_iter()
+                .collect::<Vec<_>>();
+            let map = self.get_asset_classinfos(&classes).await?;
+            let assets = raw_assets
+                .into_iter()
+                .map(|asset| helpers::from_raw_receipt_asset(asset, &map))
+                .collect::<Result<Vec<_>, _>>()?;
+            
+            Ok(assets)
         } else if regex_is_match!(r#"\{"success": ?false\}"#, &body) {
             Err(Error::NotLoggedIn)
         } else {
@@ -729,18 +723,6 @@ impl SteamTradeOfferAPI {
             partner: u32,
             token: &'b Option<String>,
         }
-
-        fn get_days(group: Option<(&str, &str)>) -> u32 {
-            match group {
-                Some((_, days_str)) => {
-                    match days_str.parse::<u32>() {
-                        Ok(days) => days,
-                        Err(_e) => 0,
-                    }
-                },
-                None => 0,
-            }
-        }
         
         let uri = {
             let pathname: String = match tradeofferid {
@@ -764,23 +746,9 @@ impl SteamTradeOfferAPI {
         let body = response
             .text()
             .await?;
+        let user_details = helpers::parse_user_details(&body)?;
         
-        println!("{}", body);
-        if regex_is_match!(r#"\n\W*<script type="text/javascript">\W*\r?\n?(\W*var g_rgAppContextData[\s\S]*)</script>"#, &body) {
-            let my_escrow_days = get_days(
-                regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, &body)
-            );
-            let them_escrow_days = get_days(
-                regex_captures!(r#"var g_daysTheirEscrow = (\d+);"#, &body)
-            );
-
-            Ok(UserDetails {
-                my_escrow_days,
-                them_escrow_days,
-            })
-        } else {
-            Err(Error::MalformedResponse)
-        }
+        Ok(user_details)
     }
     
     /// Accepts an offer. 

@@ -1,7 +1,13 @@
 use super::response as api_response;
 use lazy_regex::Regex;
 use std::sync::Arc;
-use crate::{error::MissingClassInfoError, types::ClassInfoMap, response};
+use crate::{
+    error::{MissingClassInfoError, ParseHtmlError},
+    types::ClassInfoMap,
+    response::{self, User, UserDetails},
+};
+use lazy_regex::regex_captures;
+use unescape::unescape;
 
 pub fn from_raw_receipt_asset(
     asset: api_response::RawReceiptAsset,
@@ -22,22 +28,78 @@ pub fn from_raw_receipt_asset(
         })
 }
 
+pub fn parse_user_details(
+    body: &str
+) -> Result<UserDetails, ParseHtmlError> {
+    fn get_days(group: Option<(&str, &str)>) -> u32 {
+        match group {
+            Some((_, days_str)) => {
+                match days_str.parse::<u32>() {
+                    Ok(days) => days,
+                    Err(_e) => 0,
+                }
+            },
+            None => 0,
+        }
+    }
+    
+    fn get_persona_names(contents: &str) -> Result<(String, String), ParseHtmlError> {
+        let my_persona_name = regex_captures!(r#"var g_strYourPersonaName = "(.*)";\n"#, &contents)
+            .map(|(_, name)| unescape(name))
+            .flatten()
+            .ok_or_else(|| ParseHtmlError::Malformed("Missing persona name for me"))?;
+        let them_persona_name = regex_captures!(r#"var g_strTradePartnerPersonaName = "(.*)";\n"#, &contents)
+            .map(|(_, name)| unescape(name))
+            .flatten()
+            .ok_or_else(|| ParseHtmlError::Malformed("Missing persona name for them"))?;
+        
+        Ok((my_persona_name, them_persona_name))
+    }
+    
+    println!("{}", body);
+    if let Some((_, contents)) = regex_captures!(r#"\n\W*<script type="text/javascript">\W*\r?\n?(\W*var g_rgAppContextData[\s\S]*)</script>"#, &body) {
+        let my_escrow_days = get_days(
+            regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, &body)
+        );
+        let them_escrow_days = get_days(
+            regex_captures!(r#"var g_daysTheirEscrow = (\d+);"#, &body)
+        );
+        let (
+            my_persona_name,
+            them_persona_name,
+        ) = get_persona_names(contents)?;
+        
+        Ok(UserDetails {
+            me: User {
+                persona_name: my_persona_name,
+                escrow_days: my_escrow_days,
+            },
+            them: User {
+                persona_name: them_persona_name,
+                escrow_days: them_escrow_days,
+            }
+        })
+    } else {
+        Err(ParseHtmlError::Malformed("Missing script tag"))
+    }
+}
+
 pub fn parse_receipt_script(
     script: &str,
-) -> Result<Vec<api_response::RawReceiptAsset>, &'static str> {
+) -> Result<Vec<api_response::RawReceiptAsset>, ParseHtmlError> {
     Regex::new(r#"oItem\s*=\s*(\{.*\});\s*\n"#)
-        .map_err(|_| "Invalid regexp")?
+        .map_err(|_| ParseHtmlError::Malformed("Invalid regexp"))?
         .captures_iter(script)
         // filter out the matches that can't be parsed (e.g. if there are too many digits to store in an i64).
         .map(|capture| if let Some(m) = capture.get(1) {
             if let Ok(asset) = serde_json::from_str::<api_response::RawReceiptAsset>(m.as_str()) {
                 Ok(asset)
             } else {
-                Err("Failed to deserialize item")
+                Err(ParseHtmlError::Malformed("Failed to deserialize item"))
             }
         } else {
             // shouldn't happen...
-            Err("Missing capture group in match")
+            Err(ParseHtmlError::Malformed("Missing capture group in match"))
         })
         .collect()
 }
@@ -65,5 +127,13 @@ mod tests {
         let scripts = parse_receipt_script(script).unwrap();
         
         assert_eq!(scripts.len(), 2);
+    }
+    
+    #[test]
+    fn parses_user_details() {
+        let body = include_str!("fixtures/new_offer.html");
+        let user_details = parse_user_details(body);
+        
+        assert!(user_details.is_ok());
     }
 }

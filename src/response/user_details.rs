@@ -2,23 +2,32 @@ use std::cmp;
 use serde::{Serialize, Deserialize};
 
 /// Details for user.
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserDetails {
+    /// Details about you.
+    pub me: User,
+    /// Details about them.
+    pub them: User,
+}
+
+/// Details for a single user.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct User {
+    // Persona name.
+    pub persona_name: String,
     /// Their escrow duration in days.
-    pub them_escrow_days: u32,
-    /// Your escrow duration in days.
-    pub my_escrow_days: u32,
+    pub escrow_days: u32,
 }
 
 impl UserDetails {
     /// Whether the trade would result in escrow or not.
     pub fn has_escrow(&self) -> bool {
-        self.them_escrow_days > 0 || self.my_escrow_days > 0
+        self.them.escrow_days > 0 || self.me.escrow_days > 0
     }
     
     /// The number of days the trade would be held in escrow.
     pub fn hold_duration_days(&self) -> u32 {
-        cmp::max(self.them_escrow_days, self.my_escrow_days)
+        cmp::max(self.them.escrow_days, self.me.escrow_days)
     }
 }
 
@@ -29,8 +38,14 @@ mod tests {
     #[test]
     fn escrow_works() {
         let details = UserDetails {
-            them_escrow_days: 0,
-            my_escrow_days: 3,
+            me: User {
+                persona_name: "gaming".into(),
+                escrow_days: 0,
+            },
+            them: User {
+                persona_name: "gaming".into(),
+                escrow_days: 3,
+            },
         };
 
         assert_eq!(true, details.has_escrow());
@@ -39,8 +54,14 @@ mod tests {
     #[test]
     fn hold_duration_days_works() {
         let details = UserDetails {
-            them_escrow_days: 0,
-            my_escrow_days: 15,
+            me: User {
+                persona_name: "gaming".into(),
+                escrow_days: 0,
+            },
+            them: User {
+                persona_name: "gaming".into(),
+                escrow_days: 15,
+            },
         };
 
         assert_eq!(15, details.hold_duration_days());
