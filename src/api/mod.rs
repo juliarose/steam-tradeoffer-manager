@@ -620,6 +620,67 @@ impl SteamTradeOfferAPI {
         start_after_time: Option<u32>,
         start_after_tradeid: Option<TradeId>,
         navigating_back: bool,
+        include_failed: bool,
+        include_total: bool,
+    ) -> Result<(Vec<Trade>, bool), Error> {
+        let (
+            trades,
+            descriptions,
+            more,
+        ) = self.get_trade_history_request(
+            max_trades,
+            start_after_time,
+            start_after_tradeid,
+            navigating_back,
+            true,
+            include_failed,
+            include_total,
+        ).await?;
+        
+        if let Some(descriptions) = descriptions {
+            let trades = trades
+                .into_iter()
+                .filter_map(|trade| trade.try_combine_classinfos(&descriptions).ok())
+                .collect();
+                
+            Ok((trades, more))
+        } else {
+            Err(Error::Response("No descriptions in response body.".into()))
+        }
+    }
+    
+    pub async fn get_trade_history_without_descriptions(
+        &self,
+        max_trades: u32,
+        start_after_time: Option<u32>,
+        start_after_tradeid: Option<TradeId>,
+        navigating_back: bool,
+        include_failed: bool,
+        include_total: bool,
+    ) -> Result<(Vec<RawTrade>, bool), Error> {
+        let (
+            trades,
+            _descriptions,
+            more,
+        ) = self.get_trade_history_request(
+            max_trades,
+            start_after_time,
+            start_after_tradeid,
+            navigating_back,
+            false,
+            include_failed,
+            include_total,
+        ).await?;
+        
+        Ok((trades, more))
+    }
+    
+    async fn get_trade_history_request(
+        &self,
+        max_trades: u32,
+        start_after_time: Option<u32>,
+        start_after_tradeid: Option<TradeId>,
+        navigating_back: bool,
         get_descriptions: bool,
         include_failed: bool,
         include_total: bool,
