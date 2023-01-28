@@ -1,5 +1,5 @@
 use super::{TradeOfferManager, USER_AGENT_STRING};
-use crate::{SteamID, ClassInfoCache, helpers::get_default_data_directory};
+use crate::{SteamID, ClassInfoCache};
 use std::{path::PathBuf, sync::{Mutex, Arc}};
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
@@ -32,6 +32,7 @@ impl TradeOfferManagerBuilder {
     pub fn new(
         steamid: SteamID,
         api_key: String,
+        data_directory: PathBuf,
     ) -> Self {
         Self {
             steamid,
@@ -39,7 +40,7 @@ impl TradeOfferManagerBuilder {
             identity_secret: None,
             language: String::from("english"),
             classinfo_cache: Arc::new(Mutex::new(ClassInfoCache::default())),
-            data_directory: get_default_data_directory(),
+            data_directory,
             cookies: None,
             client: None,
             user_agent: USER_AGENT_STRING,

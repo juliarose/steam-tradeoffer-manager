@@ -46,17 +46,27 @@ impl TradeOfferManager {
     /// Creates a new [`TradeOfferManager`].
     pub fn new(
         steamid: SteamID,
-        key: String,
+        api_key: String,
+        data_directory: PathBuf,
     ) -> Self {
-        Self::builder(steamid, key).build()
+        Self::builder(
+            steamid,
+            api_key,
+            data_directory,
+        ).build()
     }
     
     /// Builder for new manager.
     pub fn builder(
         steamid: SteamID,
-        key: String,
+        api_key: String,
+        data_directory: PathBuf,
     ) -> TradeOfferManagerBuilder {
-        TradeOfferManagerBuilder::new(steamid, key)
+        TradeOfferManagerBuilder::new(
+            steamid,
+            api_key,
+            data_directory,
+        )
     }
     
     /// Sets the session and cookies.

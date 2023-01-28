@@ -31,10 +31,6 @@ pub async fn write_file_atomic(
     }
 }
 
-pub fn get_default_data_directory() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets")
-}
-
 pub fn get_default_middleware<T>(
     cookie_store: Arc<T>,
     user_agent_string: &'static str,

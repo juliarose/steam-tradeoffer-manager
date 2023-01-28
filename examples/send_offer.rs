@@ -6,10 +6,14 @@ use steam_tradeoffer_manager::{
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let data_directory = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
     let (steamid, api_key, sessionid, cookies) = get_session();
     let steamid_other = get_steamid("STEAMID_OTHER");
-    let manager = TradeOfferManager::builder(steamid, api_key)
-        .build();
+    let manager = TradeOfferManager::builder(
+        steamid,
+        api_key,
+        data_directory,
+    ).build();
     let offer = NewTradeOffer::builder(steamid_other)
         .items_to_receive(vec![
             NewTradeOfferItem {

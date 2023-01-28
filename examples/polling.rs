@@ -50,8 +50,13 @@ async fn handle_offer(
 
 #[tokio::main]
 async fn main() {
+    let data_directory = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
     let (steamid, api_key, sessionid, cookies) = get_session();
-    let manager = TradeOfferManager::builder(steamid, api_key)
+    let manager = TradeOfferManager::builder(
+        steamid,
+        api_key,
+        data_directory,
+    )
         .identity_secret(String::from("secret"))
         .build();
     let mut options = PollOptions::default();
