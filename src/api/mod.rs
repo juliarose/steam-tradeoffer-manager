@@ -23,7 +23,7 @@ use url::{Url, ParseError};
 use reqwest::{cookie::Jar, header::REFERER};
 use lazy_regex::{regex_captures, regex_is_match};
 
-/// The underlying API.for ['crate::SteamTradeOfferManager'].
+/// The underlying API.for [`crate::SteamTradeOfferManager`].
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPI {
     /// The client for making requests.
