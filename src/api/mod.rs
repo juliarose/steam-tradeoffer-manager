@@ -29,7 +29,7 @@ pub struct SteamTradeOfferAPI {
     /// The client for making requests.
     client: Client,
     /// The API key.
-    pub key: String,
+    pub api_key: String,
     /// The cookies to make requests with. Since the requests are made with the provided client, 
     /// the cookies should be the same as what the client uses.
     pub cookies: Arc<Jar>,
@@ -54,14 +54,14 @@ impl SteamTradeOfferAPI {
         client: ClientWithMiddleware,
         cookies: Arc<Jar>,
         steamid: SteamID,
-        key: String,
+        api_key: String,
         language: String,
         classinfo_cache: Arc<Mutex<ClassInfoCache>>,
         data_directory: PathBuf,
     ) -> Self {
         Self {
             client,
-            key,
+            api_key,
             steamid,
             language,
             cookies: Arc::clone(&cookies),
@@ -271,7 +271,7 @@ impl SteamTradeOfferAPI {
     ) -> Result<ClassInfoMap, Error> {
         let query = {
             let mut query = vec![
-                ("key".to_string(), self.key.to_string()),
+                ("key".to_string(), self.api_key.to_string()),
                 ("appid".to_string(), appid.to_string()),
                 ("language".to_string(), self.language.clone()),
                 ("class_count".to_string(), classes.len().to_string()),
@@ -455,7 +455,7 @@ impl SteamTradeOfferAPI {
         loop {
             let response = self.client.get(&uri)
                 .query(&Form {
-                    key: &self.key,
+                    key: &self.api_key,
                     language: &self.language,
                     active_only,
                     historical_only,
@@ -601,7 +601,7 @@ impl SteamTradeOfferAPI {
         let uri = self.get_api_url("IEconService", "GetTradeOffer", 1);
         let response = self.client.get(&uri)
             .query(&Form {
-                key: &self.key,
+                key: &self.api_key,
                 tradeofferid,
             })
             .send()
@@ -700,7 +700,7 @@ impl SteamTradeOfferAPI {
         let uri = self.get_api_url("IEconService", "GetTradeHistory", 1);
         let response = self.client.get(&uri)
             .query(&Form {
-                key: &self.key,
+                key: &self.api_key,
                 max_trades,
                 start_after_time,
                 start_after_tradeid,
