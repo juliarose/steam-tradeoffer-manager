@@ -23,7 +23,7 @@ impl Default for ClassInfoCache {
 }
 
 impl ClassInfoCache {
-    /// Crease a new [`ClassInfoCache`] with the given capacity.
+    /// Creates a new [`ClassInfoCache`] with the given capacity.
     pub fn new(
         capacity: usize,
     ) -> Self {
@@ -32,7 +32,7 @@ impl ClassInfoCache {
         }
     }
     
-    /// Crease a new sharable [`ClassInfoCache`] with the given capacity.
+    /// Creates a new sharable [`ClassInfoCache`] with the given capacity.
     pub fn new_shared(
         capacity: usize,
     ) -> Arc<Mutex<Self>> {
