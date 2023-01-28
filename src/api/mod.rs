@@ -548,15 +548,13 @@ impl SteamTradeOfferAPI {
         offers: Vec<response::RawTradeOffer>,
         map: ClassInfoMap,
     ) -> Vec<TradeOffer> {
-        
-        
         offers
             .into_iter()
             // ignore offers where the classinfo cannot be obtained
             // attempts to load the missing classinfos will continue
             // but it will not cause the whole poll to fail
             .filter_map(|offer| offer.try_combine_classinfos(&map).ok())
-            .collect::<Vec<_>>()
+            .collect()
     }
     
     /// Gets trade offers.

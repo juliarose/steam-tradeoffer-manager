@@ -72,18 +72,19 @@ impl Poller {
             .map(|date| date.timestamp() - (60 * 30))
             .unwrap_or(1);
         let mut active_only = true;
-        let mut full_update = false;
+        let mut full_update = {
+            poll_type.is_full_update() || 
+            // The date of the last full poll is outdated.
+            self.poll_data.last_full_poll_is_stale(&self.full_poll_update_duration)
+        };
         
         if poll_type == PollType::NewOffers {
             // a very high date
             offers_since = u32::MAX as i64;
-            active_only = true;
-        } else if poll_type.is_full_update() || 
-        // The date of the last full poll is outdated.
-        self.poll_data.last_full_poll_is_stale(&self.full_poll_update_duration) {
+            full_update = false;
+        } else if full_update {
             offers_since = 1;
             active_only = false;
-            full_update = true;
         }
         
         let (mut offers, descriptions) = self.api.get_raw_trade_offers(
