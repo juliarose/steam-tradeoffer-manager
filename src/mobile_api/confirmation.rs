@@ -1,3 +1,4 @@
+
 /// A mobile confirmation. Used primarily for confirming trade offers or listing 
 /// items on the market.
 #[derive(Debug, PartialEq, Clone)]

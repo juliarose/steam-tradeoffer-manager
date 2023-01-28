@@ -1,9 +1,5 @@
 use serde::{Serialize, Deserialize};
-use crate::{
-    serializers::string,
-    response::Asset,
-    types::{AppId, ContextId, AssetId, Amount},
-};
+use crate::{serializers::string, response::Asset, types::{AppId, ContextId, AssetId, Amount}};
 
 /// An item to send in a trade offer.
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]

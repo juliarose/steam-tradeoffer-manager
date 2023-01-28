@@ -1,9 +1,5 @@
 use super::confirmation::{Confirmation, ConfirmationType};
-use crate::{
-    SteamID,
-    time,
-    error::ParseHtmlError,
-};
+use crate::{SteamID, time, error::ParseHtmlError};
 use hmacsha1::hmac_sha1;
 use sha1::{Sha1, Digest};
 use lazy_regex::regex_replace_all;

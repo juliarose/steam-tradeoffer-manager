@@ -1,19 +1,11 @@
 use crate::{
     response::ClassInfo,
     error::FileError,
-    types::{
-        ClassInfoClass,
-        ClassInfoAppClass,
-        AppId,
-    },
+    types::{ClassInfoClass, ClassInfoAppClass, AppId},
     helpers::write_file_atomic,
 };
 use super::types::ClassInfoFile;
-use std::{
-    path::{Path, PathBuf},
-    time::{SystemTime, UNIX_EPOCH},
-    collections::{HashMap, HashSet},
-};
+use std::{path::{Path, PathBuf}, time::{SystemTime, UNIX_EPOCH}, collections::{HashMap, HashSet}};
 use futures::future::join_all;
 use tokio::task::JoinHandle;
 use serde_json;

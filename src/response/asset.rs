@@ -1,10 +1,7 @@
 use serde::{Serialize, Deserialize};
 use std::sync::Arc;
 use super::classinfo::ClassInfo;
-use crate::{
-    serializers::string,
-    types::{AppId, ContextId, AssetId, Amount, ClassInfoClass},
-};
+use crate::{serializers::string, types::{AppId, ContextId, AssetId, Amount, ClassInfoClass}};
 
 /// An asset which includes its related [`ClassInfo`] mapping.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]

@@ -8,11 +8,7 @@ pub use poller::{PollResult, Poll, PollType};
 pub use poll_data::PollData;
 
 use crate::api::SteamTradeOfferAPI;
-use std::{
-    path::PathBuf,
-    collections::HashMap,
-    sync::{atomic::{Ordering, AtomicBool}, Arc},
-};
+use std::{path::PathBuf, collections::HashMap, sync::{atomic::{Ordering, AtomicBool}, Arc}};
 use chrono::{Duration, DateTime};
 use tokio::{sync::{Mutex, mpsc}, task::JoinHandle};
 
