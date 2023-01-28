@@ -18,7 +18,6 @@ use crate::{
     response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Trade},
 };
 use steamid_ng::SteamID;
-use url::ParseError;
 use tokio::{sync::mpsc, task::JoinHandle};
 use reqwest::cookie::Jar;
 
@@ -77,11 +76,9 @@ impl TradeOfferManager {
         &self,
         sessionid: &str,
         cookies: &Vec<String>,
-    ) -> Result<(), ParseError> {
-        self.api.set_session(sessionid, cookies)?;
-        self.mobile_api.set_session(sessionid, cookies)?;
-        
-        Ok(())
+    ) {
+        self.api.set_session(sessionid, cookies);
+        self.mobile_api.set_session(sessionid, cookies);
     }
     
     /// Accepts an offer. This checks if the offer can be acted on and updates the state of the 

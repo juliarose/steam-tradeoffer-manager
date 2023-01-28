@@ -62,7 +62,7 @@ async fn main() {
     let mut options = PollOptions::default();
     
     // Cookies and sessionid are required to interact with trade offers.
-    manager.set_session(&sessionid, &cookies).expect("Could not set session");
+    manager.set_session(&sessionid, &cookies);
     // By default PollOptions does not have a cancel duration.
     options.cancel_duration = Some(Duration::minutes(30));
     

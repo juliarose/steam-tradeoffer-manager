@@ -19,7 +19,7 @@ use crate::{
     request::{NewTradeOffer, NewTradeOfferItem},
 };
 use serde::{Deserialize, Serialize};
-use url::{Url, ParseError};
+use url::Url;
 use reqwest::{cookie::Jar, header::REFERER};
 use lazy_regex::{regex_captures, regex_is_match};
 
@@ -88,14 +88,16 @@ impl SteamTradeOfferAPI {
     }
     
     /// Sets cookies.
-    pub fn set_cookies(&self, cookies: &Vec<String>) -> Result<(), ParseError> {
-        let url = Self::HOSTNAME.parse::<Url>()?;
+    pub fn set_cookies(
+        &self,
+        cookies: &Vec<String>,
+    ) {
+        let url = Self::HOSTNAME.parse::<Url>()
+            .expect(&format!("URL could not be parsed from {}", Self::HOSTNAME));
         
         for cookie_str in cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
         }
-        
-        Ok(())
     }
     
     /// Sets session.
@@ -103,11 +105,9 @@ impl SteamTradeOfferAPI {
         &self,
         sessionid: &str,
         cookies: &Vec<String>,
-    ) -> Result<(), ParseError> {
+    ) {
         *self.sessionid.write().unwrap() = Some(sessionid.to_string());
-        self.set_cookies(cookies)?;
-        
-        Ok(())
+        self.set_cookies(cookies);
     }
     
     /// Sends an offer.

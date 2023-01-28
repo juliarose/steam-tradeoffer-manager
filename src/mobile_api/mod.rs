@@ -8,7 +8,7 @@ pub use confirmation::{Confirmation, ConfirmationType};
 
 use serde::Deserialize;
 use reqwest::cookie::Jar;
-use url::{Url, ParseError};
+use url::Url;
 use reqwest_middleware::ClientWithMiddleware;
 use std::{collections::HashMap, sync::{Arc, RwLock}};
 use crate::{SteamID, error::Error, helpers::parses_response};
@@ -64,14 +64,13 @@ impl MobileAPI {
     pub fn set_cookies(
         &self,
         cookies: &Vec<String>,
-    ) -> Result<(), ParseError> {
-        let url = Self::HOSTNAME.parse::<Url>()?;
+    ) {
+        let url = Self::HOSTNAME.parse::<Url>()
+            .expect(&format!("URL could not be parsed from {}", Self::HOSTNAME));
         
         for cookie_str in cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
         }
-        
-        Ok(())
     }
     
     /// Sets session.
@@ -79,11 +78,9 @@ impl MobileAPI {
         &self,
         sessionid: &str,
         cookies: &Vec<String>,
-    ) -> Result<(), ParseError> {
+    ) {
         *self.sessionid.write().unwrap() = Some(sessionid.to_string());
-        self.set_cookies(cookies)?;
-        
-        Ok(())
+        self.set_cookies(cookies);
     }
     
     /// Accepts a confirmation.

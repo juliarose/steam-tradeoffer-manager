@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ])
         .build();
         
-    manager.set_session(&sessionid, &cookies)?;
+    manager.set_session(&sessionid, &cookies);
     manager.send_offer(&offer).await?;
     
     Ok(())
