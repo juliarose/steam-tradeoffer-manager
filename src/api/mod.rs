@@ -166,7 +166,7 @@ impl SteamTradeOfferAPI {
         }
         
         let sessionid = self.sessionid.read().unwrap().clone()
-            .ok_or_else(|| Error::NotLoggedIn)?;
+            .ok_or(Error::NotLoggedIn)?;
         let referer = {
             let pathname: String = match &counter_tradeofferid {
                 Some(id) => id.to_string(),
@@ -306,7 +306,7 @@ impl SteamTradeOfferAPI {
         
         let classinfos = classinfos
             .into_iter()
-            .map(|((classid, instanceid), classinfo_string)| {
+            .filter_map(|((classid, instanceid), classinfo_string)| {
                 serde_json::from_str::<ClassInfo>(&classinfo_string)
                     // ignore classinfos that failed parsed
                     .ok()
@@ -317,7 +317,6 @@ impl SteamTradeOfferAPI {
                         )
                     })
             })
-            .flatten()
             .collect::<HashMap<_, _>>();
         
         self.classinfo_cache.lock().unwrap().insert_classinfos(&classinfos);
@@ -549,15 +548,15 @@ impl SteamTradeOfferAPI {
         offers: Vec<response::RawTradeOffer>,
         map: ClassInfoMap,
     ) -> Vec<TradeOffer> {
-        let offers = offers
+        
+        
+        offers
             .into_iter()
             // ignore offers where the classinfo cannot be obtained
             // attempts to load the missing classinfos will continue
             // but it will not cause the whole poll to fail
             .filter_map(|offer| offer.try_combine_classinfos(&map).ok())
-            .collect::<Vec<_>>();
-        
-        offers
+            .collect::<Vec<_>>()
     }
     
     /// Gets trade offers.
@@ -700,7 +699,7 @@ impl SteamTradeOfferAPI {
         }
         
         let sessionid = self.sessionid.read().unwrap().clone()
-            .ok_or_else(|| Error::NotLoggedIn)?;
+            .ok_or(Error::NotLoggedIn)?;
         let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid));
         let params = AcceptOfferParams {
             sessionid,
@@ -737,7 +736,7 @@ impl SteamTradeOfferAPI {
         }
         
         let sessionid = self.sessionid.read().unwrap().clone()
-            .ok_or_else(|| Error::NotLoggedIn)?;
+            .ok_or(Error::NotLoggedIn)?;
         let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid));
         let uri = self.get_uri(&format!("/tradeoffer/{}/decline", tradeofferid));
         let response = self.client.post(&uri)
@@ -769,7 +768,7 @@ impl SteamTradeOfferAPI {
         }
         
         let sessionid = self.sessionid.read().unwrap().clone()
-            .ok_or_else(|| Error::NotLoggedIn)?;
+            .ok_or(Error::NotLoggedIn)?;
         let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid));
         let uri = self.get_uri(&format!("/tradeoffer/{}/cancel", tradeofferid));
         let response = self.client.post(&uri)

@@ -7,7 +7,7 @@ pub fn load_poll_data(
     path: &PathBuf,
 ) -> Result<PollData, FileError> {
     let filepath = path.join(format!("poll_data_{}.json", u64::from(*steamid)));
-    let data = fs::read_to_string(&filepath)?;
+    let data = fs::read_to_string(filepath)?;
     let poll_data: PollData = serde_json::from_str(&data)?;
     
     Ok(poll_data)

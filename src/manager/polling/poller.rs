@@ -78,11 +78,9 @@ impl Poller {
             // a very high date
             offers_since = u32::MAX as i64;
             active_only = true;
-        } else if {
-            poll_type.is_full_update() || 
-            // The date of the last full poll is outdated.
-            self.poll_data.last_full_poll_is_stale(&self.full_poll_update_duration)
-        } {
+        } else if poll_type.is_full_update() || 
+        // The date of the last full poll is outdated.
+        self.poll_data.last_full_poll_is_stale(&self.full_poll_update_duration) {
             offers_since = 1;
             active_only = false;
             full_update = true;
@@ -151,7 +149,7 @@ impl Poller {
             
             // Update the offers_since to the most recent trade offer.
             if offer.time_updated > offers_since {
-                offers_since = offer.time_updated.clone();
+                offers_since = offer.time_updated;
             }
             
             match self.poll_data.state_map.get(&offer.tradeofferid) {
@@ -212,7 +210,7 @@ impl Poller {
                     let prev_state = prev_states_map.remove(&offer.tradeofferid);
                     
                     // insert new state into map
-                    self.poll_data.state_map.insert(offer.tradeofferid, offer.trade_offer_state.clone());
+                    self.poll_data.state_map.insert(offer.tradeofferid, offer.trade_offer_state);
                     
                     (offer, prev_state)
                 })

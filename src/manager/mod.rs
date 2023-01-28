@@ -96,7 +96,7 @@ impl TradeOfferManager {
         tradeofferid: TradeOfferId,
         partner: &SteamID,
     ) -> Result<AcceptedOffer, Error> {
-        let accepted_offer = self.api.accept_offer(tradeofferid, &partner).await?;
+        let accepted_offer = self.api.accept_offer(tradeofferid, partner).await?;
         
         Ok(accepted_offer)
     }

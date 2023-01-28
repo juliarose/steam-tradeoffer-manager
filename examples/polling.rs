@@ -40,7 +40,7 @@ async fn handle_offer(
     
     // free items
     if offer.items_to_give.is_empty() {
-        if let Err(error) = accept_offer(&manager, &mut offer).await {
+        if let Err(error) = accept_offer(manager, offer).await {
             println!("Error accepting offer {}: {}", offer, error);
         } else {
             println!("Accepted offer {}", offer);

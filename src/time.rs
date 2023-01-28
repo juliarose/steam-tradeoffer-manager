@@ -10,8 +10,7 @@ pub fn timestamp_to_server_time(timestamp: i64) -> ServerTime {
     let naive_data_time = NaiveDateTime::from_timestamp_opt(
         timestamp,
         0,
-    )
-        .unwrap_or_else(|| NaiveDateTime::default());
+    ).unwrap_or_default();
     let time: ServerTime = DateTime::from_utc(naive_data_time, Utc);
 
     time

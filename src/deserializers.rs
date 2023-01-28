@@ -254,7 +254,7 @@ where
                 0 => Ok(false),
                 1 => Ok(true),
                 other => Err(de::Error::invalid_value(
-                    Unexpected::Unsigned(other as u64),
+                    Unexpected::Unsigned(other),
                     &"zero or one",
                 )),
             }

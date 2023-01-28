@@ -17,7 +17,7 @@ pub fn generate_confirmation_hash_for_time(
     tag: &str,
     identity_secret: &String,
 ) -> Result<String, base64::DecodeError> {
-    let decode: &[u8] = &base64::decode(&identity_secret)?;
+    let decode: &[u8] = &base64::decode(identity_secret)?;
     let time_bytes = time.to_be_bytes();
     let tag_bytes = tag.as_bytes();
     let array = [&time_bytes, tag_bytes].concat();
@@ -47,15 +47,15 @@ pub fn get_device_id(steamid: &SteamID) -> String {
 pub fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlError> {
     fn parse_description(element: ElementRef, description_selector: &Selector) -> Result<Confirmation, ParseHtmlError> {
         let description = element.select(description_selector).next()
-            .ok_or_else(|| ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+            .ok_or(ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
         let data_type = element.value().attr("data-type")
-            .ok_or_else(|| ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+            .ok_or(ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
         let id = element.value().attr("data-confid")
-            .ok_or_else(|| ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+            .ok_or(ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
         let key = element.value().attr("data-key")
-            .ok_or_else(|| ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+            .ok_or(ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
         let creator = element.value().attr("data-creator")
-            .ok_or_else(|| ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+            .ok_or(ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
         let description = description
             .text()
             .map(|t| t.trim())
