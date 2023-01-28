@@ -57,7 +57,7 @@ impl ClassInfoCache {
     }
     
     /// Inserts a [`HashMap`] of [`ClassInfo`] data into the cache.
-    pub fn insert_classinfos(
+    pub fn insert_map(
         &mut self,
         classinfos: &HashMap<ClassInfoClass, Arc<ClassInfo>>,
     ) {

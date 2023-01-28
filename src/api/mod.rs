@@ -316,7 +316,7 @@ impl SteamTradeOfferAPI {
             })
             .collect::<HashMap<_, _>>();
         
-        self.classinfo_cache.lock().unwrap().insert_classinfos(&classinfos);
+        self.classinfo_cache.lock().unwrap().insert_map(&classinfos);
 
         Ok(classinfos)
     }
