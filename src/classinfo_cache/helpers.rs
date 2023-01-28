@@ -16,13 +16,8 @@ async fn save_classinfo(
     classinfo: String,
     data_directory: &Path, 
 ) -> Result<(), FileError> {
-    // first validate the classinfo string
-    if let Err(error) = serde_json::from_str::<ClassInfo>(&classinfo) {
-        // output a warning...
-        log::warn!("{}", error);
-        
-        return Err(FileError::Parse(error));
-    }
+    // Before saving we want to validate if the JSON is valid
+    serde_json::from_str::<ClassInfo>(&classinfo)?;
     
     let filepath = get_classinfo_file_path(
         &class,
@@ -69,30 +64,30 @@ pub async fn save_classinfos(
     appid: AppId,
     classinfos: &HashMap<ClassInfoAppClass, String>,
     data_directory: &Path, 
-) -> Vec<Result<(), FileError>> {
-    let mut tasks: Vec<JoinHandle<Result<(), FileError>>>= vec![];
-    
-    for ((classid, instanceid), classinfo) in classinfos {
-        // must be cloned to move across threads
-        let classinfo = classinfo.clone();
-        let class = (appid, *classid, *instanceid);
-        let class_data_directory = data_directory.to_path_buf();
-        
-        tasks.push(tokio::spawn(async move {
-            save_classinfo(class, classinfo, &class_data_directory).await
-        }));
-    }
-    
-    let mut results: Vec<Result<(), FileError>> = Vec::new();
+) {
+    let tasks = classinfos
+        .iter()
+        .map(|((classid, instanceid), classinfo)|  {
+            // must be cloned to move across threads
+            let classinfo = classinfo.to_owned();
+            let class = (appid, *classid, *instanceid);
+            let class_data_directory = data_directory.to_path_buf();
+            
+            tokio::spawn(async move {
+                save_classinfo(class, classinfo, &class_data_directory).await
+            })
+        })
+        .collect::<Vec<_>>();
     
     for join_result in join_all(tasks).await {
-        results.push(match join_result {
-            Ok(task_result) => task_result,
-            Err(_err) => Err(FileError::JoinError),
-        })
+        match join_result {
+            Ok(result) => if let Err(error) = result {
+                // These are allowed to fail but we want a message of the error.
+                log::debug!("Error saving classinfo: {}", error);
+            },
+            Err(_error) => {},
+        }
     }
-
-    results
 }
 
 async fn load_classinfo(
@@ -103,11 +98,9 @@ async fn load_classinfo(
     let data = async_fs::read_to_string(&filepath).await?;
     
     match serde_json::from_str::<ClassInfo>(&data) {
-        Ok(classinfo) => {
-            Ok((class, classinfo))
-        },
+        Ok(classinfo) => Ok((class, classinfo)),
         Err(error) => {
-            // remove the file...
+            // Remove the file...
             let _ = async_fs::remove_file(&filepath).await;
             
             Err(FileError::Parse(error))

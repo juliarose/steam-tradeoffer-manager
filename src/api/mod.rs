@@ -297,16 +297,16 @@ impl SteamTradeOfferAPI {
         
         let classinfos = classinfos
             .into_iter()
+            // Sometimes Steam returns empty classinfo data.
+            // We just ignore them until they are successfully fetched.
             .filter_map(|((classid, instanceid), classinfo_string)| {
                 serde_json::from_str::<ClassInfo>(&classinfo_string)
                     // ignore classinfos that failed parsed
                     .ok()
-                    .map(|classinfo| {
-                        (
-                            (appid, classid, instanceid),
-                            Arc::new(classinfo),
-                        )
-                    })
+                    .map(|classinfo| (
+                        (appid, classid, instanceid),
+                        Arc::new(classinfo),
+                    ))
             })
             .collect::<HashMap<_, _>>();
         
@@ -346,70 +346,64 @@ impl SteamTradeOfferAPI {
         }
         
         {
-            {
-                // check memory for caches
+            // check memory for caches
+            let mut classinfo_cache = self.classinfo_cache.lock().unwrap();
+            
+            needed = needed
+                .into_iter()
+                .filter(|class| {
+                    if let Some(classinfo) = classinfo_cache.get(class) {
+                        map.insert(**class, classinfo);
+                        // we don't need it
+                        false
+                    } else {
+                        true
+                    }
+                })
+                .collect::<HashSet<_>>();
+            
+            // drop the lock
+        }
+        
+        if !needed.is_empty() {
+            // check filesystem for caches
+            let results = classinfo_cache_helpers::load_classinfos(
+                &needed,
+                &self.data_directory,
+            ).await
+                .into_iter()
+                .flatten()
+                .collect::<Vec<_>>();
+            
+            if !results.is_empty() {
                 let mut classinfo_cache = self.classinfo_cache.lock().unwrap();
                 
-                needed = needed
-                    .into_iter()
-                    .filter(|class| {
-                        if let Some(classinfo) = classinfo_cache.get(class) {
-                            map.insert(**class, classinfo);
-                            // we don't need it
-                            false
-                        } else {
-                            true
-                        }
-                    })
-                    .collect::<HashSet<_>>();
-                
+                for (class, classinfo) in results {
+                    let classinfo = Arc::new(classinfo);
+                    
+                    needed.remove(&class);
+                    classinfo_cache.insert(class, Arc::clone(&classinfo));
+                    map.insert(class, classinfo);
+                }
+        
                 // drop the lock
             }
-            
-            if !needed.is_empty() {
-                // check filesystem for caches
-                let results = classinfo_cache_helpers::load_classinfos(
-                    &needed,
-                    &self.data_directory,
-                ).await
-                    .into_iter()
-                    .flatten()
-                    .collect::<Vec<_>>();
-                
-                if !results.is_empty() {
-                    let mut classinfo_cache = self.classinfo_cache.lock().unwrap();
-                    
-                    for (class, classinfo) in results {
-                        let classinfo = Arc::new(classinfo);
-                        
-                        needed.remove(&class);
-                        classinfo_cache.insert(class, Arc::clone(&classinfo));
-                        map.insert(class, classinfo);
-                    }
-            
-                    // drop the lock
-                }
-            }
-            
-            for (appid, classid, instanceid) in needed {
-                match apps.get_mut(appid) {
-                    Some(classes) => {
-                        classes.push((*classid, *instanceid));
-                    },
-                    None => {
-                        let classes = vec![(*classid, *instanceid)];
-                        
-                        apps.insert(*appid, classes);
-                    },
-                }
+        }
+        
+        for (appid, classid, instanceid) in needed {
+            match apps.get_mut(appid) {
+                Some(classes) => {
+                    classes.push((*classid, *instanceid));
+                },
+                None => {
+                    apps.insert(*appid, vec![(*classid, *instanceid)]);
+                },
             }
         }
         
         for (appid, classes) in apps {
             for maps in self.get_app_asset_classinfos(appid, classes).await? {
-                for (class, classinfo) in maps {
-                    map.insert(class, classinfo);
-                }
+                map.extend(maps);
             }
         }
         
