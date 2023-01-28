@@ -18,7 +18,6 @@
 //!
 //! See [examples](https://github.com/juliarose/steam-tradeoffers/tree/main/examples).
 
-
 mod manager;
 mod serializers;
 mod deserializers;
