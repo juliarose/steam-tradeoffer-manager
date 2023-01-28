@@ -6,7 +6,7 @@ use crate::{
     response,
     ServerTime,
     error::MissingClassInfoError,
-    enums::{ConfirmationMethod, TradeOfferState},
+    enums::{TradeStatus, ConfirmationMethod, TradeOfferState},
     serializers::{
         string,
         option_string,
@@ -106,7 +106,7 @@ impl RawTradeOffer {
                         })
                     }
                 })
-                .collect::<Result<_, _>>()
+                .collect()
         }
         
         Ok(response::TradeOffer {
@@ -201,4 +201,95 @@ pub struct RawAssetOld {
     #[serde(with = "string")]
     /// The amount. If this item is not stackable the amount will be 1.
     pub amount: Amount,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct RawTrade {
+    pub tradeid: TradeId,
+    /// The [`SteamID`] of our partner.
+    pub steamid_other: SteamID,
+    #[serde(with = "ts_seconds")]
+    /// The time the trade was initiated.
+    pub time_init: ServerTime,
+    /// The current status of the trade.
+    pub status: TradeStatus,
+    #[serde(default)]
+    /// Assets given.
+    pub assets_given: Vec<RawTradeAsset>,
+    #[serde(default)]
+    /// Assets given.
+    pub assets_received: Vec<RawTradeAsset>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct RawTradeAsset {
+    #[serde(with = "string")]
+    /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
+    pub appid: AppId,
+    /// The context id.
+    pub contextid: ContextId,
+    #[serde(with = "string")]
+    /// The unique asset ID. This value is unique to the item's appid and contextid.
+    pub assetid: AssetId,
+    #[serde(with = "string")]
+    /// The ID of the classinfo.
+    pub classid: ClassId,
+    #[serde(with = "option_string_0_as_none")]
+    /// The specific instance ID of the classinfo.
+    pub instanceid: InstanceId,
+    #[serde(with = "string")]
+    /// The amount. If this item is not stackable the amount will be 1.
+    pub amount: Amount,
+    #[serde(with = "string")]
+    /// The context id of the item received.
+    pub new_contextid: ContextId,
+    #[serde(with = "string")]
+    /// The unique asset ID of the item received. This value is unique to the item's appid and contextid.
+    pub new_assetid: AssetId,
+}
+
+impl RawTrade {
+    /// Attempts to combine this [`RawTradeOffer`] into a [`response::trade_offer::TradeOffer`] using the given map.
+    pub fn try_combine_classinfos(
+        self,
+        map: &ClassInfoMap,
+    ) -> Result<response::Trade, MissingClassInfoError> {
+        fn collect_items(
+            assets: Vec<RawTradeAsset>,
+            map: &ClassInfoMap,
+        ) -> Result<Vec<response::TradeAsset>, MissingClassInfoError> {
+            assets
+                .into_iter()
+                .map(|asset| {
+                    if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
+                        Ok(response::TradeAsset {
+                            classinfo: Arc::clone(classinfo),
+                            appid: asset.appid,
+                            contextid: asset.contextid,
+                            assetid: asset.assetid,
+                            amount: asset.amount,
+                            new_contextid: asset.new_contextid,
+                            new_assetid: asset.new_assetid,
+                        })
+                    } else {
+                        // todo use a less broad error for this
+                        Err(MissingClassInfoError {
+                            appid: asset.appid,
+                            classid: asset.classid,
+                            instanceid: asset.instanceid,
+                        })
+                    }
+                })
+                .collect()
+        }
+        
+        Ok(response::Trade {
+            assets_given: collect_items(self.assets_given, map)?,
+            assets_received: collect_items(self.assets_received, map)?,
+            tradeid: self.tradeid,
+            status: self.status,
+            steamid_other: self.steamid_other,
+            time_init: self.time_init,
+        })
+    }
 }

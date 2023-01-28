@@ -614,6 +614,12 @@ impl SteamTradeOfferAPI {
         Ok(body.response.offer)
     }
     
+    // pub async fn get_trade_history(
+        
+    // ) {
+        
+    // }
+    
     /// Gets escrow details for user.
     pub async fn get_user_details(
         &self,
@@ -662,6 +668,7 @@ impl SteamTradeOfferAPI {
             .text()
             .await?;
         
+        println!("{}", body);
         if regex_is_match!(r#"\n\W*<script type="text/javascript">\W*\r?\n?(\W*var g_rgAppContextData[\s\S]*)</script>"#, &body) {
             let my_escrow_days = get_days(
                 regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, &body)

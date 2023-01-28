@@ -5,7 +5,7 @@ use reqwest_middleware;
 /// Any range of errors encountered when making requests.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    /// A paramter is missing or invalid.
+    /// An input parameter is missing or invalid.
     #[error("Invalid parameter: {}", .0)]
     Parameter(&'static str),
     /// An unexpected response containing a message was received. Check the message for more 
@@ -55,8 +55,8 @@ pub enum Error {
     /// not valid a valid base64 number.
     #[error("Invalid base64: {}", .0)]
     Base64Decode(#[from] base64::DecodeError),
-    /// A confirmation could be confirmed.
-    #[error("Confirmation unsuccessful. The confirmation may have actually succeeded, the confirmation no longer exist, or another trade may be going through. Check confirmations again to verify.")]
+    /// A confirmation could not be confirmed.
+    #[error("Confirmation unsuccessful. The confirmation may have succeeded, the confirmation no longer exists, or another trade may be going through. Check confirmations again to verify.")]
     ConfirmationUnsuccessful,
     /// The response is not expected. The containing string provides a message with more details.
     #[error("Malformed response")]

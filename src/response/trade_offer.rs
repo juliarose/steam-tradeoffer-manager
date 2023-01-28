@@ -2,16 +2,13 @@ use std::fmt;
 use crate::{
     SteamID,
     time::ServerTime,
-    enums::{
-        TradeOfferState,
-        ConfirmationMethod,
-    },
+    enums::{TradeOfferState, ConfirmationMethod},
     types::{TradeId, TradeOfferId},
 };
 use super::asset::Asset;
 
 /// A trade offer.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TradeOffer {
     /// The ID for this offer.
     pub tradeofferid: TradeOfferId,

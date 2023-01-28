@@ -14,7 +14,7 @@ use crate::{
     request::NewTradeOffer,
     enums::TradeOfferState,
     mobile_api::{MobileAPI, Confirmation},
-    types::{AppId, ContextId, TradeOfferId},
+    types::{AppId, ContextId, TradeOfferId, TradeId},
     response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer},
 };
 use steamid_ng::SteamID;
@@ -311,10 +311,15 @@ impl TradeOfferManager {
         } else if offer.items_to_receive.is_empty() {
             Ok(Vec::new())
         } else if let Some(tradeid) = offer.tradeid {
-            self.api.get_receipt(&tradeid).await
+            self.get_receipt_trade_id(&tradeid).await
         } else {
             Err(Error::Parameter("Missing tradeid"))
         }
+    }
+    
+    /// Gets the trade receipt (new items) upon completion of a trade using a trade ID.
+    pub async fn get_receipt_trade_id(&self, tradeid: &TradeId) -> Result<Vec<Asset>, Error> {
+        self.api.get_receipt(&tradeid).await
     }
     
     /// Updates the offer to the most recent state against the API.
@@ -379,8 +384,9 @@ impl TradeOfferManager {
         })
     }
     
-    /// Starts polling. Listen to the receiver for events. To stop polling simply drop the 
-    /// receiver. If this method is called again the previous polling task will be aborted.
+    /// Starts polling offers. Listen to the returned receiver for events. To stop polling simply 
+    /// drop the receiver. If this method is called again the previous polling task will be 
+    /// aborted.
     pub fn start_polling(
         &self,
         options: PollOptions,
