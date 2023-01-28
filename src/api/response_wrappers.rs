@@ -131,7 +131,11 @@ pub struct GetAssetClassInfoResponse {
 
 #[derive(Deserialize, Debug)]
 pub struct GetTradeHistoryResponse {
-    #[serde(default)]
+    pub response: GetTradeHistoryResponseBody,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct GetTradeHistoryResponseBody {
     pub more: bool,
     pub trades: Vec<RawTrade>,
     #[serde(default)]

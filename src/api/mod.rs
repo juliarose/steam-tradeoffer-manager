@@ -614,6 +614,8 @@ impl SteamTradeOfferAPI {
         Ok(body.response.offer)
     }
     
+    /// Gets trade history. The second part of the returned tuple is whether more trades can be 
+    /// fetched.
     pub async fn get_trade_history(
         &self,
         max_trades: u32,
@@ -621,7 +623,6 @@ impl SteamTradeOfferAPI {
         start_after_tradeid: Option<TradeId>,
         navigating_back: bool,
         include_failed: bool,
-        include_total: bool,
     ) -> Result<(Vec<Trade>, bool), Error> {
         let (
             trades,
@@ -634,7 +635,7 @@ impl SteamTradeOfferAPI {
             navigating_back,
             true,
             include_failed,
-            include_total,
+            false,
         ).await?;
         
         if let Some(descriptions) = descriptions {
@@ -649,6 +650,8 @@ impl SteamTradeOfferAPI {
         }
     }
     
+    /// Gets trade history without descriptions. The second part of the returned tuple is whether 
+    /// more trades can be fetched.
     pub async fn get_trade_history_without_descriptions(
         &self,
         max_trades: u32,
@@ -656,7 +659,6 @@ impl SteamTradeOfferAPI {
         start_after_tradeid: Option<TradeId>,
         navigating_back: bool,
         include_failed: bool,
-        include_total: bool,
     ) -> Result<(Vec<RawTrade>, bool), Error> {
         let (
             trades,
@@ -669,7 +671,7 @@ impl SteamTradeOfferAPI {
             navigating_back,
             false,
             include_failed,
-            include_total,
+            false,
         ).await?;
         
         Ok((trades, more))
@@ -712,6 +714,7 @@ impl SteamTradeOfferAPI {
             .send()
             .await?;
         let body: GetTradeHistoryResponse = parses_response(response).await?;
+        let body = body.response;
         
         Ok((body.trades, body.descriptions, body.more))
     }

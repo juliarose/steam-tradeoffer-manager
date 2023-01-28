@@ -205,6 +205,7 @@ pub struct RawAssetOld {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct RawTrade {
+    #[serde(with = "string")]
     pub tradeid: TradeId,
     /// The [`SteamID`] of our partner.
     pub steamid_other: SteamID,
@@ -223,9 +224,9 @@ pub struct RawTrade {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct RawTradeAsset {
-    #[serde(with = "string")]
     /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
+    #[serde(with = "string")]
     /// The context id.
     pub contextid: ContextId,
     #[serde(with = "string")]

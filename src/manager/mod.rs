@@ -15,7 +15,7 @@ use crate::{
     enums::TradeOfferState,
     mobile_api::{MobileAPI, Confirmation},
     types::{AppId, ContextId, TradeOfferId, TradeId},
-    response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer},
+    response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Trade},
 };
 use steamid_ng::SteamID;
 use url::ParseError;
@@ -382,6 +382,25 @@ impl TradeOfferManager {
         } else {
             offers
         })
+    }
+    
+    /// Gets trade history. The second part of the returned tuple is whether more trades can be 
+    /// fetched.
+    pub async fn get_trade_history(
+        &self,
+        max_trades: u32,
+        start_after_time: Option<u32>,
+        start_after_tradeid: Option<TradeId>,
+        navigating_back: bool,
+        include_failed: bool,
+    ) -> Result<(Vec<Trade>, bool), Error> {
+        self.api.get_trade_history(
+            max_trades,
+            start_after_time,
+            start_after_tradeid,
+            navigating_back,
+            include_failed,
+        ).await
     }
     
     /// Starts polling offers. Listen to the returned receiver for events. To stop polling simply 
