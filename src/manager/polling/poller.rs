@@ -35,18 +35,12 @@ pub enum PollType {
 impl PollType {
     /// The poll is a full update.
     fn is_full_update(&self) -> bool {
-        match self {
-            Self::FullUpdate => true,
-            _ => false,
-        }
+        matches!(self, Self::FullUpdate)
     }
     
     /// The poll is only active offers.
     fn is_active_only(&self) -> bool {
-        match self {
-            Self::NewOffers => true,
-            _ => false,
-        }
+        matches!(self, Self::NewOffers)
     }
 }
 

@@ -24,6 +24,8 @@ use reqwest::cookie::Jar;
 
 pub const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
 
+type Polling = (mpsc::Sender<PollAction>, JoinHandle<()>);
+
 /// Manager which includes functionality for interacting with trade offers, confirmations and 
 /// inventories.
 #[derive(Debug, Clone)]
@@ -37,7 +39,7 @@ pub struct TradeOfferManager {
     /// The directory to store poll data and [`ClassInfo`] data.
     data_directory: PathBuf,
     /// The sender for sending messages to polling
-    polling: Arc<Mutex<Option<(mpsc::Sender<PollAction>, JoinHandle<()>)>>>,
+    polling: Arc<Mutex<Option<Polling>>>,
 }
 
 impl TradeOfferManager {

@@ -23,7 +23,7 @@ async fn accept_offer(
 
 async fn handle_offer(
     manager: &TradeOfferManager,
-    mut offer: &mut TradeOffer,
+    offer: &mut TradeOffer,
 ) {
     fn assets_item_names<'a>(
         assets: &'a Vec<Asset>,

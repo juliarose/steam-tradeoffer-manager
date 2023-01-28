@@ -8,7 +8,7 @@ use steam_tradeoffer_manager::{
     error::FileError,
 };
 use std::{
-    path::PathBuf,
+    path::{PathBuf, Path},
     collections::HashSet,
     time::{SystemTime, UNIX_EPOCH},
     sync::{Arc, Mutex},
@@ -19,7 +19,7 @@ type ClassInfoFile = (ClassInfoClass, ClassInfo);
 fn get_classinfo_file_path(
     class: &ClassInfoClass,
     is_temp: bool,
-    data_directory: &PathBuf, 
+    data_directory: &Path, 
 ) -> Result<PathBuf, FileError> {
     let (appid, classid, instanceid) = class;
     let instanceid = match instanceid {

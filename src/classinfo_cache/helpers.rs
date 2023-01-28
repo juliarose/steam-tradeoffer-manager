@@ -10,7 +10,7 @@ use crate::{
 };
 use super::types::ClassInfoFile;
 use std::{
-    path::PathBuf,
+    path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
     collections::{HashMap, HashSet},
 };
@@ -22,7 +22,7 @@ use serde_json;
 async fn save_classinfo(
     class: ClassInfoClass,
     classinfo: String,
-    data_directory: &PathBuf, 
+    data_directory: &Path, 
 ) -> Result<(), FileError> {
     // first validate the classinfo string
     if let Err(error) = serde_json::from_str::<ClassInfo>(&classinfo) {
@@ -46,14 +46,14 @@ async fn save_classinfo(
 /// Loads classinfos.
 pub async fn load_classinfos(
     classes: &HashSet<&ClassInfoClass>,
-    data_directory: &PathBuf, 
+    data_directory: &Path, 
 ) -> Vec<Result<ClassInfoFile, FileError>> {
     let mut tasks: Vec<JoinHandle<Result<ClassInfoFile, FileError>>>= vec![];
     
     for class in classes {
         // must be cloned to move across threads
         let class = **class;
-        let class_data_directory = data_directory.clone();
+        let class_data_directory = data_directory.to_path_buf();
         
         tasks.push(tokio::spawn(async move {
             load_classinfo(class, &class_data_directory).await
@@ -76,7 +76,7 @@ pub async fn load_classinfos(
 pub async fn save_classinfos(
     appid: AppId,
     classinfos: &HashMap<ClassInfoAppClass, String>,
-    data_directory: &PathBuf, 
+    data_directory: &Path, 
 ) -> Vec<Result<(), FileError>> {
     let mut tasks: Vec<JoinHandle<Result<(), FileError>>>= vec![];
     
@@ -84,7 +84,7 @@ pub async fn save_classinfos(
         // must be cloned to move across threads
         let classinfo = classinfo.clone();
         let class = (appid, *classid, *instanceid);
-        let class_data_directory = data_directory.clone();
+        let class_data_directory = data_directory.to_path_buf();
         
         tasks.push(tokio::spawn(async move {
             save_classinfo(class, classinfo, &class_data_directory).await
@@ -105,7 +105,7 @@ pub async fn save_classinfos(
 
 async fn load_classinfo(
     class: ClassInfoClass,
-    data_directory: &PathBuf, 
+    data_directory: &Path, 
 ) -> Result<ClassInfoFile, FileError> {
     let filepath = get_classinfo_file_path(&class, false, data_directory)?;
     let data = async_fs::read_to_string(&filepath).await?;
@@ -126,7 +126,7 @@ async fn load_classinfo(
 fn get_classinfo_file_path(
     class: &ClassInfoClass,
     is_temp: bool,
-    data_directory: &PathBuf, 
+    data_directory: &Path, 
 ) -> Result<PathBuf, FileError> {
     let (appid, classid, instanceid) = class;
     let instanceid = match instanceid {
