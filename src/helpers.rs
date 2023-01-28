@@ -5,7 +5,7 @@ use serde::de::DeserializeOwned;
 use lazy_regex::{regex_is_match, regex_captures};
 use async_fs::File;
 use crate::error::{TradeOfferError, Error};
-use futures_lite::io::AsyncWriteExt;
+use futures::io::AsyncWriteExt;
 
 pub async fn write_file_atomic(
     filepath: PathBuf,
