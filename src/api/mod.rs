@@ -614,7 +614,7 @@ impl SteamTradeOfferAPI {
         Ok(body.response.offer)
     }
     
-    /// Gets details for user including the escrow durations between this user.
+    /// Gets escrow details for user.
     pub async fn get_user_details(
         &self,
         partner: &SteamID,
