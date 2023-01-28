@@ -11,7 +11,7 @@ use crate::{
         deserialize_classinfo_map,
     },
 };
-use super::response as api_response;
+use super::{response as api_response};
 use serde::{Deserialize, de::{MapAccess, Visitor, SeqAccess, Deserializer}};
 
 type RgInventory = HashMap<String, api_response::RawAssetOld>;

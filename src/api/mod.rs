@@ -590,17 +590,17 @@ impl SteamTradeOfferAPI {
             key: &'a str,
             tradeofferid: TradeOfferId,
         }
-
+        
         #[derive(Deserialize, Debug)]
         struct Body {
             offer: response::RawTradeOffer,
         }
-
+        
         #[derive(Deserialize, Debug)]
         struct Response {
             response: Body,
         }
-
+        
         let uri = self.get_api_url("IEconService", "GetTradeOffer", 1);
         let response = self.client.get(&uri)
             .query(&Form {
@@ -614,11 +614,53 @@ impl SteamTradeOfferAPI {
         Ok(body.response.offer)
     }
     
-    // pub async fn get_trade_history(
+    pub async fn get_trade_history(
+        &self,
+        max_trades: u32,
+        start_after_time: Option<u32>,
+        start_after_tradeid: Option<TradeId>,
+        navigating_back: bool,
+        get_descriptions: bool,
+        include_failed: bool,
+        include_total: bool,
+    ) -> Result<(Vec<RawTrade>, bool), Error> {
+        #[derive(Serialize, Debug)]
+        struct Form<'a> {
+            key: &'a str,
+            max_trades: u32,
+            start_after_time: Option<u32>,
+            start_after_tradeid: Option<TradeId>,
+            navigating_back: bool,
+            get_descriptions: bool,
+            include_failed: bool,
+            include_total: bool,
+        }
+
+        #[derive(Deserialize, Debug)]
+        pub struct Response {
+            #[serde(default)]
+            more: bool,
+            trades: Vec<RawTrade>,
+        }
         
-    // ) {
+        let uri = self.get_api_url("IEconService", "GetTradeHistory", 1);
+        let response = self.client.get(&uri)
+            .query(&Form {
+                key: &self.key,
+                max_trades,
+                start_after_time,
+                start_after_tradeid,
+                navigating_back,
+                get_descriptions,
+                include_failed,
+                include_total,
+            })
+            .send()
+            .await?;
+        let body: Response = parses_response(response).await?;
         
-    // }
+        Ok((body.trades, body.more))
+    }
     
     /// Gets escrow details for user.
     pub async fn get_user_details(
