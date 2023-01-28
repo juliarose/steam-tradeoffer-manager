@@ -77,7 +77,7 @@ impl SteamTradeOfferAPI {
     ) -> String {
         format!("{}{}", Self::HOSTNAME, pathname)
     }
-
+    
     fn get_api_url(
         &self,
         interface: &str,
@@ -617,17 +617,17 @@ impl SteamTradeOfferAPI {
         Ok(body.response.offer)
     }
     
-    /// Gets details for user.
+    /// Gets details for user including the escrow durations between this user.
     pub async fn get_user_details(
         &self,
         partner: &SteamID,
         tradeofferid: Option<TradeOfferId>,
-        token: Option<&str>,
+        token: &Option<String>,
     ) -> Result<UserDetails, Error> {
         #[derive(Serialize, Debug)]
         struct Params<'b> {
             partner: u32,
-            token: Option<&'b str>,
+            token: &'b Option<String>,
         }
 
         fn get_days(group: Option<(&str, &str)>) -> u32 {
@@ -666,8 +666,12 @@ impl SteamTradeOfferAPI {
             .await?;
         
         if regex_is_match!(r#"\n\W*<script type="text/javascript">\W*\r?\n?(\W*var g_rgAppContextData[\s\S]*)</script>"#, &body) {
-            let my_escrow_days = get_days(regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, &body));
-            let them_escrow_days = get_days(regex_captures!(r#"var g_daysTheirEscrow = (\d+);"#, &body));
+            let my_escrow_days = get_days(
+                regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, &body)
+            );
+            let them_escrow_days = get_days(
+                regex_captures!(r#"var g_daysTheirEscrow = (\d+);"#, &body)
+            );
 
             Ok(UserDetails {
                 my_escrow_days,

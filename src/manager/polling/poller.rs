@@ -24,7 +24,7 @@ pub enum PollType {
     /// Fastest method for obtaining new offers when new offers. This will fetch only active 
     /// offers and includes descriptions in the response rather than relying on 
     /// ISteamEconomy/GetAssetClassInfo. For this reason, items in the response will also not 
-    /// contain app_data. This will not update the timestamps in  the poll data. For this reason, 
+    /// contain app_data. This will not update the timestamps in the poll data. For this reason, 
     /// this should not be used as your only method of polling if you care about checking the 
     /// state of changed offers.
     NewOffers,

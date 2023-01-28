@@ -9,7 +9,7 @@ pub mod string {
     pub fn serialize<T, S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
     where
         T: Display,
-        S: Serializer
+        S: Serializer,
     {
         serializer.collect_str(value)
     }
@@ -18,7 +18,7 @@ pub mod string {
     where
         T: FromStr,
         T::Err: Display,
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         String::deserialize(deserializer)?.parse().map_err(de::Error::custom)
     }
@@ -32,7 +32,7 @@ pub mod option_string {
     pub fn serialize<T, S>(value: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
     where
         T: Display,
-        S: Serializer
+        S: Serializer,
     {
         match value {
             Some(string) => serializer.collect_str(string),
@@ -44,7 +44,7 @@ pub mod option_string {
     where
         T: FromStr,
         T::Err: Display,
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         let s: Option<String> = Option::<String>::deserialize(deserializer)?;
         
@@ -64,7 +64,7 @@ pub mod option_string_0_as_none {
     pub fn serialize<T, S>(value: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
     where
         T: Display,
-        S: Serializer
+        S: Serializer,
     {
         match value {
             Some(string) => serializer.collect_str(string),
@@ -76,7 +76,7 @@ pub mod option_string_0_as_none {
     where
         T: FromStr,
         T::Err: Display,
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         let s: Option<String> = Option::<String>::deserialize(deserializer)?;
         
@@ -93,7 +93,7 @@ pub mod option_string_0_as_none {
 
 pub fn steamid_as_string<S>(steamid: &SteamID, s: S) -> Result<S::Ok, S::Error>
 where
-    S: Serializer
+    S: Serializer,
 {
     s.serialize_str(&u64::from(*steamid).to_string())
 }

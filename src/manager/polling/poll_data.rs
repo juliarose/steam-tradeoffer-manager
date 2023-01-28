@@ -7,17 +7,23 @@ use crate::{
 };
 use chrono::Duration;
 
+/// Used for storing account poll data.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PollData {
     #[serde(default)]
+    /// Where to fetch offers since the last poll.
     pub offers_since: Option<ServerTime>,
     #[serde(default)]
+    /// The date of the last poll.
     pub last_poll: Option<ServerTime>,
     #[serde(default)]
+    /// The last full update.
     pub last_poll_full_update: Option<ServerTime>,
     #[serde(default)]
+    /// The state map for trade offers.
     pub state_map: HashMap<TradeOfferId, TradeOfferState>,
     #[serde(default, skip_serializing)]
+    /// Whether the data has changed. Used for reducing file writes.
     pub changed: bool,
 }
 

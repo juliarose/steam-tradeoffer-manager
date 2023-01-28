@@ -40,7 +40,7 @@ pub fn get_default_middleware<T>(
     user_agent_string: &'static str,
 ) -> ClientWithMiddleware
 where
-    T: CookieStore + 'static
+    T: CookieStore + 'static,
 {
     let mut headers = header::HeaderMap::new();
     
@@ -86,7 +86,7 @@ pub async fn check_response(
 
 pub async fn parses_response<D>(response: reqwest::Response) -> Result<D, Error>
 where
-    D: DeserializeOwned
+    D: DeserializeOwned,
 {
     let body = check_response(response).await?;
     // let html = String::from_utf8_lossy(&body);

@@ -98,7 +98,7 @@ impl ClassInfo {
     /// Convenience method for getting a value out of app_data. Parses string into generic.
     pub fn get_app_data_value_parsed<T>(&self, key: &str) -> Option<T>
     where
-        T: std::str::FromStr
+        T: std::str::FromStr,
     {
         if let Some(app_data) = &self.app_data {
             app_data.get(key).and_then(parse_value)
@@ -183,7 +183,7 @@ pub type AppData = Option<serde_json::Map<String, serde_json::value::Value>>;
 
 fn parse_value<T>(value: &serde_json::Value) -> Option<T> 
 where
-    T: std::str::FromStr
+    T: std::str::FromStr,
 {
     match value {
         serde_json::Value::String(string) => string.parse::<T>().ok(),

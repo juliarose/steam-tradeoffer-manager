@@ -1,9 +1,5 @@
 use super::{TradeOfferManager, USER_AGENT_STRING};
-use crate::{
-    SteamID,
-    ClassInfoCache,
-    helpers::get_default_data_directory,
-};
+use crate::{SteamID, ClassInfoCache, helpers::get_default_data_directory};
 use std::{path::PathBuf, sync::{Mutex, Arc}};
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;

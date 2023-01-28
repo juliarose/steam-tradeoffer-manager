@@ -230,7 +230,7 @@ impl TradeOfferManager {
         partner: &SteamID,
         tradeofferid: TradeOfferId,
     ) -> Result<UserDetails, Error> {
-        self.api.get_user_details(partner, Some(tradeofferid), None).await
+        self.api.get_user_details(partner, Some(tradeofferid), &None).await
     }
     
     /// Gets the user's details for trading using an access token.
@@ -239,7 +239,7 @@ impl TradeOfferManager {
         partner: &SteamID,
         token: &str,
     ) -> Result<UserDetails, Error> {
-        self.api.get_user_details(partner, None, Some(token)).await
+        self.api.get_user_details(partner, None, &Some(token.into())).await
     }
     
     /// Gets trade confirmations.
@@ -377,8 +377,8 @@ impl TradeOfferManager {
         })
     }
     
-    /// Starts polling. Listen to the receiver for events. If the receiver is dropped polling will 
-    /// stop. If this method is called again polling the previous polling will also stop.
+    /// Starts polling. Listen to the receiver for events. To stop polling simply drop the 
+    /// receiver. If this method is called again the previous polling task will be aborted.
     pub fn start_polling(
         &self,
         options: PollOptions,

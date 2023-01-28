@@ -18,11 +18,9 @@ use serde::{
 };
 use serde_json::value::RawValue;
 use lazy_regex::{regex_is_match, regex_captures};
-use crate::response::ClassInfo;
-use crate::types::{
-    ClassInfoAppClass,
-    ClassInfoAppMap,
-    ClassInfoMap,
+use crate::{
+    response::ClassInfo,
+    types::{ClassInfoAppClass, ClassInfoAppMap, ClassInfoMap},
 };
 
 pub fn empty_string_is_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
@@ -99,7 +97,6 @@ pub mod ts_seconds_option_none_when_zero {
         }
     }
 }
-
 
 pub fn string_or_number<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where

@@ -1,11 +1,7 @@
 use super::response as api_response;
 use lazy_regex::Regex;
 use std::sync::Arc;
-use crate::{
-    error::MissingClassInfoError,
-    types::ClassInfoMap,
-    response,
-};
+use crate::{error::MissingClassInfoError, types::ClassInfoMap, response};
 
 pub fn from_raw_receipt_asset(
     asset: api_response::RawReceiptAsset,
