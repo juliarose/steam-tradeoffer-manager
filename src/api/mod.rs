@@ -640,8 +640,8 @@ impl SteamTradeOfferAPI {
         if let Some(descriptions) = descriptions {
             let trades = trades
                 .into_iter()
-                .filter_map(|trade| trade.try_combine_classinfos(&descriptions).ok())
-                .collect();
+                .map(|trade| trade.try_combine_classinfos(&descriptions))
+                .collect::<Result<_, _>>()?;
                 
             Ok((trades, more))
         } else {
