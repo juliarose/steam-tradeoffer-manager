@@ -674,6 +674,7 @@ impl SteamTradeOfferAPI {
         Ok((trades, more))
     }
     
+    #[cfg_attr(feature = "cargo-clippy", allow(clippy::too_many_arguments))]
     async fn get_trade_history_request(
         &self,
         max_trades: u32,

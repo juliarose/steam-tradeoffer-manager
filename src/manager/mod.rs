@@ -319,7 +319,7 @@ impl TradeOfferManager {
     
     /// Gets the trade receipt (new items) upon completion of a trade using a trade ID.
     pub async fn get_receipt_trade_id(&self, tradeid: &TradeId) -> Result<Vec<Asset>, Error> {
-        self.api.get_receipt(&tradeid).await
+        self.api.get_receipt(tradeid).await
     }
     
     /// Updates the offer to the most recent state against the API.
