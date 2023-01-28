@@ -4,14 +4,19 @@ use crate::{
     time::ServerTime,
     enums::{TradeOfferState, ConfirmationMethod},
     types::{TradeId, TradeOfferId},
+    serializers::{string, option_string},
 };
+use serde::Serialize;
+use chrono::serde::{ts_seconds, ts_seconds_option};
 use super::asset::Asset;
 
 /// A trade offer.
-#[derive(Debug, Clone)]
+#[derive(Serialize, Debug, Clone)]
 pub struct TradeOffer {
+    #[serde(with = "string")]
     /// The ID for this offer.
     pub tradeofferid: TradeOfferId,
+    #[serde(with = "option_string")]
     /// The trade ID for this offer. This should be present when the state of the offer is
     /// "Accepted".
     pub tradeid: Option<TradeId>,
@@ -28,14 +33,18 @@ pub struct TradeOffer {
     pub is_our_offer: bool,
     /// Whether this offer originated from a real time trade.
     pub from_real_time_trade: bool,
+    #[serde(with = "ts_seconds")]
     /// The time before the offer expires if it has not been acted on.
     pub expiration_time: ServerTime,
+    #[serde(with = "ts_seconds")]
     /// The time this offer was created.
     pub time_created: ServerTime,
+    #[serde(with = "ts_seconds")]
     /// The time this offer last had an action e.g. accepting or declining the offer.
     pub time_updated: ServerTime,
     /// The state of this offer.
     pub trade_offer_state: TradeOfferState,
+    #[serde(with = "ts_seconds_option")]
     /// The end date if this trade is in escrow. `None` when this offer is not in escrow.
     pub escrow_end_date: Option<ServerTime>,
     /// The confirmation method for this offer.

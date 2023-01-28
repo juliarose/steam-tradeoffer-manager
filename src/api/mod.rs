@@ -104,10 +104,7 @@ impl SteamTradeOfferAPI {
         sessionid: &str,
         cookies: &Vec<String>,
     ) -> Result<(), ParseError> {
-        let mut sessionid_write = self.sessionid.write().unwrap();
-        
-        *sessionid_write = Some(sessionid.to_string());
-        
+        *self.sessionid.write().unwrap() = Some(sessionid.to_string());
         self.set_cookies(cookies)?;
         
         Ok(())
