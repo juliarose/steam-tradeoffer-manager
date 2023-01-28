@@ -623,7 +623,7 @@ impl SteamTradeOfferAPI {
         get_descriptions: bool,
         include_failed: bool,
         include_total: bool,
-    ) -> Result<(Vec<RawTrade>, bool), Error> {
+    ) -> Result<(Vec<RawTrade>, Option<ClassInfoMap>, bool), Error> {
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -634,13 +634,6 @@ impl SteamTradeOfferAPI {
             get_descriptions: bool,
             include_failed: bool,
             include_total: bool,
-        }
-
-        #[derive(Deserialize, Debug)]
-        pub struct Response {
-            #[serde(default)]
-            more: bool,
-            trades: Vec<RawTrade>,
         }
         
         let uri = self.get_api_url("IEconService", "GetTradeHistory", 1);
@@ -657,9 +650,9 @@ impl SteamTradeOfferAPI {
             })
             .send()
             .await?;
-        let body: Response = parses_response(response).await?;
+        let body: GetTradeHistoryResponse = parses_response(response).await?;
         
-        Ok((body.trades, body.more))
+        Ok((body.trades, body.descriptions, body.more))
     }
     
     /// Gets escrow details for user.

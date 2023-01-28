@@ -11,7 +11,7 @@ use crate::{
         deserialize_classinfo_map,
     },
 };
-use super::{response as api_response};
+use super::{response as api_response, RawTrade};
 use serde::{Deserialize, de::{MapAccess, Visitor, SeqAccess, Deserializer}};
 
 type RgInventory = HashMap<String, api_response::RawAssetOld>;
@@ -127,6 +127,16 @@ pub struct GetInventoryOldResponse {
 pub struct GetAssetClassInfoResponse {
     #[serde(deserialize_with = "deserialize_classinfo_map_raw")]
     pub result: HashMap<ClassInfoAppClass, String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct GetTradeHistoryResponse {
+    #[serde(default)]
+    pub more: bool,
+    pub trades: Vec<RawTrade>,
+    #[serde(default)]
+    #[serde(deserialize_with = "to_trade_offers_classinfo_map")]
+    pub descriptions: Option<ClassInfoMap>,
 }
 
 #[cfg(test)]
