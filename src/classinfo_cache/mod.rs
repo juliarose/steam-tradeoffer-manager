@@ -2,7 +2,7 @@ mod types;
 pub mod helpers;
 
 use crate::{response::ClassInfo, types::ClassInfoClass};
-use std::{sync::Arc, collections::HashMap};
+use std::{sync::{Arc, Mutex}, collections::HashMap};
 use lfu_cache::LfuCache;
 
 type LfuClassInfoMap = LfuCache<ClassInfoClass, Arc<ClassInfo>>;
@@ -24,10 +24,19 @@ impl Default for ClassInfoCache {
 
 impl ClassInfoCache {
     /// Crease a new [`ClassInfoCache`] with the given capacity.
-    pub fn new(capacity: usize) -> Self {
+    pub fn new(
+        capacity: usize,
+    ) -> Self {
         Self {
             map: create_map(capacity),
         }
+    }
+    
+    /// Crease a new sharable [`ClassInfoCache`] with the given capacity.
+    pub fn new_shared(
+        capacity: usize,
+    ) -> Arc<Mutex<Self>> {
+        Arc::new(Mutex::new(Self::new(capacity)))
     }
     
     /// Gets a [`ClassInfo`] wrapped in an [`Arc`] from the cache.
