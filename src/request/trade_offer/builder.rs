@@ -40,7 +40,8 @@ impl NewTradeOfferBuilder {
     }
     
     /// The trade offer URL for sending an offer if you are not friends with the partner. 
-    /// Silently fails if the URL does not contain a token.
+    /// Silently fails if the URL does not contain a token. If you want to check if the token
+    /// was parsed successfully check if the `token` of the builder is `Some`.
     pub fn trade_offer_url(mut self, trade_offer_url: &str) -> Self {
         self.token = parse_offer_access_token(trade_offer_url);
         self
@@ -93,7 +94,6 @@ fn parse_offer_access_token(trade_offer_url: &str) -> Option<String> {
     
     None
 }
-
 
 #[cfg(test)]
 mod tests {

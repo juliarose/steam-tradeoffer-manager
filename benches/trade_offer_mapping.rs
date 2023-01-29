@@ -16,11 +16,7 @@ fn get_classinfo_file_path(
     data_directory: &Path, 
 ) -> Result<PathBuf, FileError> {
     let (appid, classid, instanceid) = class;
-    let instanceid = match instanceid {
-        Some(instanceid) => *instanceid,
-        None => 0,
-    };
-    let filename = format!("{}_{}_{}.json", appid, classid, instanceid);
+    let filename = format!("{}_{}_{}.json", appid, classid, instanceid.unwrap_or(0));
     
     Ok(data_directory.join(filename))
 }

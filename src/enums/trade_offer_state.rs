@@ -2,6 +2,7 @@ use num_enum::{TryFromPrimitive, IntoPrimitive};
 use serde_repr::{Serialize_repr, Deserialize_repr};
 use strum_macros::{Display, EnumString};
 
+/// The state of a trade offer.
 #[derive(Debug, Serialize_repr, Deserialize_repr, Display, EnumString, PartialEq, TryFromPrimitive, IntoPrimitive, Clone, Copy)]
 #[repr(u8)]
 pub enum TradeOfferState {

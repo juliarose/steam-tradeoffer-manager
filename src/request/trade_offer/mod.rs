@@ -7,7 +7,8 @@ use steamid_ng::SteamID;
 use crate::response::{TradeOffer, Asset};
 
 /// Represents a trade offer not yet sent. A template including items from an existing offer can
-/// created by calling `from` on the offer.
+/// created by calling `from` on the owned or borrowed [`TradeOffer`]. For constructing blank 
+/// offers [`NewTradeOffer::builder`] to create a new [`NewTradeOfferBuilder`] is useful.
 #[derive(Debug, Clone, PartialEq)]
 pub struct NewTradeOffer {
     /// The partner's [`SteamID`] for this offer.
