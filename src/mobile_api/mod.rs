@@ -54,7 +54,7 @@ impl MobileAPI {
         &self,
         pathname: &str,
     ) -> String {
-        format!("{}{}", Self::HOSTNAME, pathname)
+        format!("{}{pathname}", Self::HOSTNAME)
     }
     
     /// Sets cookies.

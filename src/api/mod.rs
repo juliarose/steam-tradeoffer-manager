@@ -75,7 +75,7 @@ impl SteamTradeOfferAPI {
         &self,
         pathname: &str,
     ) -> String {
-        format!("{}{}", Self::HOSTNAME, pathname)
+        format!("{}{pathname}", Self::HOSTNAME)
     }
     
     fn get_api_url(
@@ -84,7 +84,7 @@ impl SteamTradeOfferAPI {
         method: &str,
         version: usize,
     ) -> String {
-        format!("{}/{}/{}/v{}", Self::API_HOSTNAME, interface, method, version)
+        format!("{}/{interface}/{method}/v{version}", Self::API_HOSTNAME)
     }
     
     /// Sets cookies.
