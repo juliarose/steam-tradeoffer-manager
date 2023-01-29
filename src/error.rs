@@ -78,12 +78,10 @@ pub enum FileError {
     /// File contents could not be parsed as JSON.
     #[error("Error parsing file contents: {}", .0)]
     Parse(#[from] serde_json::Error),
-    // An error occurred joining reads.
-    #[error("Join error")]
-    JoinError,
     // A path could not be converted to a string.
     #[error("Path conversion to string failed")]
     PathError,
+    /// Error with system time.
     #[error("System time failure: {}", .0)]
     SystemTime(SystemTimeError),
 }
