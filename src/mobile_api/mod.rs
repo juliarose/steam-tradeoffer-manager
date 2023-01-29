@@ -128,7 +128,6 @@ impl MobileAPI {
         )?;
         let mut params: HashMap<&str, String> = HashMap::new();
         
-        // self.device_id.clone()
         params.insert("p", helpers::get_device_id(&self.steamid));
         params.insert("a", u64::from(self.steamid).to_string());
         params.insert("k", key);

@@ -1,4 +1,5 @@
 pub mod response;
+
 mod response_wrappers;
 mod helpers;
 
@@ -1075,26 +1076,33 @@ pub async fn get_inventory(
     let mut inventory: Inventory = Vec::new();
     
     for body in responses {
-        for item in &body.assets {
-            let classinfo = body.descriptions.get(&(item.classid, item.instanceid))
-                .ok_or_else(|| Error::MissingClassInfo(MissingClassInfoError {
-                    appid,
-                    classid: item.classid,
-                    instanceid: item.instanceid,
-                }))?;
-            
-            if tradable_only && !classinfo.tradable {
-                continue;
-            }
-            
-            inventory.push(Asset {
-                appid,
-                contextid,
-                assetid: item.assetid,
-                amount: item.amount,
-                classinfo: Arc::clone(classinfo),
-            });
-        }
+        let mut items = body.assets
+            .iter()
+            .filter_map(|item| {
+                let classinfo_result = body.descriptions.get(&(item.classid, item.instanceid))
+                    .ok_or_else(|| Error::MissingClassInfo(MissingClassInfoError {
+                        appid,
+                        classid: item.classid,
+                        instanceid: item.instanceid,
+                    }));
+                
+                match classinfo_result {
+                    Ok(ref classinfo) if tradable_only && !classinfo.tradable => {
+                        None
+                    },
+                    Ok(classinfo) => Some(Ok(Asset {
+                        appid,
+                        contextid,
+                        assetid: item.assetid,
+                        amount: item.amount,
+                        classinfo: Arc::clone(classinfo),
+                    })),
+                    Err(error) => Some(Err(error)),
+                }
+            })
+            .collect::<Result<_, _>>()?;
+        
+        inventory.append(&mut items);
     }
     
     Ok(inventory)
