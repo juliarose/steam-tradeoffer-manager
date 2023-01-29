@@ -2,7 +2,7 @@
 //! 
 //! Makes Steam trade offers easy!
 //! 
-//! Based on the excellent [`node-steam-tradeoffer-manager`](https://github.com/DoctorMcKay/node-steam-tradeoffer-manager).
+//! Based on the excellent [node-steam-tradeoffer-manager](https://github.com/DoctorMcKay/node-steam-tradeoffer-manager).
 //! 
 //! ## Features
 //! 
