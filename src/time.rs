@@ -4,7 +4,7 @@ use chrono::{NaiveDateTime, DateTime, Utc, Duration};
 /// The datetime formated used for requests and responses.
 pub type ServerTime = DateTime<Utc>;
 
-/// Converts a unix timestamp to a [DateTime].
+/// Converts a unix timestamp to a [`DateTime`].
 pub fn timestamp_to_server_time(timestamp: i64) -> ServerTime {
     // I'm not sure when this would ever fail, so hopefully it never fails
     let naive_data_time = NaiveDateTime::from_timestamp_opt(
