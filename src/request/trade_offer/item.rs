@@ -4,15 +4,15 @@ use crate::{serializers::string, response::Asset, types::{AppId, ContextId, Asse
 /// An item to send in a trade offer.
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct NewTradeOfferItem {
-    /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
+    /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
     #[serde(with = "string")]
-    /// The context id.
+    /// The context ID.
     pub contextid: ContextId,
     #[serde(with = "string")]
-    /// The unique asset ID. This value is unique to the item's appid and contextid.
+    /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
     pub assetid: AssetId,
-    /// The amount. If this item is not stackable the amount will be 1.
+    /// The amount. If this item is not stackable the amount will be `1`.
     pub amount: Amount,
 }
 

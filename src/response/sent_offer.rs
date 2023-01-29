@@ -5,7 +5,7 @@ use crate::{types::TradeOfferId, serializers::string};
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SentOffer {
     #[serde(with = "string")]
-    /// The ID of the offer.
+    /// The ID of the offer sent.
     pub tradeofferid: TradeOfferId,
     #[serde(default)]
     /// Whether the offer needs mobile confirmation or not.

@@ -29,25 +29,38 @@ pub struct Trade {
     pub assets_received: Vec<TradeAsset>,
 }
 
+impl Default for Trade {
+    fn default() -> Self {
+        Trade {
+            tradeid: 0,
+            steamid_other: SteamID::from(0),
+            time_init: chrono::Utc::now(),
+            status: TradeStatus::Complete,
+            assets_given: Vec::new(),
+            assets_received: Vec::new(),
+        }
+    }
+}
+
 /// An asset belonging to a trade.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TradeAsset {
     #[serde(with = "string")]
-    /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
+    /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
-    /// The context id.
+    /// The context ID.
     pub contextid: ContextId,
     #[serde(with = "string")]
-    /// The unique asset ID. This value is unique to the item's appid and contextid.
+    /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
     pub assetid: AssetId,
     #[serde(with = "string")]
-    /// The amount. If this item is not stackable the amount will be 1.
+    /// The amount. If this item is not stackable the amount will be `1`.
     pub amount: Amount,
     #[serde(with = "string")]
-    /// The context id of the item received.
+    /// The context ID of the item received.
     pub new_contextid: ContextId,
     #[serde(with = "string")]
-    /// The unique asset ID of the item received. This value is unique to the item's appid and contextid.
+    /// The unique asset ID of the item received. This value is unique to the item's `appid` and `contextid`.
     pub new_assetid: AssetId,
     /// The [`ClassInfo`] containing names, descriptions and other details about the item.
     pub classinfo: Arc<ClassInfo>,

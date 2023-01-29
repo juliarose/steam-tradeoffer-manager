@@ -8,7 +8,8 @@ use crate::{
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ClassInfo {
     #[serde(default)]
-    /// The item's app ID. some cases this is included
+    /// The item's app ID. This is included when including descriptions in the `GetTradeOffers` 
+    /// and `GetTradeHistory` response.
     pub appid: Option<AppId>,
     #[serde(with = "string")]
     /// The ID for this classinfo.
@@ -16,13 +17,13 @@ pub struct ClassInfo {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "option_string_0_as_none")]
-    /// The specific instance for this classinfo.
+    /// The specific instance ID for this classinfo.
     pub instanceid: InstanceId,
     /// The name of the item.
     pub name: String,
     /// The name of the item on the Steam Community Market.
     pub market_name: String,
-    /// The market hash name. This is used to link to the on the Steam Community Market.
+    /// The market hash name. This is used to link to the item on the Steam Community Market.
     pub market_hash_name: String,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -74,13 +75,13 @@ pub struct ClassInfo {
     /// Actions for this item.
     pub actions: Vec<Action>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    /// This contains extra data from the app's internal schema and is sometimes missing depending 
-    /// on which endpoint was used.
+    /// This contains extra data from the app's internal schema. This is only included in the 
+    /// `GetAssetClassInfo` and `inventory/json` responses.
     pub app_data: AppData,
 }
 
 impl ClassInfo {
-    /// Convenience method for getting a value out of app_data.
+    /// Convenience method for getting a value from `app_data`.
     pub fn get_app_data_value(&self, key: &str) -> Option<&serde_json::Value> {
         if let Some(app_data) = &self.app_data {
             app_data.get(key)
@@ -89,24 +90,28 @@ impl ClassInfo {
         }
     }
     
-    /// Convenience method for getting a value out of app_data. Parses string into generic.
+    /// Convenience method for parsing a value from `app_data`. Parses string values into any 
+    /// generic that implements [`std::str::FromStr`].
     pub fn get_app_data_value_parsed<T>(&self, key: &str) -> Option<T>
     where
         T: std::str::FromStr,
     {
         if let Some(app_data) = &self.app_data {
-            app_data.get(key).and_then(parse_value)
+            app_data.get(key).and_then(|value| match value {
+                serde_json::Value::String(string) => string.parse::<T>().ok(),
+                _ => None,
+            })
         } else {
             None
         }
     }
     
-    /// Gets def_index value out of app_data parsed as a u64.
+    /// Gets `def_index` value out of app_data parsed as a `u64`.
     pub fn get_app_data_defindex(&self) -> Option<u64> {
         self.get_app_data_value_parsed("def_index")
     }
     
-    /// Gets quality value out of app_data parsed as a u64.
+    /// Gets `quality` value out of app_data parsed as a `u64`.
     pub fn get_app_data_quality(&self) -> Option<u64> {
         self.get_app_data_value_parsed("quality")
     }
@@ -118,6 +123,7 @@ pub type Color = String;
 /// A description.
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Description {
+    /// The description message.
     pub value: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// A string representing the color e.g. `"FFFFFF"`
@@ -143,14 +149,14 @@ impl Description {
 /// A tag.
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Tag {
-    /// The game's internal name of this tag; e.g. for Team Fortress 2 items: "Unique" for items 
+    /// The game's internal name of this tag e.g. for Team Fortress 2 items: "Unique" for items 
     /// under the "Quality" category or "primary" for items under the "Type" category.
     pub internal_name: String,
     #[serde(alias = "localized_tag_name")]
-    /// The name of this tag; e.g. for Team Fortress 2 items: "Unique" for items under the 
+    /// The name of this tag e.g. for Team Fortress 2 items: "Unique" for items under the 
     /// "Quality" category or "Primary weapon" for items under the "Type" category.
     pub name: String,
-    /// The category of this tag; e.g. for Team Fortress the "Quality" category.
+    /// The category of this tag e.g. for Team Fortress the "Quality" category.
     pub category: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The color associated with this tag.
@@ -174,16 +180,6 @@ pub struct Action {
 
 /// App data.
 pub type AppData = Option<serde_json::Map<String, serde_json::value::Value>>;
-
-fn parse_value<T>(value: &serde_json::Value) -> Option<T> 
-where
-    T: std::str::FromStr,
-{
-    match value {
-        serde_json::Value::String(string) => string.parse::<T>().ok(),
-        _ => None,
-    }
-}
 
 mod tests {
     #[test]

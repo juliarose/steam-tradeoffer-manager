@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 use steamid_ng::SteamID;
 use chrono::serde::ts_seconds;
 use crate::{
-    response,
+    response::{TradeOffer, Asset, Trade, TradeAsset},
     ServerTime,
     error::MissingClassInfoError,
     enums::{TradeStatus, ConfirmationMethod, TradeOfferState},
@@ -19,15 +19,15 @@ pub struct RawTradeOffer {
     pub tradeofferid: TradeOfferId,
     #[serde(default)]
     #[serde(with = "option_string")]
-    /// The trade ID for this offer. This should be present when the state of the offer is
-    /// "Accepted".
+    /// The trade ID for this offer. This should be present when the `trade_offer_state` of this 
+    /// offer is [`TradeOfferState::Accepted`].
     pub tradeid: Option<TradeId>,
     /// The [`SteamID`] of our partner.
     pub accountid_other: u32,
     #[serde(default)]
     #[serde(deserialize_with = "empty_string_is_none")]
-    /// The message included in the offer. If the message is empty or not present this will
-    /// be `None`.
+    /// The message included in the offer. If the message is empty or not present this will be 
+    /// `None`.
     pub message: Option<String>,
     #[serde(default)]
     /// The items we're receiving in this offer.
@@ -60,20 +60,20 @@ pub struct RawTradeOffer {
 }
 
 impl RawTradeOffer {
-    /// Attempts to combine this [`RawTradeOffer`] into a [`response::trade_offer::TradeOffer`] using the given map.
+    /// Attempts to combine this [`RawTradeOffer`] into a [`TradeOffer`] using the given map.
     pub fn try_combine_classinfos(
         self,
         map: &ClassInfoMap,
-    ) -> Result<response::TradeOffer, MissingClassInfoError> {
+    ) -> Result<TradeOffer, MissingClassInfoError> {
         fn collect_items(
             assets: Vec<RawAsset>,
             map: &ClassInfoMap,
-        ) -> Result<Vec<response::Asset>, MissingClassInfoError> {
+        ) -> Result<Vec<Asset>, MissingClassInfoError> {
             assets
                 .into_iter()
                 .map(|asset| {
                     if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
-                        Ok(response::Asset {
+                        Ok(Asset {
                             classinfo: Arc::clone(classinfo),
                             appid: asset.appid,
                             contextid: asset.contextid,
@@ -92,7 +92,7 @@ impl RawTradeOffer {
                 .collect()
         }
         
-        Ok(response::TradeOffer {
+        Ok(TradeOffer {
             items_to_give: collect_items(self.items_to_give, map)?,
             items_to_receive: collect_items(self.items_to_receive, map)?,
             tradeofferid: self.tradeofferid,
@@ -119,54 +119,46 @@ impl RawTradeOffer {
     pub fn is_glitched(&self) -> bool {
         self.items_to_receive.is_empty() && self.items_to_give.is_empty()
     }
-    
-    /// Whether the state of this offer can be modified. This is either active offers or offers 
-    /// that are in escrow.
-    pub fn state_is_changeable(&self) -> bool {
-        self.trade_offer_state == TradeOfferState::Active ||
-        self.trade_offer_state == TradeOfferState::InEscrow ||
-        self.trade_offer_state == TradeOfferState::CreatedNeedsConfirmation
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RawAsset {
-    /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
+    /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
     #[serde(with = "string")]
-    /// The context id.
+    /// The context ID.
     pub contextid: ContextId,
     #[serde(with = "string")]
-    /// The unique asset ID. This value is unique to the item's appid and contextid.
+    /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
     pub assetid: AssetId,
     #[serde(with = "string")]
     /// The ID of the classinfo.
     pub classid: ClassId,
     #[serde(with = "option_string_0_as_none")]
-    /// The specific instance ID of the classinfo.
+    /// The specific instance ID of the classinfo belonging to the class ID.
     pub instanceid: InstanceId,
     #[serde(with = "string")]
-    /// The amount. If this item is not stackable the amount will be 1.
+    /// The amount. If this item is not stackable the amount will be `1`.
     pub amount: Amount,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RawReceiptAsset {
-    /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
+    /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
-    /// The context id.
+    /// The context ID.
     pub contextid: ContextId,
     #[serde(with = "string", rename = "id")]
-    /// The unique asset ID. This value is unique to the item's appid and contextid.
+    /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
     pub assetid: AssetId,
     #[serde(with = "string")]
     /// The ID of the classinfo.
     pub classid: ClassId,
     #[serde(with = "option_string_0_as_none")]
-    /// The specific instance ID of the classinfo.
+    /// The specific instance ID of the classinfo belonging to the class ID.
     pub instanceid: InstanceId,
     #[serde(with = "string")]
-    /// The amount. If this item is not stackable the amount will be 1.
+    /// The amount. If this item is not stackable the amount will be `1`.
     pub amount: Amount,
 }
 
@@ -179,10 +171,10 @@ pub struct RawAssetOld {
     /// The ID of the classinfo.
     pub classid: ClassId,
     #[serde(with = "option_string_0_as_none")]
-    /// The specific instance ID of the classinfo.
+    /// The specific instance ID of the classinfo belonging to the class ID.
     pub instanceid: InstanceId,
     #[serde(with = "string")]
-    /// The amount. If this item is not stackable the amount will be 1.
+    /// The amount. If this item is not stackable the amount will be `1`.
     pub amount: Amount,
 }
 
@@ -207,46 +199,46 @@ pub struct RawTrade {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTradeAsset {
-    /// The appid e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
+    /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
     #[serde(with = "string")]
-    /// The context id.
+    /// The context ID.
     pub contextid: ContextId,
     #[serde(with = "string")]
-    /// The unique asset ID. This value is unique to the item's appid and contextid.
+    /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
     pub assetid: AssetId,
     #[serde(with = "string")]
     /// The ID of the classinfo.
     pub classid: ClassId,
     #[serde(with = "option_string_0_as_none")]
-    /// The specific instance ID of the classinfo.
+    /// The specific instance ID of the classinfo belonging to the class ID.
     pub instanceid: InstanceId,
     #[serde(with = "string")]
-    /// The amount. If this item is not stackable the amount will be 1.
+    /// The amount. If this item is not stackable the amount will be `1`.
     pub amount: Amount,
     #[serde(with = "string")]
-    /// The context id of the item received.
+    /// The context ID of the item received.
     pub new_contextid: ContextId,
     #[serde(with = "string")]
-    /// The unique asset ID of the item received. This value is unique to the item's appid and contextid.
+    /// The unique asset ID of the item received. This value is unique to the item's `appid` and `contextid`.
     pub new_assetid: AssetId,
 }
 
 impl RawTrade {
-    /// Attempts to combine this [`RawTradeOffer`] into a [`response::trade_offer::TradeOffer`] using the given map.
+    /// Attempts to combine this [`RawTradeOffer`] into a [`Trade`] using the given map.
     pub fn try_combine_classinfos(
         self,
         map: &ClassInfoMap,
-    ) -> Result<response::Trade, MissingClassInfoError> {
+    ) -> Result<Trade, MissingClassInfoError> {
         fn collect_items(
             assets: Vec<RawTradeAsset>,
             map: &ClassInfoMap,
-        ) -> Result<Vec<response::TradeAsset>, MissingClassInfoError> {
+        ) -> Result<Vec<TradeAsset>, MissingClassInfoError> {
             assets
                 .into_iter()
                 .map(|asset| {
                     if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
-                        Ok(response::TradeAsset {
+                        Ok(TradeAsset {
                             classinfo: Arc::clone(classinfo),
                             appid: asset.appid,
                             contextid: asset.contextid,
@@ -267,7 +259,7 @@ impl RawTrade {
                 .collect()
         }
         
-        Ok(response::Trade {
+        Ok(Trade {
             assets_given: collect_items(self.assets_given, map)?,
             assets_received: collect_items(self.assets_received, map)?,
             tradeid: self.tradeid,

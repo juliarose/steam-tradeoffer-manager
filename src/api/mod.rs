@@ -997,7 +997,7 @@ impl SteamTradeOfferAPI {
         Ok(inventory)
     }
     
-    /// Gets a user's inventory with more detailed clasinfo data using the GetAssetClassInfo API.
+    /// Gets a user's inventory which includes the `app_data` using the `GetAssetClassInfo` API.
     pub async fn get_inventory_with_classinfos(
         &self,
         steamid: &SteamID,

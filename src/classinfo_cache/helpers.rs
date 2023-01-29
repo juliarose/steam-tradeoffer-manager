@@ -5,7 +5,7 @@ use crate::{
     helpers::write_file_atomic,
 };
 use super::types::ClassInfoFile;
-use std::{path::{Path, PathBuf}, time::{SystemTime, UNIX_EPOCH}, collections::{HashMap, HashSet}};
+use std::{path::{Path, PathBuf}, collections::{HashMap, HashSet}};
 use futures::future::join_all;
 use tokio::task::JoinHandle;
 use serde_json;
@@ -21,7 +21,6 @@ async fn save_classinfo(
     
     let filepath = get_classinfo_file_path(
         &class,
-        false,
         data_directory,
     )?;
     
@@ -94,7 +93,7 @@ async fn load_classinfo(
     class: ClassInfoClass,
     data_directory: &Path, 
 ) -> Result<ClassInfoFile, FileError> {
-    let filepath = get_classinfo_file_path(&class, false, data_directory)?;
+    let filepath = get_classinfo_file_path(&class, data_directory)?;
     let data = async_fs::read_to_string(&filepath).await?;
     
     match serde_json::from_str::<ClassInfo>(&data) {
@@ -110,7 +109,6 @@ async fn load_classinfo(
 
 fn get_classinfo_file_path(
     class: &ClassInfoClass,
-    is_temp: bool,
     data_directory: &Path, 
 ) -> Result<PathBuf, FileError> {
     let (appid, classid, instanceid) = class;
@@ -118,23 +116,7 @@ fn get_classinfo_file_path(
         Some(instanceid) => *instanceid,
         None => 0,
     };
-    let filename: String = match is_temp {
-        true => {
-            match SystemTime::now().duration_since(UNIX_EPOCH) {
-                Ok(system_time) => {
-                    let timestamp = system_time.as_millis();
-                    
-                    Ok(format!("{}_{}_{}.json.{}.temp", appid, classid, instanceid, timestamp))
-                },
-                Err(error) => {
-                    Err(FileError::SystemTime(error))
-                },
-            }
-        },
-        false => {
-            Ok(format!("{}_{}_{}.json", appid, classid, instanceid))
-        },
-    }?;
+    let filename = format!("{}_{}_{}.json", appid, classid, instanceid);
     
     Ok(data_directory.join(filename))
 }

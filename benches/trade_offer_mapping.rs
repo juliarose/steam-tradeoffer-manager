@@ -7,18 +7,12 @@ use steam_tradeoffer_manager::{
     api::RawTradeOffer,
     error::FileError,
 };
-use std::{
-    path::{PathBuf, Path},
-    collections::HashSet,
-    time::{SystemTime, UNIX_EPOCH},
-    sync::{Arc, Mutex},
-};
+use std::{path::{PathBuf, Path}, collections::HashSet, sync::{Arc, Mutex}};
 
 type ClassInfoFile = (ClassInfoClass, ClassInfo);
 
 fn get_classinfo_file_path(
     class: &ClassInfoClass,
-    is_temp: bool,
     data_directory: &Path, 
 ) -> Result<PathBuf, FileError> {
     let (appid, classid, instanceid) = class;
@@ -26,23 +20,7 @@ fn get_classinfo_file_path(
         Some(instanceid) => *instanceid,
         None => 0,
     };
-    let filename: String = match is_temp {
-        true => {
-            match SystemTime::now().duration_since(UNIX_EPOCH) {
-                Ok(system_time) => {
-                    let timestamp = system_time.as_millis();
-                    
-                    Ok(format!("{}_{}_{}.json.{}.temp", appid, classid, instanceid, timestamp))
-                },
-                Err(error) => {
-                    Err(FileError::SystemTime(error))
-                },
-            }
-        },
-        false => {
-            Ok(format!("{}_{}_{}.json", appid, classid, instanceid))
-        },
-    }?;
+    let filename = format!("{}_{}_{}.json", appid, classid, instanceid);
     
     Ok(data_directory.join(filename))
 }
@@ -51,7 +29,7 @@ fn load_classinfo_sync(
     class: ClassInfoClass,
     data_directory: &PathBuf, 
 ) -> Result<ClassInfoFile, FileError> {
-    let filepath = get_classinfo_file_path(&class, false, data_directory)?;
+    let filepath = get_classinfo_file_path(&class, data_directory)?;
     let data = std::fs::read_to_string(&filepath)?;
     
     match serde_json::from_str::<ClassInfo>(&data) {

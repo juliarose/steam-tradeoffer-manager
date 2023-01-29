@@ -17,13 +17,13 @@ pub struct TradeOffer {
     /// The ID for this offer.
     pub tradeofferid: TradeOfferId,
     #[serde(with = "option_string")]
-    /// The trade ID for this offer. This should be present when the state of the offer is
-    /// "Accepted".
+    /// The trade ID for this offer. This should be present when the `trade_offer_state` of this 
+    /// offer is [`TradeOfferState::Accepted`].
     pub tradeid: Option<TradeId>,
     /// The [`SteamID`] of our partner.
     pub partner: SteamID,
-    /// The message included in the offer. If the message is empty or not present this will
-    /// be `None`.
+    /// The message included in the offer. If the message is empty or not present this will be 
+    /// `None`.
     pub message: Option<String>,
     /// The items we're receiving in this offer.
     pub items_to_receive: Vec<Asset>,
@@ -34,13 +34,13 @@ pub struct TradeOffer {
     /// Whether this offer originated from a real time trade.
     pub from_real_time_trade: bool,
     #[serde(with = "ts_seconds")]
-    /// The time before the offer expires if it has not been acted on.
-    pub expiration_time: ServerTime,
-    #[serde(with = "ts_seconds")]
     /// The time this offer was created.
     pub time_created: ServerTime,
     #[serde(with = "ts_seconds")]
-    /// The time this offer last had an action e.g. accepting or declining the offer.
+    /// The time before the offer expires if it has not been acted on.
+    pub expiration_time: ServerTime,
+    #[serde(with = "ts_seconds")]
+    /// The time this offer last was last acted on e.g. accepting or declining the offer.
     pub time_updated: ServerTime,
     /// The state of this offer.
     pub trade_offer_state: TradeOfferState,
@@ -87,13 +87,5 @@ impl TradeOffer {
     /// Checks whether the trade offer is glitched or not by checking if no items are present.
     pub fn is_glitched(&self) -> bool {
         self.items_to_receive.is_empty() && self.items_to_give.is_empty()
-    }
-    
-    /// Whether the state of this offer can be modified. This is either active offers or offers 
-    /// that are in escrow.
-    pub fn state_is_changeable(&self) -> bool {
-        self.trade_offer_state == TradeOfferState::Active ||
-        self.trade_offer_state == TradeOfferState::InEscrow ||
-        self.trade_offer_state == TradeOfferState::CreatedNeedsConfirmation
     }
 }
