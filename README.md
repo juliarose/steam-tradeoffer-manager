@@ -4,7 +4,7 @@ Makes Steam trade offers easy!
 
 Based on the excellent [`node-steam-tradeoffer-manager`](https://github.com/DoctorMcKay/node-steam-tradeoffer-manager).
 
-### Features
+## Features
 
 - Richly-featured API for creating, accepting, cancelling, and declining trade offers.
 - Manages account trade offer state.
@@ -16,10 +16,10 @@ Based on the excellent [`node-steam-tradeoffer-manager`](https://github.com/Doct
 - Uses [tokio](https://crates.io/crates/tokio) asynchronous runtime for performing polling.
 - And of course the blazingly fast performance and data integrity you'd expect from Rust.
 
-### Usage
+## Usage
 
 See [examples](https://github.com/juliarose/steam-tradeoffers/tree/main/examples).
 
-### License
+## License
 
 MIT
