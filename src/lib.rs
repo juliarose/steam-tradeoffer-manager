@@ -34,7 +34,6 @@ pub mod request;
 pub mod response;
 pub mod error;
 
-pub use mobile_api::Confirmation;
 pub use classinfo_cache::ClassInfoCache;
 pub use time::ServerTime;
 pub use manager::{

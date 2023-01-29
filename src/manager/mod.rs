@@ -13,9 +13,9 @@ use crate::{
     helpers::get_default_middleware,
     request::NewTradeOffer,
     enums::TradeOfferState,
-    mobile_api::{MobileAPI, Confirmation},
+    mobile_api::MobileAPI,
     types::{AppId, ContextId, TradeOfferId, TradeId},
-    response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Trade},
+    response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Trade, Confirmation},
 };
 use steamid_ng::SteamID;
 use tokio::{sync::mpsc, task::JoinHandle};

@@ -1,17 +1,14 @@
 // Most of the code here is taken from https://github.com/dyc3/steamguard-cli with some 
 // modifications to fit with the rest of this crate.
 
-mod confirmation;
 mod helpers;
-
-pub use confirmation::{Confirmation, ConfirmationType};
 
 use serde::Deserialize;
 use reqwest::cookie::Jar;
 use url::Url;
 use reqwest_middleware::ClientWithMiddleware;
 use std::{collections::HashMap, sync::{Arc, RwLock}};
-use crate::{SteamID, error::Error, helpers::parses_response};
+use crate::{SteamID, error::Error, helpers::parses_response, response::Confirmation};
 
 #[derive(Debug, Clone)]
 pub struct MobileAPI {
