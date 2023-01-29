@@ -234,6 +234,16 @@ impl TradeOfferManager {
         self.api.get_inventory_old(steamid, appid, contextid, tradable_only).await
     }
     
+    /// Gets our nventory.
+    pub async fn get_my_inventory(
+        &self,
+        appid: AppId,
+        contextid: ContextId,
+        tradable_only: bool,
+    ) -> Result<Vec<Asset>, Error> {
+        self.api.get_inventory(&self.steamid, appid, contextid, tradable_only).await
+    }
+    
     /// Gets a user's inventory.
     pub async fn get_inventory(
         &self,
