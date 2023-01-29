@@ -61,15 +61,15 @@ pub fn create_poller(
 ) {
     let steamid = api.steamid;
     let poll_data = file::load_poll_data(
-        &steamid,
+        &api.steamid,
         &data_directory,
     ).unwrap_or_else(|_| PollData::new());
-    // allows sending a message into the poller
+    // Allows sending a message into the poller.
     let (
         tx,
         mut rx,
     ) = mpsc::channel::<PollAction>(10);
-    // allows broadcasting polls outside of the poller
+    // Allows broadcasting polls outside of the poller.
     let (
         polling_tx,
         polling_rx,
@@ -86,7 +86,10 @@ pub fn create_poller(
         }));
         let receiver_poller = Arc::clone(&poller);
         let receiver_polling_tx = polling_tx.clone();
+        let poll_interval = options.poll_interval.to_std()
+            .unwrap_or_else(|_| std::time::Duration::from_secs(60 * 5));
         let handle = tokio::spawn(async move {
+            // To prevent spam.
             let mut poll_events: HashMap<PollType, DateTime<chrono::Utc>> = HashMap::new();
             
             while let Some(message) = rx.recv().await {
@@ -121,9 +124,6 @@ pub fn create_poller(
                 }
             }
         });
-        
-        let poll_interval = options.poll_interval.to_std()
-            .unwrap_or_else(|_| std::time::Duration::from_secs(60 * 5));
         
         loop {
             let poll = poller.lock().await.do_poll(PollType::Auto).await;
