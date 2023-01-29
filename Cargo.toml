@@ -39,6 +39,7 @@ thiserror = "1.0.30"
 log = "0.4.0"
 async-std = "1.12.0"
 unescape = "0.1.0"
+rand = "0.8"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }

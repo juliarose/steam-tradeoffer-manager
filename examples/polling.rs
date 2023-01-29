@@ -51,7 +51,7 @@ async fn handle_offer(
 #[tokio::main]
 async fn main() {
     let data_directory = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
-    let (steamid, api_key, sessionid, cookies) = get_session();
+    let (steamid, api_key, cookies) = get_session();
     let manager = TradeOfferManager::builder(
         steamid,
         api_key,
@@ -61,8 +61,8 @@ async fn main() {
         .build();
     let mut options = PollOptions::default();
     
-    // Cookies and sessionid are required to interact with trade offers.
-    manager.set_session(&sessionid, &cookies);
+    // Cookies are required to interact with trade offers.
+    manager.set_cookies(&cookies);
     // By default PollOptions does not have a cancel duration.
     options.cancel_duration = Some(Duration::minutes(30));
     
@@ -101,27 +101,18 @@ async fn main() {
 }
 
 /// Gets session from environment variable.
-fn get_session() -> (SteamID, String, String, Vec<String>) {
+fn get_session() -> (SteamID, String, Vec<String>) {
     dotenv::dotenv().ok();
     
     let api_key = std::env::var("API_KEY").expect("API_KEY missing");
     let sid_str = std::env::var("STEAMID")
         .unwrap_or_else(|_| panic!("STEAMID missing"));
     let steamid = SteamID::from(sid_str.parse::<u64>().unwrap());
-    let mut sessionid = None;
-    let mut cookies: Vec<String> = Vec::new();
-    let cookies_str = std::env::var("COOKIES")
-        .expect("COOKIES missing");
+    let cookies = std::env::var("COOKIES")
+        .expect("COOKIES missing")
+        .split('&')
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
     
-    for cookie in cookies_str.split('&') {
-        let mut split = cookie.split('=');
-        
-        if split.next().unwrap() == "sessionid" {
-            sessionid = Some(split.next().unwrap().to_string());
-        }
-        
-        cookies.push(cookie.to_string());
-    }
-    
-    (steamid, api_key, sessionid.unwrap(), cookies)
+    (steamid, api_key, cookies)
 }

@@ -1,6 +1,9 @@
 mod builder;
 mod polling;
+mod helpers;
 
+use helpers::generate_sessionid;
+use lazy_regex::regex_captures;
 pub use polling::{PollAction, Poll, PollResult, PollType, PollOptions, PollData};
 pub use builder::TradeOfferManagerBuilder;
 
@@ -72,13 +75,33 @@ impl TradeOfferManager {
     /// 
     /// **IMPORTANT:** If you passed in a client to the builder for this manager but did not also 
     /// pass in the cookies connected to the client this method will effectively do nothing.
-    pub fn set_session(
+    pub fn set_cookies(
         &self,
-        sessionid: &str,
         cookies: &Vec<String>,
     ) {
-        self.api.set_session(sessionid, cookies);
-        self.mobile_api.set_session(sessionid, cookies);
+        let mut cookies = cookies.clone();
+        let mut sessionid = None;
+        
+        for cookie in &cookies {
+            if let Some((_, key, value)) = regex_captures!(r#"([^=]+)=(.+)"#, cookie) {
+                if key == "sessionid" {
+                    sessionid = Some(value.to_string());
+                }
+            }
+        }
+        
+        let sessionid = if let Some(sessionid) = sessionid {
+            sessionid
+        } else {
+            // the cookies don't contain a sessionid
+            let sessionid = generate_sessionid();
+            
+            cookies.push(format!("sessionid={sessionid}"));
+            sessionid
+        };
+        
+        self.api.set_session(&sessionid, &cookies);
+        self.mobile_api.set_session(&sessionid, &cookies);
     }
     
     /// Accepts an offer. This checks if the offer can be acted on and updates the state of the 

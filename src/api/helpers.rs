@@ -56,7 +56,6 @@ pub fn parse_user_details(
         Ok((my_persona_name, them_persona_name))
     }
     
-    println!("{body}");
     if let Some((_, contents)) = regex_captures!(r#"\n\W*<script type="text/javascript">\W*\r?\n?(\W*var g_rgAppContextData[\s\S]*)</script>"#, body) {
         let my_escrow_days = get_days(
             regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, body)
