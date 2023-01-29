@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         2,
         true,
     ).await?;
-    let items = inventory.into_iter().take(5).collect::<Vec<_>>();
+    let items = inventory.into_iter().take(5);
     let offer = NewTradeOffer::builder(steamid_other)
         // Any items that implement Into<NewTradeOfferItem> are fine.
         .items_to_receive(items)
