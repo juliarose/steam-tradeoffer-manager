@@ -28,14 +28,22 @@ impl NewTradeOfferBuilder {
     }
     
     /// The items to give in this offer.
-    pub fn items_to_give(mut self, items: Vec<NewTradeOfferItem>) -> Self {
-        self.items_to_give = items;
+    pub fn items_to_give<T>(mut self, items: T) -> Self
+    where
+        T: IntoIterator,
+        T::Item: Into<NewTradeOfferItem>
+    {
+        self.items_to_give = items.into_iter().map(|i| i.into()).collect();
         self
     }
     
     /// The items to received in this offer.
-    pub fn items_to_receive(mut self, items: Vec<NewTradeOfferItem>) -> Self {
-        self.items_to_receive = items;
+    pub fn items_to_receive<T>(mut self, items: T) -> Self
+    where
+        T: IntoIterator,
+        T::Item: Into<NewTradeOfferItem>
+    {
+        self.items_to_receive = items.into_iter().map(|i| i.into()).collect();
         self
     }
     

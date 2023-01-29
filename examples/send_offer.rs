@@ -14,15 +14,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         api_key,
         data_directory,
     ).build();
+    let inventory = manager.get_inventory(
+        &steamid_other,
+        440,
+        2,
+        true,
+    ).await?;
+    let items = inventory.into_iter().take(5).collect::<Vec<_>>();
     let offer = NewTradeOffer::builder(steamid_other)
-        .items_to_receive(vec![
-            NewTradeOfferItem {
-                appid: 440,
-                contextid: 2,
-                amount: 1,
-                assetid: 11482399896,
-            },
-        ])
+        .items_to_receive(items)
+        // Alternatively you can explicitly define the items yourself. As long as the items passed 
+        // into the method implement Into<NewTradeOfferItem> they are fine.
+        // .items_to_receive(vec![
+        //     NewTradeOfferItem {
+        //         appid: 440,
+        //         contextid: 2,
+        //         amount: 1,
+        //         assetid: 11482399896,
+        //     },
+        // ])
         .build();
         
     manager.set_session(&sessionid, &cookies);

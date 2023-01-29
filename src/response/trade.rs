@@ -62,6 +62,6 @@ pub struct TradeAsset {
     #[serde(with = "string")]
     /// The unique asset ID of the item received. This value is unique to the item's `appid` and `contextid`.
     pub new_assetid: AssetId,
-    /// The [`ClassInfo`] containing names, descriptions and other details about the item.
+    /// The [`ClassInfo`] containing names, descriptions, and other details about the item.
     pub classinfo: Arc<ClassInfo>,
 }

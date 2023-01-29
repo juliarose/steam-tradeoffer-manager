@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use std::sync::Arc;
-use super::classinfo::ClassInfo;
+use super::{TradeAsset, ClassInfo};
 use crate::{serializers::string, types::{AppId, ContextId, AssetId, Amount, ClassInfoClass}};
 
 /// An asset which includes its related [`ClassInfo`] mapping.
@@ -17,13 +17,41 @@ pub struct Asset {
     #[serde(with = "string")]
     /// The amount. If this item is not stackable the amount will be `1`.
     pub amount: Amount,
-    /// The [`ClassInfo`] containing names, descriptions and other details about the item.
+    /// The [`ClassInfo`] containing names, descriptions, and other details about the item.
     pub classinfo: Arc<ClassInfo>,
 }
 
 impl Asset {
     /// The key used for [`ClassInfo`] data.
-    pub fn key(&self) -> ClassInfoClass {
+    pub fn class(&self) -> ClassInfoClass {
         (self.appid, self.classinfo.classid, self.classinfo.instanceid)
+    }
+}
+
+/// Converts a [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are taken from
+/// `new_contextid` and `new_assetid` respectively.
+impl From<TradeAsset> for Asset {
+    fn from(trade_asset: TradeAsset) -> Self {
+        Asset {
+            appid: trade_asset.appid,
+            contextid: trade_asset.new_contextid,
+            assetid: trade_asset.new_assetid,
+            amount: trade_asset.amount,
+            classinfo: trade_asset.classinfo,
+        }
+    }
+}
+
+/// Converts a borrowed [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are taken 
+/// from`new_contextid` and `new_assetid` respectively.
+impl From<&TradeAsset> for Asset {
+    fn from(trade_asset: &TradeAsset) -> Self {
+        Asset {
+            appid: trade_asset.appid,
+            contextid: trade_asset.new_contextid,
+            assetid: trade_asset.new_assetid,
+            amount: trade_asset.amount,
+            classinfo: Arc::clone(&trade_asset.classinfo),
+        }
     }
 }

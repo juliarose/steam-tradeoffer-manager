@@ -1,6 +1,6 @@
 # steam-tradeoffer-manager
 
-Makes Steam trade offers easy.
+Makes Steam trade offers easy!
 
 Everything is working and tested, but you may find some issues. Please open an issue if you do. This crate is being actively developed and is prone to change.
 
@@ -13,7 +13,7 @@ Everything is working and tested, but you may find some issues. Please open an i
 - Trade history.
 - Automatically cancels offers past a set duration during polls.
 - Loads descriptions (classinfos) for assets. Classinfos are cached to file and read when available. The manager holds a [Least frequently used (LFU) cache](https://en.wikipedia.org/wiki/Least_frequently_used) of classinfos in memory to reduce file reads.
-- Uses [tokio](https://crates.io/crates/tokio) asynchronous framework.
+- Uses [tokio](https://crates.io/crates/tokio) asynchronous runtime for performing polling.
 - And of course the blazingly fast performance and data integrity you'd expect from Rust.
 
 ## Usage
