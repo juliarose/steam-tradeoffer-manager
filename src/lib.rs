@@ -21,8 +21,7 @@
 //! See [examples](https://github.com/juliarose/steam-tradeoffers/tree/main/examples).
 
 mod manager;
-mod serializers;
-mod deserializers;
+mod serialize;
 mod mobile_api;
 mod helpers;
 mod classinfo_cache;

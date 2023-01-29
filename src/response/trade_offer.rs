@@ -4,7 +4,7 @@ use crate::{
     time::ServerTime,
     enums::{TradeOfferState, ConfirmationMethod},
     types::{TradeId, TradeOfferId},
-    serializers::{string, option_string},
+    serialize::{string, option_string},
 };
 use serde::{Deserialize, Serialize};
 use chrono::serde::{ts_seconds, ts_seconds_option};

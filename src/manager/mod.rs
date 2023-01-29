@@ -477,13 +477,13 @@ impl std::ops::Drop for TradeOfferManager {
 
 impl From<TradeOfferManagerBuilder> for TradeOfferManager {
     fn from(builder: TradeOfferManagerBuilder) -> Self {
-        let cookies = builder.cookies.unwrap_or_else(|| Arc::new(Jar::default()));
-        let client = builder.client.unwrap_or_else(|| {
-            get_default_middleware(
+        let cookies = builder.cookies
+            .unwrap_or_else(|| Arc::new(Jar::default()));
+        let client = builder.client
+            .unwrap_or_else(|| get_default_middleware(
                 Arc::clone(&cookies),
                 builder.user_agent,
-            )
-        });
+            ));
         
         Self {
             steamid: builder.steamid,

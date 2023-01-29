@@ -59,16 +59,10 @@ impl TradeOfferManagerBuilder {
         self
     }
     
-    /// The [ClassInfoCache] to use for this manager. Useful if instantiation multiple managers 
+    /// The [ClassInfoCache] to use for this manager. Useful if instantiating multiple managers 
     /// to share state.
     pub fn classinfo_cache(mut self, classinfo_cache: Arc<Mutex<ClassInfoCache>>) -> Self {
         self.classinfo_cache = classinfo_cache;
-        self
-    }
-    
-    /// The location to save data to.
-    pub fn data_directory(mut self, data_directory: PathBuf) -> Self {
-        self.data_directory = data_directory;
         self
     }
     
@@ -85,7 +79,8 @@ impl TradeOfferManagerBuilder {
         self
     }
     
-    /// User agent for requests. If you provided a client this is not needed.
+    /// User agent for requests. If you provided a client this is not needed as the user agent 
+    /// associated with the client is used.
     pub fn user_agent(mut self, user_agent: &'static str) -> Self {
         self.user_agent = user_agent;
         self

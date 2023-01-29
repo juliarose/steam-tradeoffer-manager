@@ -4,7 +4,7 @@ use crate::{
     response::ClassInfo,
     enums::TradeStatus,
     types::{TradeId, AppId, ContextId, AssetId, Amount},
-    serializers::string,
+    serialize::string,
 };
 use chrono::serde::ts_seconds;
 use serde::{self, Deserialize, Serialize};

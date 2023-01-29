@@ -7,8 +7,13 @@ use crate::{
     ServerTime,
     error::MissingClassInfoError,
     enums::{TradeStatus, ConfirmationMethod, TradeOfferState},
-    serializers::{string, option_string, option_string_0_as_none},
-    deserializers::{ts_seconds_option_none_when_zero, empty_string_is_none},
+    serialize::{
+        string,
+        option_string,
+        option_string_0_as_none,
+        ts_seconds_option_none_when_zero,
+        empty_string_is_none,
+    },
     types::*,
 };
 

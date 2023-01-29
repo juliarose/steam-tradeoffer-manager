@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use crate::{
-    types::{AppId, ClassId, InstanceId}, serializers::{string, option_string_0_as_none},
-    deserializers::{into_bool, hashmap_or_vec, from_fraudwarnings, string_or_number},
+    types::{AppId, ClassId, InstanceId}, serialize::{string, option_string_0_as_none},
+    serialize::{into_bool, hashmap_or_vec, from_fraudwarnings, string_or_number},
 };
 
 /// Contains details about an item including names and descriptions.

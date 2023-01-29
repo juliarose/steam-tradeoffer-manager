@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use crate::{types::TradeOfferId, serializers::string};
+use crate::{types::TradeOfferId, serialize::string};
 
 /// The result returned after sending a new trade offer.
 #[derive(Debug, Deserialize, Serialize, Clone)]
