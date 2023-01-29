@@ -8,7 +8,7 @@ mod currency;
 mod trade;
 mod confirmation;
 
-pub use confirmation::{Confirmation, ConfirmationType};
+pub use confirmation::Confirmation;
 pub use currency::Currency;
 pub use accepted_offer::AcceptedOffer;
 pub use user_details::{UserDetails, User};

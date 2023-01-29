@@ -1,4 +1,4 @@
-use crate::{SteamID, time, error::ParseHtmlError, response::{Confirmation, ConfirmationType}};
+use crate::{SteamID, time, error::ParseHtmlError, response::Confirmation, enums::ConfirmationType};
 use hmacsha1::hmac_sha1;
 use sha1::{Sha1, Digest};
 use lazy_regex::regex_replace_all;
