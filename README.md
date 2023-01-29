@@ -2,6 +2,8 @@
 
 Makes Steam trade offers easy!
 
+Based on the excellent [node-steam-tradeoffer-manager](https://github.com/DoctorMcKay/node-steam-tradeoffer-manager) module. 
+
 Everything is working and tested, but you may find some issues. Please open an issue if you do. This crate is being actively developed and is prone to change.
 
 ## Features
@@ -22,7 +24,7 @@ See [examples](https://github.com/juliarose/steam-tradeoffers/tree/main/examples
 
 ## Thanks
 
-Based on the excellent [node-steam-tradeoffer-manager](https://github.com/DoctorMcKay/node-steam-tradeoffer-manager) module. Thanks to https://github.com/dyc3/steamguard-cli (steamguard) for functionality relating to mobile confirmations.
+Thanks to https://github.com/dyc3/steamguard-cli (steamguard) for functionality relating to mobile confirmations.
 
 ## LICENSE
 
