@@ -11,7 +11,7 @@ pub struct NewTradeOfferBuilder {
     pub items_to_receive: Vec<NewTradeOfferItem>,
     /// The message to send in this offer.
     pub message: Option<String>,
-    /// The token for sending an offer if you are not friends with the partner.
+    /// The access token for sending an offer if you are not friends with the partner.
     pub token: Option<String>,
 }
 
@@ -39,6 +39,13 @@ impl NewTradeOfferBuilder {
         self
     }
     
+    /// The trade offer URL for sending an offer if you are not friends with the partner. 
+    /// Silently fails if the URL does not contain a token.
+    pub fn trade_offer_url(mut self, trade_offer_url: &str) -> Self {
+        self.token = parse_offer_access_token(trade_offer_url);
+        self
+    }
+    
     /// The token for sending an offer if you are not friends with the partner.
     pub fn token(mut self, token: String) -> Self {
         self.token = Some(token);
@@ -60,5 +67,43 @@ impl NewTradeOfferBuilder {
             message: self.message,
             token: self.token,
         }
+    }
+}
+        
+fn parse_offer_access_token(trade_offer_url: &str) -> Option<String> {
+    if let Ok(url) = url::Url::parse(trade_offer_url) {
+        let pairs = url.query_pairs();
+        let hostname = url.host_str();
+        
+        if hostname != Some("steamcommunity.com") {
+            return None;
+        }
+        
+        for (key, value) in pairs {
+            if key == std::borrow::Cow::Borrowed("token") {
+                if value.len() == 8 {
+                    return Some(value.to_string());
+                } else {
+                    // not a valid token
+                    return None;
+                }
+            }
+        }
+    }
+    
+    None
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn parses_trade_offer_url() {
+        let url = "https://steamcommunity.com/tradeoffer/new/?partner=0&token=TkA5KFkh";
+        let token = parse_offer_access_token(url).unwrap();
+        
+        assert_eq!(token, "TkA5KFkh");
     }
 }
