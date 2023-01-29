@@ -23,7 +23,7 @@ use url::Url;
 use reqwest::{cookie::Jar, header::REFERER};
 use lazy_regex::{regex_captures, regex_is_match};
 
-/// The underlying API.for [`crate::SteamTradeOfferManager`].
+/// The underlying API.for interacting with Steam trade offers.
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPI {
     /// The client for making requests.
@@ -255,7 +255,7 @@ impl SteamTradeOfferAPI {
         }
     }
     
-    /// Gets a chunk of [`response::class_info::ClassInfo`] data.
+    /// Gets a chunk of [`ClassInfo`] data.
     pub async fn get_app_asset_classinfos_chunk(
         &self,
         appid: AppId,
@@ -313,7 +313,7 @@ impl SteamTradeOfferAPI {
         Ok(classinfos)
     }
     
-    /// Gets [`response::class_info::ClassInfo`] data for appid.
+    /// Gets [`ClassInfo`] data for appid.
     async fn get_app_asset_classinfos(
         &self,
         appid: AppId,
@@ -330,7 +330,7 @@ impl SteamTradeOfferAPI {
         Ok(maps)
     }
     
-    /// Gets [`response::class_info::ClassInfo`] data for the given classes.
+    /// Gets [`ClassInfo`] data for the given classes.
     pub async fn get_asset_classinfos(
         &self,
         classes: &Vec<ClassInfoClass>,

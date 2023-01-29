@@ -35,7 +35,7 @@ pub struct TradeOfferManager {
     api: SteamTradeOfferAPI,
     /// The underlying API for mobile confirmations.
     mobile_api: MobileAPI,
-    /// The directory to store poll data and [`ClassInfo`] data.
+    /// The directory to store poll data and [`crate::response::ClassInfo`] data.
     data_directory: PathBuf,
     /// The sender for sending messages to polling
     polling: Arc<Mutex<Option<Polling>>>,
@@ -440,8 +440,8 @@ impl TradeOfferManager {
     }
     
     /// Sends a message to the poller to do a poll now. Returns an error if polling is not setup.
-    /// Remember to start polling using the [`start_polling`] method before calling this method.
-    /// The message will be ignored if a message with the same [`poll_type`] was sent within the 
+    /// Remember to start polling using the `start_polling` method before calling this method.
+    /// The message will be ignored if a message with the same [`PollType`] was sent within the 
     /// last half a second.
     pub fn do_poll(
         &self,

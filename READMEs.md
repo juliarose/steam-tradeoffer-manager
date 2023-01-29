@@ -1,5 +1,7 @@
 # steam-tradeoffer-manager
 
+## steam-tradeoffer-manager
+
 Makes Steam trade offers easy!
 
 Based on the excellent [`node-steam-tradeoffer-manager`](https://github.com/DoctorMcKay/node-steam-tradeoffer-manager).
@@ -20,6 +22,4 @@ Based on the excellent [`node-steam-tradeoffer-manager`](https://github.com/Doct
 
 See [examples](https://github.com/juliarose/steam-tradeoffers/tree/main/examples).
 
-### License
-
-MIT
+License: MIT

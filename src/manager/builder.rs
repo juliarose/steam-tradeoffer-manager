@@ -8,7 +8,7 @@ use reqwest_middleware::ClientWithMiddleware;
 pub struct TradeOfferManagerBuilder {
     /// Your account's Steam ID.
     pub steamid: SteamID,
-    /// Your account's API key from https://steamcommunity.com/dev/apikey
+    /// Your account's API key from <https://steamcommunity.com/dev/apikey>.
     pub api_key: String,
     /// The identity secret for the account (optional). Required for mobile confirmations.
     pub identity_secret: Option<String>,

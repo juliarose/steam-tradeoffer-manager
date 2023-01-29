@@ -19,7 +19,7 @@ pub struct PollOptions {
     /// not be cancelled if this is not set.
     pub cancel_duration: Option<Duration>,
     /// The duration after the last poll becomes stale and a new one must be obtained when 
-    /// polling using [`crate::PollType::Auto`]. Default is 4 minutes.
+    /// polling using [`crate::polling::PollType::Auto`]. Default is 4 minutes.
     pub full_poll_update_duration: Duration,
     /// Interval to poll at. Default is 30 seconds.
     pub poll_interval: Duration,
