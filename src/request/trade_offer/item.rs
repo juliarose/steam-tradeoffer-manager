@@ -84,8 +84,8 @@ impl From<&TradeAsset> for NewTradeOfferItem {
     fn from(asset: &TradeAsset) -> NewTradeOfferItem {
         NewTradeOfferItem {
             appid: asset.appid,
-            contextid: asset.contextid,
-            assetid: asset.assetid,
+            contextid: asset.new_contextid,
+            assetid: asset.new_contextid,
             amount: asset.amount,
         }
     }
@@ -110,8 +110,8 @@ impl From<&RawTradeAsset> for NewTradeOfferItem {
     fn from(raw_trade_asset: &RawTradeAsset) -> NewTradeOfferItem {
         NewTradeOfferItem {
             appid: raw_trade_asset.appid,
-            contextid: raw_trade_asset.contextid,
-            assetid: raw_trade_asset.assetid,
+            contextid: raw_trade_asset.new_contextid,
+            assetid: raw_trade_asset.new_contextid,
             amount: raw_trade_asset.amount,
         }
     }
