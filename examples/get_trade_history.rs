@@ -39,7 +39,7 @@ fn get_steamid(key: &str) -> SteamID {
     dotenv::dotenv().ok();
     
     let sid_str = std::env::var(key)
-        .unwrap_or_else(|_| panic!("{} missing", key));
+        .unwrap_or_else(|_| panic!("{key} missing"));
     
     SteamID::from(sid_str.parse::<u64>().unwrap())
 }

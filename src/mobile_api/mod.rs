@@ -66,7 +66,7 @@ impl MobileAPI {
         cookies: &Vec<String>,
     ) {
         let url = Self::HOSTNAME.parse::<Url>()
-            .expect(&format!("URL could not be parsed from {}", Self::HOSTNAME));
+            .unwrap_or_else(|_| panic!("URL could not be parsed from {}", Self::HOSTNAME));
         
         for cookie_str in cookies {
             self.cookies.add_cookie_str(cookie_str, &url);

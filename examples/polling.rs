@@ -34,16 +34,16 @@ async fn handle_offer(
             .collect()
     }
     
-    println!("New offer {}", offer);
+    println!("New offer {offer}");
     println!("Receiving: {:?}", assets_item_names(&offer.items_to_receive));
     println!("Giving: {:?}", assets_item_names(&offer.items_to_give));
     
     // free items
     if offer.items_to_give.is_empty() {
         if let Err(error) = accept_offer(manager, offer).await {
-            println!("Error accepting offer {}: {}", offer, error);
+            println!("Error accepting offer {offer}: {error}");
         } else {
-            println!("Accepted offer {}", offer);
+            println!("Accepted offer {offer}");
         }
     }
 }
@@ -94,7 +94,7 @@ async fn main() {
             },
             Err(error) => {
                 // If an error occurred during the poll.
-                println!("Error encountered polling offers: {}", error);
+                println!("Error encountered polling offers: {error}");
             },
         }
     }

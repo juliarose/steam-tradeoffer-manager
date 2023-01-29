@@ -93,7 +93,7 @@ impl SteamTradeOfferAPI {
         cookies: &Vec<String>,
     ) {
         let url = Self::HOSTNAME.parse::<Url>()
-            .expect(&format!("URL could not be parsed from {}", Self::HOSTNAME));
+            .unwrap_or_else(|_| panic!("URL could not be parsed from {}", Self::HOSTNAME));
         
         for cookie_str in cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
@@ -175,9 +175,7 @@ impl SteamTradeOfferAPI {
             })?;
             
             self.get_uri(&format!(
-                "/tradeoffer/{}?{}",
-                pathname,
-                qs_params
+                "/tradeoffer/{pathname}?{qs_params}"
             ))
         };
         let params = {
@@ -227,7 +225,7 @@ impl SteamTradeOfferAPI {
         &self,
         trade_id: &TradeId,
     ) -> Result<Vec<Asset>, Error> {
-        let uri = self.get_uri(&format!("/trade/{}/receipt", trade_id));
+        let uri = self.get_uri(&format!("/trade/{trade_id}/receipt"));
         let response = self.client.get(&uri)
             .send()
             .await?;
@@ -272,10 +270,10 @@ impl SteamTradeOfferAPI {
             ];
             
             for (i, (classid, instanceid)) in classes.iter().enumerate() {
-                query.push((format!("classid{}", i), classid.to_string()));
+                query.push((format!("classid{i}"), classid.to_string()));
                 
                 if let Some(instanceid) = instanceid {
-                    query.push((format!("instanceid{}", i), instanceid.to_string()));
+                    query.push((format!("instanceid{i}"), instanceid.to_string()));
                 }
             }
             
@@ -729,9 +727,7 @@ impl SteamTradeOfferAPI {
             })?;
             
             self.get_uri(&format!(
-                "/tradeoffer/{}?{}",
-                pathname,
-                qs_params
+                "/tradeoffer/{pathname}?{qs_params}"
             ))
         };
         let response = self.client.get(&uri)
@@ -764,7 +760,7 @@ impl SteamTradeOfferAPI {
         
         let sessionid = self.sessionid.read().unwrap().clone()
             .ok_or(Error::NotLoggedIn)?;
-        let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid));
+        let referer = self.get_uri(&format!("/tradeoffer/{tradeofferid}"));
         let params = AcceptOfferParams {
             sessionid,
             tradeofferid,
@@ -772,7 +768,7 @@ impl SteamTradeOfferAPI {
             serverid: 1,
             captcha: "",
         };
-        let uri = self.get_uri(&format!("/tradeoffer/{}/accept", tradeofferid));
+        let uri = self.get_uri(&format!("/tradeoffer/{tradeofferid}/accept"));
         let response = self.client.post(&uri)
             .header(REFERER, referer)
             .form(&params)
@@ -801,8 +797,8 @@ impl SteamTradeOfferAPI {
         
         let sessionid = self.sessionid.read().unwrap().clone()
             .ok_or(Error::NotLoggedIn)?;
-        let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid));
-        let uri = self.get_uri(&format!("/tradeoffer/{}/decline", tradeofferid));
+        let referer = self.get_uri(&format!("/tradeoffer/{tradeofferid}"));
+        let uri = self.get_uri(&format!("/tradeoffer/{tradeofferid}/decline"));
         let response = self.client.post(&uri)
             .header(REFERER, referer)
             .form(&DeclineOfferParams {
@@ -833,8 +829,8 @@ impl SteamTradeOfferAPI {
         
         let sessionid = self.sessionid.read().unwrap().clone()
             .ok_or(Error::NotLoggedIn)?;
-        let referer = self.get_uri(&format!("/tradeoffer/{}", tradeofferid));
-        let uri = self.get_uri(&format!("/tradeoffer/{}/cancel", tradeofferid));
+        let referer = self.get_uri(&format!("/tradeoffer/{tradeofferid}"));
+        let uri = self.get_uri(&format!("/tradeoffer/{tradeofferid}/cancel"));
         let response = self.client.post(&uri)
             .header(REFERER, referer)
             .form(&CancelOfferParams {
@@ -865,8 +861,8 @@ impl SteamTradeOfferAPI {
         let mut responses: Vec<GetInventoryOldResponse> = Vec::new();
         let mut start: Option<u64> = None;
         let sid = u64::from(*steamid);
-        let uri = self.get_uri(&format!("/profiles/{}/inventory/json/{}/{}", sid, appid, contextid));
-        let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
+        let uri = self.get_uri(&format!("/profiles/{sid}/inventory/json/{appid}/{contextid}"));
+        let referer = self.get_uri(&format!("/profiles/{sid}/inventory"));
         
         loop {
             let response = self.client.get(&uri)
@@ -938,8 +934,8 @@ impl SteamTradeOfferAPI {
         let mut responses: Vec<GetInventoryResponse> = Vec::new();
         let mut start_assetid: Option<u64> = None;
         let sid = u64::from(*steamid);
-        let uri = self.get_uri(&format!("/inventory/{}/{}/{}", sid, appid, contextid));
-        let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
+        let uri = self.get_uri(&format!("/inventory/{sid}/{appid}/{contextid}"));
+        let referer = self.get_uri(&format!("/profiles/{sid}/inventory"));
         
         loop {
             let response = self.client.get(&uri)
@@ -1015,8 +1011,8 @@ impl SteamTradeOfferAPI {
         let mut responses: Vec<GetInventoryResponseIgnoreDescriptions> = Vec::new();
         let mut start_assetid: Option<u64> = None;
         let sid = u64::from(*steamid);
-        let uri = self.get_uri(&format!("/inventory/{}/{}/{}", sid, appid, contextid));
-        let referer = self.get_uri(&format!("/profiles/{}/inventory", sid));
+        let uri = self.get_uri(&format!("/inventory/{sid}/{appid}/{contextid}"));
+        let referer = self.get_uri(&format!("/profiles/{sid}/inventory"));
         
         loop {
             let response = self.client.get(&uri)

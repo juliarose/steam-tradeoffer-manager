@@ -29,15 +29,15 @@ pub fn get_device_id(steamid: &SteamID) -> String {
     
     let result = hasher.finalize();
     let hash = result.iter()
-        .map(|b| format!("{:02x}", b))
+        .map(|b| format!("{b:02x}"))
         .collect::<String>();
     let device_id = regex_replace_all!(
         r#"^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12}).*$"#i,
         &hash,
-        |_, a, b, c, d, e| format!("{}-{}-{}-{}-{}", a, b, c, d, e),
+        |_, a, b, c, d, e| format!("{a}-{b}-{c}-{d}-{e}"),
     );
     
-    format!("android:{}", device_id)
+    format!("android:{device_id}")
 }
 
 pub fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlError> {

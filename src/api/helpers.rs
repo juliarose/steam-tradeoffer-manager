@@ -21,7 +21,7 @@ pub fn from_raw_receipt_asset(
             assetid: asset.assetid,
             amount: asset.amount,
         })
-        .ok_or_else(|| MissingClassInfoError {
+        .ok_or(MissingClassInfoError {
             appid: asset.appid,
             classid: asset.classid,
             instanceid: asset.instanceid,
@@ -44,11 +44,11 @@ pub fn parse_user_details(
     }
     
     fn get_persona_names(contents: &str) -> Result<(String, String), ParseHtmlError> {
-        let my_persona_name = regex_captures!(r#"var g_strYourPersonaName = "(.*)";\n"#, &contents)
+        let my_persona_name = regex_captures!(r#"var g_strYourPersonaName = "(.*)";\n"#, contents)
             .map(|(_, name)| unescape(name))
             .flatten()
             .ok_or_else(|| ParseHtmlError::Malformed("Missing persona name for me"))?;
-        let them_persona_name = regex_captures!(r#"var g_strTradePartnerPersonaName = "(.*)";\n"#, &contents)
+        let them_persona_name = regex_captures!(r#"var g_strTradePartnerPersonaName = "(.*)";\n"#, contents)
             .map(|(_, name)| unescape(name))
             .flatten()
             .ok_or_else(|| ParseHtmlError::Malformed("Missing persona name for them"))?;
@@ -56,13 +56,13 @@ pub fn parse_user_details(
         Ok((my_persona_name, them_persona_name))
     }
     
-    println!("{}", body);
-    if let Some((_, contents)) = regex_captures!(r#"\n\W*<script type="text/javascript">\W*\r?\n?(\W*var g_rgAppContextData[\s\S]*)</script>"#, &body) {
+    println!("{body}");
+    if let Some((_, contents)) = regex_captures!(r#"\n\W*<script type="text/javascript">\W*\r?\n?(\W*var g_rgAppContextData[\s\S]*)</script>"#, body) {
         let my_escrow_days = get_days(
-            regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, &body)
+            regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, body)
         );
         let them_escrow_days = get_days(
-            regex_captures!(r#"var g_daysTheirEscrow = (\d+);"#, &body)
+            regex_captures!(r#"var g_daysTheirEscrow = (\d+);"#, body)
         );
         let (
             my_persona_name,
