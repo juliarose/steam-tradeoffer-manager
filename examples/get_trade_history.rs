@@ -9,9 +9,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         steamid,
         api_key,
         data_directory,
-    )
-        .identity_secret(String::from("secret"))
-        .build();
+    ).build();
     let (trades, _more) = manager.get_trade_history(
         1,
         None,
