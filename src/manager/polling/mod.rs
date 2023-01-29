@@ -8,7 +8,7 @@ pub use poller::{PollResult, Poll, PollType};
 pub use poll_data::PollData;
 
 use crate::api::SteamTradeOfferAPI;
-use std::{path::PathBuf, collections::HashMap, sync::{atomic::{Ordering, AtomicBool}, Arc}};
+use std::{path::PathBuf, collections::HashMap, sync::Arc};
 use chrono::{Duration, DateTime};
 use tokio::{sync::{Mutex, mpsc}, task::JoinHandle};
 
@@ -86,8 +86,6 @@ pub fn create_poller(
         }));
         let receiver_poller = Arc::clone(&poller);
         let receiver_polling_tx = polling_tx.clone();
-        let is_listening = Arc::new(AtomicBool::new(true));
-        let receiver_is_listing = Arc::clone(&is_listening);
         let handle = tokio::spawn(async move {
             let mut poll_events: HashMap<PollType, DateTime<chrono::Utc>> = HashMap::new();
             
@@ -122,19 +120,12 @@ pub fn create_poller(
                     },
                 }
             }
-            
-            // The client is no longer reading new messages
-            receiver_is_listing.store(false, Ordering::Relaxed);
         });
         
         let poll_interval = options.poll_interval.to_std()
             .unwrap_or_else(|_| std::time::Duration::from_secs(60 * 5));
         
         loop {
-            if !is_listening.load(Ordering::Relaxed) {
-                break;
-            }
-            
             let poll = poller.lock().await.do_poll(PollType::Auto).await;
             
             match polling_tx.send(poll).await {
