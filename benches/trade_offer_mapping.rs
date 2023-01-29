@@ -4,7 +4,7 @@ use steam_tradeoffer_manager::{
     types::{ClassInfoMap, ClassInfoClass},
     ClassInfoCache,
     response::ClassInfo,
-    api::RawTradeOffer,
+    api::response::RawTradeOffer,
     error::FileError,
 };
 use std::{path::{PathBuf, Path}, collections::HashSet, sync::{Arc, Mutex}};

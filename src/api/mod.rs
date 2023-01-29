@@ -1,9 +1,8 @@
-mod response;
+pub mod response;
 mod response_wrappers;
 mod helpers;
 
-pub use response::*;
-
+use response::*;
 use response_wrappers::*;
 use crate::response::*;
 use reqwest_middleware::ClientWithMiddleware;
@@ -923,74 +922,15 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<Asset>, Error> { 
-        #[derive(Serialize, Debug)]
-        struct Query<'a> {
-            l: &'a str,
-            count: u32,
-            start_assetid: Option<u64>,
-        }
-        
-        let mut responses: Vec<GetInventoryResponse> = Vec::new();
-        let mut start_assetid: Option<u64> = None;
-        let sid = u64::from(*steamid);
-        let uri = self.get_uri(&format!("/inventory/{sid}/{appid}/{contextid}"));
-        let referer = self.get_uri(&format!("/profiles/{sid}/inventory"));
-        
-        loop {
-            let response = self.client.get(&uri)
-                .header(REFERER, &referer)
-                .query(&Query {
-                    l: &self.language,
-                    count: 2000,
-                    start_assetid,
-                })
-                .send()
-                .await?;
-            let body: GetInventoryResponse = parses_response(response).await?;
-            
-            if !body.success {
-                return Err(Error::ResponseUnsuccessful);
-            } else if body.more_items {
-                // shouldn't occur, but we wouldn't want to call this endlessly if it does...
-                if body.last_assetid == start_assetid {
-                    return Err(Error::MalformedResponse);
-                }
-                
-                start_assetid = body.last_assetid;
-                responses.push(body);
-            } else {
-                responses.push(body);
-                break;
-            }
-        }
-        
-        let mut inventory: Inventory = Vec::new();
-        
-        for body in responses {
-            for item in &body.assets {
-                let classinfo = body.descriptions.get(&(item.classid, item.instanceid))
-                    .ok_or_else(|| Error::MissingClassInfo(MissingClassInfoError {
-                        appid,
-                        classid: item.classid,
-                        instanceid: item.instanceid,
-                    }))?;
-                
-                if tradable_only && !classinfo.tradable {
-                    continue;
-                }
-                
-                inventory.push(Asset {
-                    appid,
-                    contextid,
-                    assetid: item.assetid,
-                    amount: item.amount,
-                    classinfo: Arc::clone(classinfo),
-                });
-            }
-        }
-        
-        Ok(inventory)
+    ) -> Result<Vec<Asset>, Error> {
+        get_inventory(
+            &self.client,
+            steamid,
+            appid,
+            contextid,
+            tradable_only,
+            &self.language,
+        ).await
     }
     
     /// Gets a user's inventory which includes the `app_data` using the `GetAssetClassInfo` API.
@@ -1078,4 +1018,84 @@ impl SteamTradeOfferAPI {
         
         Ok(inventory)
     }
+}
+
+/// A stand-alone method for getting a user's inventory.
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::too_many_arguments))]
+pub async fn get_inventory(
+    client: &Client,
+    steamid: &SteamID,
+    appid: AppId,
+    contextid: ContextId,
+    tradable_only: bool,
+    language: &str,
+) -> Result<Vec<Asset>, Error> { 
+    #[derive(Serialize, Debug)]
+    struct Query<'a> {
+        l: &'a str,
+        count: u32,
+        start_assetid: Option<u64>,
+    }
+    
+    let mut responses: Vec<GetInventoryResponse> = Vec::new();
+    let mut start_assetid: Option<u64> = None;
+    let sid = u64::from(*steamid);
+    let hostname = SteamTradeOfferAPI::HOSTNAME;
+    let uri = format!("{hostname}/inventory/{sid}/{appid}/{contextid}");
+    let referer = format!("{hostname}/profiles/{sid}/inventory");
+    
+    loop {
+        let response = client.get(&uri)
+            .header(REFERER, &referer)
+            .query(&Query {
+                l: &language,
+                count: 2000,
+                start_assetid,
+            })
+            .send()
+            .await?;
+        let body: GetInventoryResponse = parses_response(response).await?;
+        
+        if !body.success {
+            return Err(Error::ResponseUnsuccessful);
+        } else if body.more_items {
+            // shouldn't occur, but we wouldn't want to call this endlessly if it does...
+            if body.last_assetid == start_assetid {
+                return Err(Error::MalformedResponse);
+            }
+            
+            start_assetid = body.last_assetid;
+            responses.push(body);
+        } else {
+            responses.push(body);
+            break;
+        }
+    }
+    
+    let mut inventory: Inventory = Vec::new();
+    
+    for body in responses {
+        for item in &body.assets {
+            let classinfo = body.descriptions.get(&(item.classid, item.instanceid))
+                .ok_or_else(|| Error::MissingClassInfo(MissingClassInfoError {
+                    appid,
+                    classid: item.classid,
+                    instanceid: item.instanceid,
+                }))?;
+            
+            if tradable_only && !classinfo.tradable {
+                continue;
+            }
+            
+            inventory.push(Asset {
+                appid,
+                contextid,
+                assetid: item.assetid,
+                amount: item.amount,
+                classinfo: Arc::clone(classinfo),
+            });
+        }
+    }
+    
+    Ok(inventory)
 }

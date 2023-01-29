@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use crate::{
     serialize::string,
-    api::{RawTradeAsset, RawAsset},
+    api::response::{RawTradeAsset, RawAsset},
     response::{TradeAsset, Asset},
     types::{AppId, ContextId, AssetId, Amount},
 };
