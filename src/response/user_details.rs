@@ -48,7 +48,7 @@ mod tests {
             },
         };
 
-        assert_eq!(true, details.has_escrow());
+        assert!(details.has_escrow());
     }
     
     #[test]
