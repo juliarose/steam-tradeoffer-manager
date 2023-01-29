@@ -1079,7 +1079,8 @@ pub async fn get_inventory(
         let mut items = body.assets
             .iter()
             .filter_map(|item| {
-                let classinfo_result = body.descriptions.get(&(item.classid, item.instanceid))
+                let classinfo_result = body.descriptions
+                    .get(&(item.classid, item.instanceid))
                     .ok_or_else(|| Error::MissingClassInfo(MissingClassInfoError {
                         appid,
                         classid: item.classid,
