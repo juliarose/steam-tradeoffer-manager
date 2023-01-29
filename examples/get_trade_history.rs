@@ -1,4 +1,13 @@
-use steam_tradeoffer_manager::{TradeOfferManager, SteamID};
+use steam_tradeoffer_manager::{TradeOfferManager, SteamID, response::TradeAsset};
+
+fn assets_item_names<'a>(
+    assets: &'a Vec<TradeAsset>,
+) -> Vec<&'a str> {
+    assets
+        .iter()
+        .map(|item| item.classinfo.market_hash_name.as_ref())
+        .collect()
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,8 +26,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         false,
         false,
     ).await?;
+    let trade = trades.into_iter().next().unwrap();
     
-    println!("Last trade: {:?}", trades);
+    println!("Trade #{}", trade.tradeid);
+    println!("Received: {:?}", assets_item_names(&trade.assets_received));
+    println!("Given: {:?}", assets_item_names(&trade.assets_given));
     
     Ok(())
 }

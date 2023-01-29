@@ -48,3 +48,7 @@ criterion = "0.3"
 [[bench]]
 name = "trade_offer_mapping"
 harness = false
+
+[[bench]]
+name = "deserialize"
+harness = false
