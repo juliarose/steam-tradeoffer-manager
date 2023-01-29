@@ -59,7 +59,7 @@ impl TradeOfferManagerBuilder {
         self
     }
     
-    /// The [ClassInfoCache] to use for this manager. Useful if instantiating multiple managers 
+    /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
     /// to share state.
     pub fn classinfo_cache(mut self, classinfo_cache: Arc<Mutex<ClassInfoCache>>) -> Self {
         self.classinfo_cache = classinfo_cache;
