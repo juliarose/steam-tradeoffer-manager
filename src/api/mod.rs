@@ -90,7 +90,7 @@ impl SteamTradeOfferAPI {
     /// Sets cookies.
     pub fn set_cookies(
         &self,
-        cookies: &Vec<String>,
+        cookies: &[String],
     ) {
         let url = Self::HOSTNAME.parse::<Url>()
             .unwrap_or_else(|_| panic!("URL could not be parsed from {}", Self::HOSTNAME));
@@ -104,7 +104,7 @@ impl SteamTradeOfferAPI {
     pub fn set_session(
         &self,
         sessionid: &str,
-        cookies: &Vec<String>,
+        cookies: &[String],
     ) {
         *self.sessionid.write().unwrap() = Some(sessionid.to_string());
         self.set_cookies(cookies);
@@ -1049,7 +1049,7 @@ pub async fn get_inventory(
         let response = client.get(&uri)
             .header(REFERER, &referer)
             .query(&Query {
-                l: &language,
+                l: language,
                 count: 2000,
                 start_assetid,
             })
@@ -1088,7 +1088,7 @@ pub async fn get_inventory(
                     }));
                 
                 match classinfo_result {
-                    Ok(ref classinfo) if tradable_only && !classinfo.tradable => {
+                    Ok(classinfo) if tradable_only && !classinfo.tradable => {
                         None
                     },
                     Ok(classinfo) => Some(Ok(Asset {

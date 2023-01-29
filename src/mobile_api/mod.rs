@@ -60,7 +60,7 @@ impl MobileAPI {
     /// Sets cookies.
     pub fn set_cookies(
         &self,
-        cookies: &Vec<String>,
+        cookies: &[String],
     ) {
         let url = Self::HOSTNAME.parse::<Url>()
             .unwrap_or_else(|_| panic!("URL could not be parsed from {}", Self::HOSTNAME));
@@ -74,7 +74,7 @@ impl MobileAPI {
     pub fn set_session(
         &self,
         sessionid: &str,
-        cookies: &Vec<String>,
+        cookies: &[String],
     ) {
         *self.sessionid.write().unwrap() = Some(sessionid.to_string());
         self.set_cookies(cookies);

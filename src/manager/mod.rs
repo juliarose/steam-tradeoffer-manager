@@ -71,15 +71,15 @@ impl TradeOfferManager {
         )
     }
     
-    /// Sets the session and cookies.
+    /// Sets cookies.
     /// 
     /// **IMPORTANT:** If you passed in a client to the builder for this manager but did not also 
     /// pass in the cookies connected to the client this method will effectively do nothing.
     pub fn set_cookies(
         &self,
-        cookies: &Vec<String>,
+        cookies: &[String],
     ) {
-        let mut cookies = cookies.clone();
+        let mut cookies = cookies.to_owned();
         let mut sessionid = None;
         
         for cookie in &cookies {
