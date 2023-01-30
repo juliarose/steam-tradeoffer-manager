@@ -17,7 +17,7 @@ use crate::{
     types::*,
     serialize::{string, steamid_as_string},
     helpers::parses_response,
-    error::{Error, MissingClassInfoError},
+    error::{Error, ParameterError, MissingClassInfoError},
     classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
     request::{NewTradeOffer, NewTradeOfferItem},
 };
@@ -162,7 +162,9 @@ impl SteamTradeOfferAPI {
         let num_items: usize = offer.items_to_give.len() + offer.items_to_receive.len();
 
         if num_items == 0 {
-            return Err(Error::Parameter("Cannot send an empty offer"));
+            return Err(Error::Parameter(
+                ParameterError::EmptyOffer
+            ));
         }
         
         let sessionid = self.sessionid.read().unwrap().clone()

@@ -10,7 +10,7 @@ pub use builder::TradeOfferManagerBuilder;
 use std::{sync::Mutex, path::PathBuf, sync::Arc};
 use crate::{
     time,
-    error::Error,
+    error::{ParameterError, Error},
     ServerTime,
     api::SteamTradeOfferAPI,
     helpers::get_default_middleware,
@@ -111,9 +111,13 @@ impl TradeOfferManager {
         offer: &mut TradeOffer,
     ) -> Result<AcceptedOffer, Error> {
         if offer.is_our_offer {
-            return Err(Error::Parameter("Cannot accept an offer that is ours"));
+            return Err(Error::Parameter(
+                ParameterError::CannotAcceptOfferThatIsOurs
+            ));
         } else if offer.trade_offer_state != TradeOfferState::Active {
-            return Err(Error::Parameter("Cannot accept an offer that is not active"));
+            return Err(Error::Parameter(
+                ParameterError::CannotAcceptOfferThatIsNotActive(offer.trade_offer_state)
+            ));
         }
         
         let accepted_offer = self.api.accept_offer(offer.tradeofferid, &offer.partner).await?;
@@ -129,7 +133,9 @@ impl TradeOfferManager {
         offer: &mut TradeOffer,
     ) -> Result<(), Error> {
         if !offer.is_our_offer {
-            return Err(Error::Parameter("Cannot cancel an offer we did not create"));
+            return Err(Error::Parameter(
+                ParameterError::CannotCancelOfferWeDidNotCreate
+            ));
         }
         
         self.api.cancel_offer(offer.tradeofferid).await?;
@@ -145,7 +151,9 @@ impl TradeOfferManager {
         offer: &mut TradeOffer,
     ) -> Result<(), Error> {
         if offer.is_our_offer {
-            return Err(Error::Parameter("Cannot decline an offer we created"));
+            return Err(Error::Parameter(
+                ParameterError::CannotDeclineOfferWeCreated
+            ));
         }
         
         self.api.decline_offer(offer.tradeofferid).await?;
@@ -291,13 +299,17 @@ impl TradeOfferManager {
     /// Gets the trade receipt (new items) upon completion of a trade.
     pub async fn get_receipt(&self, offer: &TradeOffer) -> Result<Vec<Asset>, Error> {
         if offer.trade_offer_state != TradeOfferState::Accepted {
-            Err(Error::Parameter(r#"Offer is not in "accepted" state"#))
+            Err(Error::Parameter(
+                ParameterError::NotInAcceptedState(offer.trade_offer_state)
+            ))
         } else if offer.items_to_receive.is_empty() {
             Ok(Vec::new())
         } else if let Some(tradeid) = offer.tradeid {
             self.api.get_receipt(&tradeid).await
         } else {
-            Err(Error::Parameter("Missing tradeid"))
+            Err(Error::Parameter(
+                ParameterError::MissingTradeId
+            ))
         }
     }
     

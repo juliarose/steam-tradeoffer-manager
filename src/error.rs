@@ -1,4 +1,4 @@
-use crate::types::{AppId, ClassId, InstanceId, TradeOfferId};
+use crate::{types::{AppId, ClassId, InstanceId, TradeOfferId}, enums::TradeOfferState};
 use std::{fmt, num::ParseIntError, time::SystemTimeError};
 use reqwest_middleware;
 
@@ -7,7 +7,7 @@ use reqwest_middleware;
 pub enum Error {
     /// An input parameter is missing or invalid.
     #[error("Invalid parameter: {}", .0)]
-    Parameter(&'static str),
+    Parameter(#[from] ParameterError),
     /// An unexpected response containing a message was received. Check the message for more 
     /// details.
     #[error("Unexpected response: {}", .0)]
@@ -36,37 +36,58 @@ pub enum Error {
     ResponseUnsuccessful,
     /// An HTML document could not be parsed from the response.
     #[error("Error parsing HTML document: {}", .0)]
-    Html(#[from] ParseHtmlError),
+    ParseHtml(#[from] ParseHtmlError),
     /// An error was encountered when sending or acting on trade offers.
     #[error("Trade error: {}", .0)]
     Trade(TradeOfferError),
+    /// A [`crate::response::ClassInfo`] is missing. For some reason a classinfo could not be 
+    /// obtained from Steam or the file system. This is rare but can sometimes occur if 
+    /// Steam's servers are having issues.
     #[error("{}", .0)]
-    /// A [`crate::response::ClassInfo`] is missing. For some reason a classinfo could not be obtained from Steam or 
-    /// the file system. This is rare but can sometimes occur if Steam's servers are having 
-    /// issues.
     MissingClassInfo(#[from] MissingClassInfoError),
     /// This trade offer has no confirmations.
     #[error("No confirmation for offer {}", .0)]
     NoConfirmationForOffer(TradeOfferId),
-    /// A poll was called within 1 second from the last poll.
-    #[error("Poll called too soon after last poll")]
-    PollCalledTooSoon,
     /// A number could not be decoded from base64. This means your identity_secret was used and is 
-    /// not valid a valid base64 number.
-    #[error("Invalid base64: {}", .0)]
-    Base64Decode(#[from] base64::DecodeError),
+    /// not a valid base64 number.
+    #[error("Identity secret is invalid base64: {}", .0)]
+    InvalidIdentitySecret(#[from] base64::DecodeError),
     /// A confirmation could not be confirmed.
     #[error("Confirmation unsuccessful. The confirmation may have succeeded, the confirmation no longer exists, or another trade may be going through. Check confirmations again to verify.")]
     ConfirmationUnsuccessful,
     /// The response is not expected. The containing string provides a message with more details.
     #[error("Malformed response")]
     MalformedResponse,
+    /// A poll was called within 1 second from the last poll.
+    #[error("Poll called too soon after last poll")]
+    PollCalledTooSoon,
     /// An action was taken that depended on polling be setup.
     #[error("No action was taken because polling is not setup.")]
     PollingNotSetup,
     /// An action resulted in the buffer going over its limit.
     #[error("Failed to enqueue action. The polling buffer is full. A maximum of 10 messages can be queued at a time.")]
     PollingBufferFull,
+}
+
+/// Any number of issues with a provided parameter.
+#[derive(thiserror::Error, Debug)]
+pub enum ParameterError {
+    #[error("Offer is missing trade ID")]
+    MissingTradeId,
+    #[error("Offer is not in accepted state. Offer state: {}", .0)]
+    NotInAcceptedState(TradeOfferState),
+    #[error("Offer is empty")]
+    EmptyOffer,
+    #[error("Cannot accept an offer that is ours")]
+    CannotAcceptOfferThatIsOurs,
+    #[error("Cannot accept an offer that is not active. Offer state: {}", .0)]
+    CannotAcceptOfferThatIsNotActive(TradeOfferState),
+    #[error("Cannot cancel an offer we did not create.")]
+    CannotCancelOfferWeDidNotCreate,
+    #[error("Cannot decline an offer we created.")]
+    CannotDeclineOfferWeCreated,
+    #[error("No identity secret.")]
+    NoIdentitySecret,
 }
 
 /// An error occurred when working with the file system.

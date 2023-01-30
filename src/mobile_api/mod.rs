@@ -8,7 +8,7 @@ use reqwest::cookie::Jar;
 use url::Url;
 use reqwest_middleware::ClientWithMiddleware;
 use std::{collections::HashMap, sync::{Arc, RwLock}};
-use crate::{SteamID, error::Error, helpers::parses_response, response::Confirmation};
+use crate::{SteamID, error::{Error, ParameterError}, helpers::parses_response, response::Confirmation};
 
 #[derive(Debug, Clone)]
 pub struct MobileAPI {
@@ -118,7 +118,7 @@ impl MobileAPI {
         tag: &str,
     ) -> Result<HashMap<&'a str, String>, Error> {
         let identity_secret = self.identity_secret.as_ref()
-            .ok_or_else(|| Error::Parameter("No identity secret"))?;
+            .ok_or(ParameterError::NoIdentitySecret)?;
         // let time = self.get_server_time().await?;
         let time = helpers::server_time(0);
         let key = helpers::generate_confirmation_hash_for_time(
