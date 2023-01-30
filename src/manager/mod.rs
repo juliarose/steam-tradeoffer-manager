@@ -34,7 +34,8 @@ type Polling = (mpsc::Sender<PollAction>, JoinHandle<()>);
 pub struct TradeOfferManager {
     /// The account's SteamID.
     pub steamid: SteamID,
-    /// The underlying API. Use this if you need more direct control over API calls.
+    /// The underlying API. The methods on [`TradeOfferManager`] only include more conventional 
+    /// ease-of-use methods. Use this API if you have a more specific use-case.
     pub api: SteamTradeOfferAPI,
     /// The underlying API for mobile confirmations.
     mobile_api: MobileAPI,
@@ -186,7 +187,7 @@ impl TradeOfferManager {
         Ok(sent_offer)
     }
     
-    /// Gets our nventory. This method **does not** to include untradable items.
+    /// Gets our nventory. This method **does not** include untradable items.
     pub async fn get_my_inventory(
         &self,
         appid: AppId,
@@ -195,7 +196,7 @@ impl TradeOfferManager {
         self.api.get_inventory(&self.steamid, appid, contextid, true).await
     }
     
-    /// Gets a user's inventory. This method **does not** to include untradable items.
+    /// Gets a user's inventory. This method **does not** include untradable items.
     pub async fn get_inventory(
         &self,
         steamid: &SteamID,

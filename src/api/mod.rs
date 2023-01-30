@@ -639,19 +639,15 @@ impl SteamTradeOfferAPI {
     /// more trades can be fetched.
     pub async fn get_trade_history_without_descriptions(
         &self,
-        max_trades: u32,
-        start_after_time: Option<u32>,
-        start_after_tradeid: Option<TradeId>,
-        navigating_back: bool,
-        include_failed: bool,
+        options: &GetTradeHistoryOptions,
     ) -> Result<RawTrades, Error> {
         let body = self.get_trade_history_request(
-            max_trades,
-            start_after_time,
-            start_after_tradeid,
-            navigating_back,
+            options.max_trades,
+            options.start_after_time,
+            options.start_after_tradeid,
+            options.navigating_back,
             false,
-            include_failed,
+            options.include_failed,
             true,
         ).await?;
         

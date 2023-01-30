@@ -11,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         data_directory,
     ).build();
     // This method returns only tradable items.
-    let inventory = manager.get_inventory( &steamid_other, 440, 2).await?;
+    let inventory = manager.get_inventory(&steamid_other, 440, 2).await?;
     let items = inventory.into_iter().take(5);
     let offer = NewTradeOffer::builder(steamid_other)
         // Any items that implement Into<NewTradeOfferItem> are fine.
