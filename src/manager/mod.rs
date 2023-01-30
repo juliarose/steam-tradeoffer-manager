@@ -24,7 +24,7 @@ use steamid_ng::SteamID;
 use tokio::{sync::mpsc, task::JoinHandle};
 use reqwest::cookie::Jar;
 
-pub const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
+const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
 
 type Polling = (mpsc::Sender<PollAction>, JoinHandle<()>);
 
@@ -467,22 +467,24 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
         
         Self {
             steamid: builder.steamid,
-            api: SteamTradeOfferAPI::new(
-                client.clone(),
-                Arc::clone(&cookies),
-                builder.steamid,
-                builder.api_key,
-                builder.language.clone(),
-                builder.classinfo_cache,
-                builder.data_directory.clone(),
-            ),
-            mobile_api: MobileAPI::new(
-                cookies,
+            api: SteamTradeOfferAPI {
+                client: client.clone(),
+                cookies: Arc::clone(&cookies),
+                steamid: builder.steamid,
+                api_key: builder.api_key,
+                language: builder.language.clone(),
+                classinfo_cache: builder.classinfo_cache,
+                data_directory: builder.data_directory.clone(),
+                sessionid: Arc::new(std::sync::RwLock::new(None)),
+            },
+            mobile_api: MobileAPI {
                 client,
-                builder.steamid,
-                builder.language.clone(),
-                builder.identity_secret,
-            ),
+                cookies,
+                steamid: builder.steamid,
+                language: builder.language.clone(),
+                identity_secret: builder.identity_secret,
+                sessionid: Arc::new(std::sync::RwLock::new(None)),
+            },
             data_directory: builder.data_directory,
             polling: Arc::new(Mutex::new(None)),
         }

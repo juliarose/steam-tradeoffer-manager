@@ -12,7 +12,7 @@ use crate::{SteamID, error::{Error, ParameterError}, helpers::parses_response, r
 
 #[derive(Debug, Clone)]
 pub struct MobileAPI {
-    client: ClientWithMiddleware,
+    pub client: ClientWithMiddleware,
     pub cookies: Arc<Jar>,
     pub language: String,
     pub steamid: SteamID,
@@ -22,33 +22,6 @@ pub struct MobileAPI {
 
 impl MobileAPI {
     pub const HOSTNAME: &str = "https://steamcommunity.com";
-    
-    /// Creates a new [`MobileAPI`].
-    pub fn new(
-        cookies: Arc<Jar>,
-        client: ClientWithMiddleware,
-        steamid: SteamID,
-        language: String,
-        identity_secret: Option<String>,
-    ) -> Self {
-        // I would only hope this never fails...
-        let url = Self::HOSTNAME.parse::<Url>().unwrap();
-        
-        cookies.add_cookie_str("mobileClientVersion=0 (2.1.3)", &url);
-        cookies.add_cookie_str("mobileClient=android", &url);
-        cookies.add_cookie_str("Steam_Language=english", &url);
-        cookies.add_cookie_str("dob=", &url);
-        cookies.add_cookie_str(format!("steamid={}", u64::from(steamid)).as_str(), &url);
-        
-        Self {
-            client,
-            steamid,
-            identity_secret,
-            language,
-            cookies,
-            sessionid: Arc::new(RwLock::new(None)),
-        }
-    }
     
     fn get_uri(
         &self,

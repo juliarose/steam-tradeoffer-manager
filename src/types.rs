@@ -1,4 +1,4 @@
-//! Contains types for common values.
+//! Contains types for common values in Steam responses.
 
 pub type AppId = u32;
 pub type ContextId = u64;

@@ -1,12 +1,6 @@
 use steamid_ng::SteamID;
 use serde::Serializer;
-use std::{
-    collections::HashMap,
-    str::FromStr,
-    sync::Arc,
-    marker::PhantomData,
-    fmt::{self, Display}
-};
+use std::{collections::HashMap, str::FromStr, sync::Arc, marker::PhantomData, fmt::{self, Display}};
 use serde::{Deserialize, de::{self, MapAccess, Visitor, SeqAccess, Deserializer, Unexpected}};
 use serde_json::value::RawValue;
 use lazy_regex::{regex_is_match, regex_captures};

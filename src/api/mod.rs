@@ -9,7 +9,6 @@ mod helpers;
 use response::*;
 use response_wrappers::*;
 use crate::response::*;
-use reqwest_middleware::ClientWithMiddleware;
 use std::{path::PathBuf, collections::{HashMap, HashSet}, sync::{Arc, RwLock, Mutex}};
 use crate::{
     SteamID,
@@ -31,7 +30,7 @@ use lazy_regex::{regex_captures, regex_is_match};
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPI {
     /// The client for making requests.
-    client: Client,
+    pub client: Client,
     /// The API key.
     pub api_key: String,
     /// The cookies to make requests with. Since the requests are made with the provided client, 
@@ -52,28 +51,6 @@ pub struct SteamTradeOfferAPI {
 impl SteamTradeOfferAPI {
     pub const HOSTNAME: &str = "https://steamcommunity.com";
     pub const API_HOSTNAME: &str = "https://api.steampowered.com";
-    
-    /// Creates a new [`SteamTradeOfferAPI`].
-    pub fn new(
-        client: ClientWithMiddleware,
-        cookies: Arc<Jar>,
-        steamid: SteamID,
-        api_key: String,
-        language: String,
-        classinfo_cache: Arc<Mutex<ClassInfoCache>>,
-        data_directory: PathBuf,
-    ) -> Self {
-        Self {
-            client,
-            api_key,
-            steamid,
-            language,
-            cookies: Arc::clone(&cookies),
-            sessionid: Arc::new(RwLock::new(None)),
-            classinfo_cache,
-            data_directory,
-        }
-    }
     
     fn get_uri(
         &self,
