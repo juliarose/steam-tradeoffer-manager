@@ -7,6 +7,18 @@ use async_fs::File;
 use futures::io::AsyncWriteExt;
 use crate::error::{TradeOfferError, Error};
 
+/// Generates a random sessionid.
+pub fn generate_sessionid() -> String {
+    // Should look like "37bf523a24034ec06c60ec61"
+    (0..12)
+        .map(|_| { 
+            let b = rand::random::<u8>();
+            
+            format!("{b:02x?}")
+        })
+        .collect()
+}
+
 pub async fn write_file_atomic(
     filepath: PathBuf,
     bytes: &[u8],
@@ -106,12 +118,24 @@ where
             } else if regex_is_match!(r#"\{"success": ?false\}"#, &html) {
                 Err(Error::ResponseUnsuccessful)
             } else if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
-                Err(Error::Trade(TradeOfferError::from(message)))
+                Err(Error::TradeOffer(TradeOfferError::from(message)))
             } else {
                 log::error!("Error parsing body `{}`: {}", parse_error, String::from_utf8_lossy(&body));
                 
                 Err(Error::Parse(parse_error))
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn generates_session() {
+        let sessionid = generate_sessionid();
+        
+        assert_eq!(sessionid.len(), 24);
     }
 }

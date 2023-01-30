@@ -10,6 +10,7 @@ use reqwest_middleware::ClientWithMiddleware;
 use std::{collections::HashMap, sync::{Arc, RwLock}};
 use crate::{SteamID, error::{Error, ParameterError}, helpers::parses_response, response::Confirmation};
 
+/// The API for mobile confirmations.
 #[derive(Debug, Clone)]
 pub struct MobileAPI {
     pub client: ClientWithMiddleware,

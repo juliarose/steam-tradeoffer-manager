@@ -39,7 +39,7 @@ pub enum Error {
     ParseHtml(#[from] ParseHtmlError),
     /// An error was encountered when sending or acting on trade offers.
     #[error("Trade error: {}", .0)]
-    Trade(TradeOfferError),
+    TradeOffer(TradeOfferError),
     /// A [`crate::response::ClassInfo`] is missing. For some reason a classinfo could not be 
     /// obtained from Steam or the file system. This is rare but can sometimes occur if 
     /// Steam's servers are having issues.

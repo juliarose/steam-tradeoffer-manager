@@ -1,8 +1,6 @@
 mod builder;
 mod polling;
-mod helpers;
 
-use helpers::generate_sessionid;
 use lazy_regex::regex_captures;
 pub use polling::{PollAction, Poll, PollResult, PollType, PollOptions, PollData};
 pub use builder::TradeOfferManagerBuilder;
@@ -13,7 +11,7 @@ use crate::{
     ServerTime,
     api::SteamTradeOfferAPI,
     mobile_api::MobileAPI,
-    helpers::get_default_middleware,
+    helpers::{generate_sessionid, get_default_middleware},
     error::{ParameterError, Error},
     request::{NewTradeOffer, GetTradeHistoryOptions},
     enums::{TradeOfferState, OfferFilter},
