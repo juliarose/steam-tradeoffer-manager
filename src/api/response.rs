@@ -19,46 +19,46 @@ use crate::{
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTradeOffer {
-    #[serde(with = "string")]
     /// The ID for this offer.
+    #[serde(with = "string")]
     pub tradeofferid: TradeOfferId,
-    #[serde(default)]
-    #[serde(with = "option_string")]
     /// The trade ID for this offer. This should be present when the `trade_offer_state` of this 
     /// offer is [`TradeOfferState::Accepted`].
+    #[serde(default)]
+    #[serde(with = "option_string")]
     pub tradeid: Option<TradeId>,
     /// The [`SteamID`] of our partner.
     pub accountid_other: u32,
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_string_is_none")]
     /// The message included in the offer. If the message is empty or not present this will be 
     /// `None`.
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_string_is_none")]
     pub message: Option<String>,
-    #[serde(default)]
     /// The items we're receiving in this offer.
+    #[serde(default)]
     pub items_to_receive: Vec<RawAsset>,
-    #[serde(default)]
     /// The items we're giving in this offer.
+    #[serde(default)]
     pub items_to_give: Vec<RawAsset>,
-    #[serde(default)]
     /// Whether this offer was created by us or not.
-    pub is_our_offer: bool,
     #[serde(default)]
+    pub is_our_offer: bool,
     /// Whether this offer originated from a real time trade.
+    #[serde(default)]
     pub from_real_time_trade: bool,
-    #[serde(with = "ts_seconds")]
     /// The time before the offer expires if it has not been acted on.
+    #[serde(with = "ts_seconds")]
     pub expiration_time: ServerTime,
-    #[serde(with = "ts_seconds")]
     /// The time this offer was created.
-    pub time_created: ServerTime,
     #[serde(with = "ts_seconds")]
+    pub time_created: ServerTime,
     /// The time this offer last had an action e.g. accepting or declining the offer.
+    #[serde(with = "ts_seconds")]
     pub time_updated: ServerTime,
     /// The state of this offer.
     pub trade_offer_state: TradeOfferState,
-    #[serde(with = "ts_seconds_option_none_when_zero")]
     /// The end date if this trade is in escrow. `None` when this offer is not in escrow.
+    #[serde(with = "ts_seconds_option_none_when_zero")]
     pub escrow_end_date: Option<ServerTime>,
     /// The confirmation method for this offer.
     pub confirmation_method: ConfirmationMethod,
@@ -169,36 +169,37 @@ pub struct RawReceiptAsset {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RawAssetOld {
-    #[serde(with = "string", rename = "id")]
     /// The unique asset ID.
+    #[serde(with = "string", rename = "id")]
     pub assetid: AssetId,
-    #[serde(with = "string")]
     /// The ID of the classinfo.
-    pub classid: ClassId,
-    #[serde(with = "option_string_0_as_none")]
-    /// The specific instance ID of the classinfo belonging to the class ID.
-    pub instanceid: InstanceId,
     #[serde(with = "string")]
+    pub classid: ClassId,
+    /// The specific instance ID of the classinfo belonging to the class ID.
+    #[serde(with = "option_string_0_as_none")]
+    pub instanceid: InstanceId,
     /// The amount. If this item is not stackable the amount will be `1`.
+    #[serde(with = "string")]
     pub amount: Amount,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTrade {
+    /// The trade ID.
     #[serde(with = "string")]
     pub tradeid: TradeId,
     /// The [`SteamID`] of our partner.
     pub steamid_other: SteamID,
-    #[serde(with = "ts_seconds")]
     /// The time the trade was initiated.
+    #[serde(with = "ts_seconds")]
     pub time_init: ServerTime,
     /// The current status of the trade.
     pub status: TradeStatus,
-    #[serde(default)]
     /// Assets given.
+    #[serde(default)]
     pub assets_given: Vec<RawTradeAsset>,
-    #[serde(default)]
     /// Assets given.
+    #[serde(default)]
     pub assets_received: Vec<RawTradeAsset>,
 }
 
@@ -206,26 +207,27 @@ pub struct RawTrade {
 pub struct RawTradeAsset {
     /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
-    #[serde(with = "string")]
     /// The context ID.
+    #[serde(with = "string")]
     pub contextid: ContextId,
-    #[serde(with = "string")]
     /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
+    #[serde(with = "string")]
     pub assetid: AssetId,
-    #[serde(with = "string")]
     /// The ID of the classinfo.
+    #[serde(with = "string")]
     pub classid: ClassId,
-    #[serde(with = "option_string_0_as_none")]
     /// The specific instance ID of the classinfo belonging to the class ID.
+    #[serde(with = "option_string_0_as_none")]
     pub instanceid: InstanceId,
-    #[serde(with = "string")]
     /// The amount. If this item is not stackable the amount will be `1`.
+    #[serde(with = "string")]
     pub amount: Amount,
-    #[serde(with = "string")]
     /// The context ID of the item received.
-    pub new_contextid: ContextId,
     #[serde(with = "string")]
-    /// The unique asset ID of the item received. This value is unique to the item's `appid` and `contextid`.
+    pub new_contextid: ContextId,
+    /// The unique asset ID of the item received. This value is unique to the item's `appid` and
+    /// `contextid`.
+    #[serde(with = "string")]
     pub new_assetid: AssetId,
 }
 

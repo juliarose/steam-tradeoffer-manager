@@ -8,14 +8,14 @@ use crate::{serialize::string, types::{AppId, ContextId, AssetId, Amount, ClassI
 pub struct Asset {
     /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
-    #[serde(with = "string")]
     /// The context ID.
+    #[serde(with = "string")]
     pub contextid: ContextId,
-    #[serde(with = "string")]
     /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
-    pub assetid: AssetId,
     #[serde(with = "string")]
+    pub assetid: AssetId,
     /// The amount. If this item is not stackable the amount will be `1`.
+    #[serde(with = "string")]
     pub amount: Amount,
     /// The [`ClassInfo`] containing names, descriptions, and other details about the item.
     pub classinfo: Arc<ClassInfo>,

@@ -11,13 +11,13 @@ pub struct ClassInfo {
     /// The item's app ID. This is included when including descriptions in the `GetTradeOffers` 
     /// and `GetTradeHistory` response.
     pub appid: Option<AppId>,
-    #[serde(with = "string")]
     /// The ID for this classinfo.
+    #[serde(with = "string")]
     pub classid: ClassId,
+    /// The specific instance ID for this classinfo.
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "option_string_0_as_none")]
-    /// The specific instance ID for this classinfo.
     pub instanceid: InstanceId,
     /// The name of the item.
     pub name: String,
@@ -25,58 +25,58 @@ pub struct ClassInfo {
     pub market_name: String,
     /// The market hash name. This is used to link to the item on the Steam Community Market.
     pub market_hash_name: String,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Option::is_none")]
     /// The color of the item's name.
-    pub name_color: Option<String>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub name_color: Option<String>,
     /// The background color for the item.
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub background_color: Option<String>,
     /// The URL to the icon for the item.
     pub icon_url: String,
     /// The URL to the large icon for the item.
     pub icon_url_large: String,
-    #[serde(rename = "type")]
     /// The item's type. This is displayed underneath the name of the game in inventories.
+    #[serde(rename = "type")]
     pub r#type: String,
-    #[serde(deserialize_with = "into_bool")]
     /// Whether this item can be traded or not.
+    #[serde(deserialize_with = "into_bool")]
     pub tradable: bool,
-    #[serde(deserialize_with = "into_bool")]
     /// Whether this item is marketable or not.
-    pub marketable: bool,
     #[serde(deserialize_with = "into_bool")]
+    pub marketable: bool,
     /// Whether this item is a commodity item on the Steam Community Market.
+    #[serde(deserialize_with = "into_bool")]
     pub commodity: bool,
-    #[serde(default)]
-    #[serde(deserialize_with = "string_or_number")]
     /// How many days the item has left until it can be traded.
-    pub market_tradable_restriction: u32,
     #[serde(default)]
     #[serde(deserialize_with = "string_or_number")]
+    pub market_tradable_restriction: u32,
     /// How many days the item has left until it can be listed on the Steam Community Market.
+    #[serde(default)]
+    #[serde(deserialize_with = "string_or_number")]
     pub market_marketable_restriction: u32,
+    /// Fraud warnings for this item.
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(deserialize_with = "from_fraudwarnings")]
-    /// Fraud warnings for this item.
     pub fraudwarnings: Option<Vec<String>>,
-    #[serde(default)]
-    #[serde(deserialize_with = "hashmap_or_vec")]
     /// Descriptions for this item.
+    #[serde(default)]
+    #[serde(deserialize_with = "hashmap_or_vec")]
     pub descriptions: Vec<Description>,
-    #[serde(default)]
-    #[serde(deserialize_with = "hashmap_or_vec")]
     /// Tags for this item.
-    pub tags: Vec<Tag>,
     #[serde(default)]
     #[serde(deserialize_with = "hashmap_or_vec")]
+    pub tags: Vec<Tag>,
     /// Actions for this item.
+    #[serde(default)]
+    #[serde(deserialize_with = "hashmap_or_vec")]
     pub actions: Vec<Action>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     /// This contains extra data from the app's internal schema. This is only included in the 
     /// `GetAssetClassInfo` and `inventory/json` responses.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub app_data: AppData,
 }
 
@@ -125,8 +125,8 @@ pub type Color = String;
 pub struct Description {
     /// The description message.
     pub value: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
     /// A string representing the color e.g. `"FFFFFF"`
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub color: Option<Color>,
 }
 
@@ -152,19 +152,19 @@ pub struct Tag {
     /// The game's internal name of this tag e.g. for Team Fortress 2 items: "Unique" for items 
     /// under the "Quality" category or "primary" for items under the "Type" category.
     pub internal_name: String,
-    #[serde(alias = "localized_tag_name")]
     /// The name of this tag e.g. for Team Fortress 2 items: "Unique" for items under the 
     /// "Quality" category or "Primary weapon" for items under the "Type" category.
+    #[serde(alias = "localized_tag_name")]
     pub name: String,
     /// The category of this tag e.g. for Team Fortress the "Quality" category.
     pub category: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
     /// The color associated with this tag.
-    pub color: Option<String>,
-    #[serde(alias = "localized_category_name")]
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub color: Option<String>,
     /// The category name of this tag. This is usually the same as category but can sometimes be 
     /// different and is not always present.
+    #[serde(alias = "localized_category_name")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub category_name: Option<String>,
 }
 

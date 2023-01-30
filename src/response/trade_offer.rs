@@ -13,12 +13,12 @@ use super::asset::Asset;
 /// A trade offer.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TradeOffer {
-    #[serde(with = "string")]
     /// The ID for this offer.
+    #[serde(with = "string")]
     pub tradeofferid: TradeOfferId,
-    #[serde(with = "option_string")]
     /// The trade ID for this offer. This should be present when the `trade_offer_state` of this 
     /// offer is [`TradeOfferState::Accepted`].
+    #[serde(with = "option_string")]
     pub tradeid: Option<TradeId>,
     /// The [`SteamID`] of our partner.
     pub partner: SteamID,
@@ -33,19 +33,19 @@ pub struct TradeOffer {
     pub is_our_offer: bool,
     /// Whether this offer originated from a real time trade.
     pub from_real_time_trade: bool,
-    #[serde(with = "ts_seconds")]
     /// The time this offer was created.
+    #[serde(with = "ts_seconds")]
     pub time_created: ServerTime,
-    #[serde(with = "ts_seconds")]
     /// The time before the offer expires if it has not been acted on.
-    pub expiration_time: ServerTime,
     #[serde(with = "ts_seconds")]
+    pub expiration_time: ServerTime,
     /// The time this offer last was last acted on e.g. accepting or declining the offer.
+    #[serde(with = "ts_seconds")]
     pub time_updated: ServerTime,
     /// The state of this offer.
     pub trade_offer_state: TradeOfferState,
-    #[serde(with = "ts_seconds_option")]
     /// The end date if this trade is in escrow. `None` when this offer is not in escrow.
+    #[serde(with = "ts_seconds_option")]
     pub escrow_end_date: Option<ServerTime>,
     /// The confirmation method for this offer.
     pub confirmation_method: ConfirmationMethod,
