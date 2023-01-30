@@ -19,7 +19,7 @@ use crate::{
     helpers::parses_response,
     error::{Error, ParameterError, MissingClassInfoError},
     classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
-    request::{NewTradeOffer, NewTradeOfferItem},
+    request::{NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions},
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -606,33 +606,30 @@ impl SteamTradeOfferAPI {
     /// fetched.
     pub async fn get_trade_history(
         &self,
-        max_trades: u32,
-        start_after_time: Option<u32>,
-        start_after_tradeid: Option<TradeId>,
-        navigating_back: bool,
-        include_failed: bool,
-    ) -> Result<(Vec<Trade>, bool), Error> {
-        let (
-            trades,
-            descriptions,
-            more,
-        ) = self.get_trade_history_request(
-            max_trades,
-            start_after_time,
-            start_after_tradeid,
-            navigating_back,
+        options: &GetTradeHistoryOptions,
+    ) -> Result<Trades, Error> {
+        let body = self.get_trade_history_request(
+            options.max_trades,
+            options.start_after_time,
+            options.start_after_tradeid,
+            options.navigating_back,
             true,
-            include_failed,
-            false,
+            options.include_failed,
+            true,
         ).await?;
         
-        if let Some(descriptions) = descriptions {
-            let trades = trades
+        if let Some(descriptions) = body.descriptions {
+            let trades = body.trades
                 .into_iter()
                 .map(|trade| trade.try_combine_classinfos(&descriptions))
                 .collect::<Result<_, _>>()?;
                 
-            Ok((trades, more))
+            Ok(Trades {
+                trades,
+                more: body.more,
+                // Should always be present since include_total was passed.
+                total_trades: body.total_trades.unwrap_or_default(),
+            })
         } else {
             Err(Error::Response("No descriptions in response body.".into()))
         }
@@ -647,22 +644,23 @@ impl SteamTradeOfferAPI {
         start_after_tradeid: Option<TradeId>,
         navigating_back: bool,
         include_failed: bool,
-    ) -> Result<(Vec<RawTrade>, bool), Error> {
-        let (
-            trades,
-            _descriptions,
-            more,
-        ) = self.get_trade_history_request(
+    ) -> Result<RawTrades, Error> {
+        let body = self.get_trade_history_request(
             max_trades,
             start_after_time,
             start_after_tradeid,
             navigating_back,
             false,
             include_failed,
-            false,
+            true,
         ).await?;
         
-        Ok((trades, more))
+        Ok(RawTrades {
+            trades: body.trades,
+            more: body.more,
+            // Should always be present since include_total was passed.
+            total_trades: body.total_trades.unwrap_or_default(),
+        })
     }
     
     #[cfg_attr(feature = "cargo-clippy", allow(clippy::too_many_arguments))]
@@ -675,7 +673,7 @@ impl SteamTradeOfferAPI {
         get_descriptions: bool,
         include_failed: bool,
         include_total: bool,
-    ) -> Result<(Vec<RawTrade>, Option<ClassInfoMap>, bool), Error> {
+    ) -> Result<GetTradeHistoryResponseBody, Error> {
         #[derive(Serialize, Debug)]
         struct Form<'a> {
             key: &'a str,
@@ -705,7 +703,7 @@ impl SteamTradeOfferAPI {
         let body: GetTradeHistoryResponse = parses_response(response).await?;
         let body = body.response;
         
-        Ok((body.trades, body.descriptions, body.more))
+        Ok(body)
     }
     
     /// Gets escrow details for user.

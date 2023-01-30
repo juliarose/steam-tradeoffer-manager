@@ -10,6 +10,14 @@ use chrono::serde::ts_seconds;
 use serde::{self, Deserialize, Serialize};
 use std::sync::Arc;
 
+/// Details from a GetTradeHistory response.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Trades {
+    pub trades: Vec<Trade>,
+    pub more: bool,
+    pub total_trades: u32,
+}
+
 /// A trade.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Trade {

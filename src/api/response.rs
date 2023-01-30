@@ -183,6 +183,14 @@ pub struct RawAssetOld {
     pub amount: Amount,
 }
 
+/// Details from a GetTradeHistory response.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RawTrades {
+    pub trades: Vec<RawTrade>,
+    pub more: bool,
+    pub total_trades: u32,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTrade {
     /// The trade ID.

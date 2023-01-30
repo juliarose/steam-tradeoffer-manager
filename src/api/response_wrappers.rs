@@ -137,6 +137,7 @@ pub struct GetTradeHistoryResponse {
 #[derive(Deserialize, Debug)]
 pub struct GetTradeHistoryResponseBody {
     pub more: bool,
+    pub total_trades: Option<u32>,
     pub trades: Vec<RawTrade>,
     #[serde(default)]
     #[serde(deserialize_with = "to_trade_offers_classinfo_map")]

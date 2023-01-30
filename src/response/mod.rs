@@ -16,4 +16,4 @@ pub use asset::Asset;
 pub use trade_offer::TradeOffer;
 pub use sent_offer::SentOffer;
 pub use classinfo::{ClassInfo, Action, Description, Tag};
-pub use trade::{Trade, TradeAsset};
+pub use trade::{Trades, Trade, TradeAsset};

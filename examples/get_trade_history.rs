@@ -1,4 +1,9 @@
-use steam_tradeoffer_manager::{TradeOfferManager, SteamID, response::TradeAsset};
+use steam_tradeoffer_manager::{
+    TradeOfferManager,
+    SteamID,
+    response::TradeAsset,
+    request::GetTradeHistoryOptions,
+};
 
 fn assets_item_names<'a>(
     assets: &'a Vec<TradeAsset>,
@@ -19,13 +24,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         api_key,
         data_directory,
     ).build();
-    let (trades, _more) = manager.get_trade_history(
-        1,
-        None,
-        None,
-        false,
-        false,
-    ).await?;
+    let mut options = GetTradeHistoryOptions::default();
+    
+    options.max_trades = 3;
+    
+    let trades = manager.get_trade_history(&options).await?.trades;
     let trade = trades.into_iter().next().unwrap();
     
     println!("Trade #{}", trade.tradeid);

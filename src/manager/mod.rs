@@ -14,11 +14,11 @@ use crate::{
     ServerTime,
     api::SteamTradeOfferAPI,
     helpers::get_default_middleware,
-    request::NewTradeOffer,
+    request::{NewTradeOffer, GetTradeHistoryOptions},
     enums::TradeOfferState,
     mobile_api::MobileAPI,
-    types::{AppId, ContextId, TradeOfferId, TradeId},
-    response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Trade, Confirmation},
+    types::{AppId, ContextId, TradeOfferId},
+    response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Confirmation, Trades},
 };
 use steamid_ng::SteamID;
 use tokio::{sync::mpsc, task::JoinHandle};
@@ -297,7 +297,10 @@ impl TradeOfferManager {
     }
     
     /// Gets the trade receipt (new items) upon completion of a trade.
-    pub async fn get_receipt(&self, offer: &TradeOffer) -> Result<Vec<Asset>, Error> {
+    pub async fn get_receipt(
+        &self,
+        offer: &TradeOffer,
+    ) -> Result<Vec<Asset>, Error> {
         if offer.trade_offer_state != TradeOfferState::Accepted {
             Err(Error::Parameter(
                 ParameterError::NotInAcceptedState(offer.trade_offer_state)
@@ -314,7 +317,10 @@ impl TradeOfferManager {
     }
     
     /// Updates the offer to the most recent state against the API.
-    pub async fn update_offer(&self, offer: &mut TradeOffer) -> Result<(), Error> {
+    pub async fn update_offer(
+        &self,
+        offer: &mut TradeOffer,
+    ) -> Result<(), Error> {
         let updated = self.api.get_trade_offer(offer.tradeofferid).await?;
         
         offer.tradeofferid = updated.tradeofferid;
@@ -379,19 +385,9 @@ impl TradeOfferManager {
     /// fetched.
     pub async fn get_trade_history(
         &self,
-        max_trades: u32,
-        start_after_time: Option<u32>,
-        start_after_tradeid: Option<TradeId>,
-        navigating_back: bool,
-        include_failed: bool,
-    ) -> Result<(Vec<Trade>, bool), Error> {
-        self.api.get_trade_history(
-            max_trades,
-            start_after_time,
-            start_after_tradeid,
-            navigating_back,
-            include_failed,
-        ).await
+        options: &GetTradeHistoryOptions,
+    ) -> Result<Trades, Error> {
+        self.api.get_trade_history(options).await
     }
     
     /// Starts polling offers. Listen to the returned receiver for events. To stop polling simply 
