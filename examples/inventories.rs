@@ -12,12 +12,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     )
         .identity_secret(String::from("secret"))
         .build();
-    let inventory = manager.get_inventory(
-        &steamid,
-        440,
-        2,
-        true,
-    ).await?;
+    // This method returns only tradable items.
+    let inventory = manager.get_my_inventory(440, 2).await?;
     
     println!("{} items in inventory", inventory.len());
     

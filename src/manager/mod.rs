@@ -186,36 +186,33 @@ impl TradeOfferManager {
         Ok(sent_offer)
     }
     
-    /// Gets our nventory.
+    /// Gets our nventory. This method **does not** to include untradable items.
     pub async fn get_my_inventory(
         &self,
         appid: AppId,
         contextid: ContextId,
-        tradable_only: bool,
     ) -> Result<Vec<Asset>, Error> {
-        self.api.get_inventory(&self.steamid, appid, contextid, tradable_only).await
+        self.api.get_inventory(&self.steamid, appid, contextid, true).await
     }
     
-    /// Gets a user's inventory.
+    /// Gets a user's inventory. This method **does not** to include untradable items.
     pub async fn get_inventory(
         &self,
         steamid: &SteamID,
         appid: AppId,
         contextid: ContextId,
-        tradable_only: bool,
     ) -> Result<Vec<Asset>, Error> {
-        self.api.get_inventory(steamid, appid, contextid, tradable_only).await
+        self.api.get_inventory(steamid, appid, contextid, true).await
     }
     
-    /// Gets a user's inventory with more detailed clasinfo data using the GetAssetClassInfo API.
-    pub async fn get_inventory_with_classinfos(
+    /// Gets a user's inventory including untradable items.
+    pub async fn get_inventory_with_untradables(
         &self,
         steamid: &SteamID,
         appid: AppId,
         contextid: ContextId,
-        tradable_only: bool,
     ) -> Result<Vec<Asset>, Error> {
-        self.api.get_inventory_with_classinfos(steamid, appid, contextid, tradable_only).await
+        self.api.get_inventory(steamid, appid, contextid, false).await
     }
     
     /// Gets escrow details for user.
