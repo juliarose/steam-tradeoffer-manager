@@ -41,8 +41,8 @@ pub enum Error {
     #[error("Trade error: {}", .0)]
     TradeOffer(TradeOfferError),
     /// A [`crate::response::ClassInfo`] is missing. For some reason a classinfo could not be 
-    /// obtained from Steam or the file system. This is rare but can sometimes occur if 
-    /// Steam's servers are having issues.
+    /// obtained from Steam or the file system. This can sometimes occur if Steam's servers are 
+    /// having issues.
     #[error("{}", .0)]
     MissingClassInfo(#[from] MissingClassInfoError),
     /// This trade offer has no confirmations.
@@ -116,7 +116,7 @@ pub enum TradeOfferError {
     Unknown(String),
     /// An unknown error occurred with a numeric EResult code.
     #[error("{}", .0)]
-    UnknownEResult(i32),
+    UnknownEResult(u32),
     /// # Code 2
     /// Returned when a more specific error code couldn't be determined.
     #[error("Fail")]
@@ -170,7 +170,7 @@ pub enum TradeOfferError {
 
 impl TradeOfferError {
     /// Transforms the code number into the corresponding error.
-    pub fn from_code(code: i32) -> Self {
+    pub fn from_code(code: u32) -> Self {
         match code {
             2 => Self::Fail,
             11 => Self::InvalidState,
@@ -185,7 +185,7 @@ impl TradeOfferError {
     }
     
     /// Gets the code number for this error.
-    pub fn code(&self) -> Option<i32> {
+    pub fn code(&self) -> Option<u32> {
         match self {
             Self::Fail => Some(2),
             Self::InvalidState => Some(11),
@@ -214,7 +214,7 @@ impl From<&str> for TradeOfferError {
                 return Self::Unknown(message.into());
             }
             
-            if let Ok(code) = chars.as_str().parse::<i32>() {
+            if let Ok(code) = chars.as_str().parse::<u32>() {
                 return Self::from_code(code);
             }
         }
@@ -247,7 +247,7 @@ impl fmt::Display for MissingClassInfoError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Missing description for {}:{}:{:?})",
+            "Missing description for {}:{}:{})",
             self.appid, self.classid, self.instanceid.unwrap_or(0),
         )
     }
