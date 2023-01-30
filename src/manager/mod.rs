@@ -34,8 +34,8 @@ type Polling = (mpsc::Sender<PollAction>, JoinHandle<()>);
 pub struct TradeOfferManager {
     /// The account's SteamID.
     pub steamid: SteamID,
-    /// The underlying API.
-    api: SteamTradeOfferAPI,
+    /// The underlying API. Use this if you need more direct control over API calls.
+    pub api: SteamTradeOfferAPI,
     /// The underlying API for mobile confirmations.
     mobile_api: MobileAPI,
     /// The directory to store poll data and [`crate::response::ClassInfo`] data.
@@ -122,17 +122,6 @@ impl TradeOfferManager {
         Ok(accepted_offer)
     }
     
-    /// Accepts an offer using its tradeofferid..
-    pub async fn accept_offer_id(
-        &self,
-        tradeofferid: TradeOfferId,
-        partner: &SteamID,
-    ) -> Result<AcceptedOffer, Error> {
-        let accepted_offer = self.api.accept_offer(tradeofferid, partner).await?;
-        
-        Ok(accepted_offer)
-    }
-    
     /// Cancels an offer. This checks if the offer was not creating by us and updates the state of 
     /// the offer upon success.
     pub async fn cancel_offer(
@@ -149,16 +138,6 @@ impl TradeOfferManager {
         Ok(())
     }
     
-    /// Cancels an offer using its tradeofferid.
-    pub async fn cancel_offer_id(
-        &self,
-        tradeofferid: TradeOfferId,
-    ) -> Result<(), Error> {
-        self.api.cancel_offer(tradeofferid).await?;
-        
-        Ok(())
-    }
-    
     /// Declines an offer. This checks if the offer was creating by us and updates the state of 
     /// the offer upon success.
     pub async fn decline_offer(
@@ -171,16 +150,6 @@ impl TradeOfferManager {
         
         self.api.decline_offer(offer.tradeofferid).await?;
         offer.trade_offer_state = TradeOfferState::Declined;
-        
-        Ok(())
-    }
-    
-    /// Declines an offer using its tradeofferid.
-    pub async fn decline_offer_id(
-        &self,
-        tradeofferid: TradeOfferId,
-    ) -> Result<(), Error> {
-        self.api.decline_offer(tradeofferid).await?;
         
         Ok(())
     }
@@ -207,31 +176,6 @@ impl TradeOfferManager {
         offer.trade_offer_state = TradeOfferState::Countered;
         
         Ok(sent_offer)
-    }
-    
-    /// Counters an existing offer using its tradeofferid.
-    pub async fn counter_offer_id(
-        &self,
-        tradeofferid: TradeOfferId,
-        counter_offer: &NewTradeOffer,
-    ) -> Result<SentOffer, Error> {
-        let sent_offer = self.api.send_offer(
-            counter_offer,
-            Some(tradeofferid),
-        ).await?;
-        
-        Ok(sent_offer)
-    }
-
-    /// Gets a user's inventory using the old endpoint.
-    pub async fn get_inventory_old(
-        &self,
-        steamid: &SteamID,
-        appid: AppId,
-        contextid: ContextId,
-        tradable_only: bool,
-    ) -> Result<Vec<Asset>, Error> {
-        self.api.get_inventory_old(steamid, appid, contextid, tradable_only).await
     }
     
     /// Gets our nventory.
@@ -351,15 +295,10 @@ impl TradeOfferManager {
         } else if offer.items_to_receive.is_empty() {
             Ok(Vec::new())
         } else if let Some(tradeid) = offer.tradeid {
-            self.get_receipt_trade_id(&tradeid).await
+            self.api.get_receipt(&tradeid).await
         } else {
             Err(Error::Parameter("Missing tradeid"))
         }
-    }
-    
-    /// Gets the trade receipt (new items) upon completion of a trade using a trade ID.
-    pub async fn get_receipt_trade_id(&self, tradeid: &TradeId) -> Result<Vec<Asset>, Error> {
-        self.api.get_receipt(tradeid).await
     }
     
     /// Updates the offer to the most recent state against the API.

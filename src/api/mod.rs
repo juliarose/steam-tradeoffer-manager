@@ -1,3 +1,6 @@
+//! This is the underlying API for the manager. If you need more direct control over API calls
+//! they are here.
+
 pub mod response;
 
 mod response_wrappers;
