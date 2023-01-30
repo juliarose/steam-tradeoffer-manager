@@ -3,9 +3,11 @@ use serde::{Serialize, Deserialize};
 use steamid_ng::SteamID;
 use chrono::serde::ts_seconds;
 use crate::{
-    response::{TradeOffer, Asset, Trade, TradeAsset},
     ServerTime,
+    types::*,
+    internal_types::*,
     error::MissingClassInfoError,
+    response::{TradeOffer, Asset, Trade, TradeAsset},
     enums::{TradeStatus, ConfirmationMethod, TradeOfferState},
     serialize::{
         string,
@@ -14,7 +16,6 @@ use crate::{
         ts_seconds_option_none_when_zero,
         empty_string_is_none,
     },
-    types::*,
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

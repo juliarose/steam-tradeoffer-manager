@@ -1,9 +1,5 @@
-use std::{sync::Arc, collections::HashMap};
-use crate::response::{Asset, ClassInfo};
-use reqwest_middleware::ClientWithMiddleware;
+//! Contains types for common values.
 
-pub type Client = ClientWithMiddleware;
-pub type Inventory = Vec<Asset>;
 pub type AppId = u32;
 pub type ContextId = u64;
 pub type AssetId = u64;
@@ -12,7 +8,3 @@ pub type ClassId = u64;
 pub type InstanceId = Option<u64>;
 pub type TradeOfferId = u64;
 pub type TradeId = u128;
-pub type ClassInfoClass = (AppId, ClassId, InstanceId);
-pub type ClassInfoMap = HashMap<ClassInfoClass, Arc<ClassInfo>>;
-pub type ClassInfoAppClass = (ClassId, InstanceId);
-pub type ClassInfoAppMap = HashMap<ClassInfoAppClass, Arc<ClassInfo>>;

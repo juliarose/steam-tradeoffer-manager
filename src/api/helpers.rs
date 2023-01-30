@@ -3,7 +3,7 @@ use lazy_regex::Regex;
 use std::sync::Arc;
 use crate::{
     error::{MissingClassInfoError, ParseHtmlError},
-    types::ClassInfoMap,
+    internal_types::ClassInfoMap,
     response::{self, User, UserDetails},
 };
 use lazy_regex::regex_captures;

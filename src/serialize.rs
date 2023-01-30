@@ -10,7 +10,10 @@ use std::{
 use serde::{Deserialize, de::{self, MapAccess, Visitor, SeqAccess, Deserializer, Unexpected}};
 use serde_json::value::RawValue;
 use lazy_regex::{regex_is_match, regex_captures};
-use crate::{response::ClassInfo, types::{ClassInfoAppClass, ClassInfoAppMap, ClassInfoMap}};
+use crate::{
+    response::ClassInfo,
+    internal_types::{ClassInfoAppClass, ClassInfoAppMap, ClassInfoMap},
+};
 
 pub fn empty_string_is_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
 where

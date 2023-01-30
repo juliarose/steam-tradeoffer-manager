@@ -10,13 +10,13 @@ pub use builder::TradeOfferManagerBuilder;
 use std::{sync::Mutex, path::PathBuf, sync::Arc};
 use crate::{
     time,
-    error::{ParameterError, Error},
     ServerTime,
     api::SteamTradeOfferAPI,
+    mobile_api::MobileAPI,
     helpers::get_default_middleware,
+    error::{ParameterError, Error},
     request::{NewTradeOffer, GetTradeHistoryOptions},
     enums::{TradeOfferState, OfferFilter},
-    mobile_api::MobileAPI,
     types::{AppId, ContextId, TradeOfferId},
     response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Confirmation, Trades},
 };

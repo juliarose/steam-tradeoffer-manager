@@ -1,7 +1,7 @@
 mod types;
 pub mod helpers;
 
-use crate::{response::ClassInfo, types::ClassInfoClass};
+use crate::{response::ClassInfo, internal_types::ClassInfoClass};
 use std::{sync::{Arc, Mutex}, collections::HashMap};
 use lfu_cache::LfuCache;
 

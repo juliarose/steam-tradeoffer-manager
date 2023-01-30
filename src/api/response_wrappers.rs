@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc, fmt};
 use crate::{
     response,
-    types::{ClassInfoAppClass, ClassInfoMap},
+    internal_types::{ClassInfoAppClass, ClassInfoMap},
     serialize::{
         from_int_to_bool,
         to_classinfo_map,

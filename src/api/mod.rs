@@ -15,6 +15,7 @@ use crate::{
     SteamID,
     time::ServerTime,
     types::*,
+    internal_types::*,
     serialize::{string, steamid_as_string},
     helpers::parses_response,
     error::{Error, ParameterError, MissingClassInfoError},
@@ -891,7 +892,7 @@ impl SteamTradeOfferAPI {
             }
         }
         
-        let mut inventory: Inventory = Vec::new();
+        let mut inventory = Vec::new();
         
         for body in responses {
             for item in body.assets.values() {
@@ -982,7 +983,7 @@ impl SteamTradeOfferAPI {
             }
         }
         
-        let mut inventory: Inventory = Vec::new();
+        let mut inventory = Vec::new();
         let items = responses
             .into_iter()
             .flat_map(|response| response.assets)
@@ -1072,7 +1073,7 @@ pub async fn get_inventory(
         }
     }
     
-    let mut inventory: Inventory = Vec::new();
+    let mut inventory = Vec::new();
     
     for body in responses {
         let mut items = body.assets

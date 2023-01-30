@@ -19,6 +19,15 @@
 //! ## Usage
 //!
 //! See [examples](https://github.com/juliarose/steam-tradeoffers/tree/main/examples).
+//! 
+//! ## Conventions
+//! 
+//! For the most part everything is straight-forward. You can find response structs in `response`, 
+//! enums in `enums`, request parameter structs in `request`, errors in `errors`, and types used
+//! throughout are found in `types`.
+//! 
+//! An underlying API for [`TradeOfferManager`] is used for making requests which has more direct 
+//! control over API calls as well as its own set of response structs. Find them in [`api`].
 
 mod manager;
 mod serialize;
@@ -26,6 +35,7 @@ mod mobile_api;
 mod helpers;
 mod classinfo_cache;
 mod time;
+mod internal_types;
 
 pub mod api;
 pub mod enums;
@@ -36,10 +46,7 @@ pub mod error;
 
 pub use classinfo_cache::ClassInfoCache;
 pub use time::ServerTime;
-pub use manager::{
-    TradeOfferManager,
-    TradeOfferManagerBuilder,
-};
+pub use manager::{TradeOfferManager, TradeOfferManagerBuilder};
 
 pub mod polling {
     pub use super::manager::{Poll, PollResult, PollType, PollOptions};

@@ -4,8 +4,8 @@ use reqwest::{header, cookie::CookieStore};
 use serde::de::DeserializeOwned;
 use lazy_regex::{regex_is_match, regex_captures};
 use async_fs::File;
-use crate::error::{TradeOfferError, Error};
 use futures::io::AsyncWriteExt;
+use crate::error::{TradeOfferError, Error};
 
 pub async fn write_file_atomic(
     filepath: PathBuf,

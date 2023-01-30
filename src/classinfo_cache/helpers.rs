@@ -1,7 +1,8 @@
 use crate::{
     response::ClassInfo,
     error::FileError,
-    types::{ClassInfoClass, ClassInfoAppClass, AppId},
+    types::AppId,
+    internal_types::{ClassInfoClass, ClassInfoAppClass},
     helpers::write_file_atomic,
 };
 use super::types::ClassInfoFile;
