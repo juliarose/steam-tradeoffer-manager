@@ -20,6 +20,7 @@ use crate::{
     error::{Error, ParameterError, MissingClassInfoError},
     classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
     request::{NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions},
+    time::get_system_time,
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -51,6 +52,30 @@ pub struct SteamTradeOfferAPI {
 impl SteamTradeOfferAPI {
     pub const HOSTNAME: &str = "https://steamcommunity.com";
     pub const API_HOSTNAME: &str = "https://api.steampowered.com";
+    
+    pub async fn get_steam_server_time_offset() -> Result<u32, Error> {
+        #[derive(Deserialize, Debug)]
+        struct ResponseBody {
+            server_time: u64,
+        }
+        
+        #[derive(Deserialize, Debug)]
+        struct Response {
+            response: ResponseBody,
+        }
+        
+        let client = reqwest::Client::new();
+        let response = client.post("https://api.steampowered.com/ITwoFactorService/QueryTime/v1/")
+            .header("content-length", 0)
+            .send()
+            .await?;
+        let body: Response = parses_response(response).await?;
+        let server_time = body.response.server_time;
+        let current_timestamp = get_system_time();
+        let offset = (current_timestamp - server_time) as u32;
+        
+        Ok(offset)
+    }
     
     fn get_uri(
         &self,

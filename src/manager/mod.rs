@@ -103,6 +103,59 @@ impl TradeOfferManager {
         self.mobile_api.set_session(&sessionid, &cookies);
     }
     
+    /// Starts polling offers. Listen to the returned receiver for events. To stop polling simply 
+    /// drop the receiver. If this method is called again the previous polling task will be 
+    /// aborted.
+    pub fn start_polling(
+        &self,
+        options: PollOptions,
+    ) -> mpsc::Receiver<PollResult> {
+        let mut polling = self.polling.lock().unwrap();
+        
+        if let Some((_, handle)) = &*polling {
+            // Abort the previous polling.
+            handle.abort();
+        }
+        
+        let (
+            tx,
+            rx,
+            handle,
+        ) = polling::create_poller(
+            self.api.clone(),
+            self.data_directory.clone(),
+            options,
+        );
+        
+        *polling = Some((tx, handle));
+        
+        rx
+    }
+    
+    /// Sends a message to the poller to do a poll now. Returns an error if polling is not setup.
+    /// Remember to start polling using the `start_polling` method before calling this method.
+    /// The message will be ignored if a message with the same [`PollType`] was sent within the 
+    /// last half a second.
+    pub fn do_poll(
+        &self,
+        poll_type: PollType,
+    ) -> Result<(), Error> {
+        use tokio::sync::mpsc::error::TrySendError;
+        
+        if let Some((sender, _)) = &*self.polling.lock().unwrap() {
+            sender.try_send(PollAction::DoPoll(poll_type))
+                .map_err(|error| match error {
+                    TrySendError::Full(_) => Error::PollingBufferFull,
+                    // Probably should happen, but if it does the handle was closed.
+                    TrySendError::Closed(_) => Error::PollingNotSetup,
+                })?;
+            
+            Ok(())
+        } else {
+            Err(Error::PollingNotSetup)
+        }
+    }
+    
     /// Accepts an offer. This checks if the offer can be acted on and updates the state of the 
     /// offer upon success.
     pub async fn accept_offer(
@@ -247,7 +300,7 @@ impl TradeOfferManager {
         self.confirm_offer_id(trade_offer.tradeofferid).await
     }
     
-    /// Confirms an trade offer using its ID.
+    /// Confirms a trade offer using its ID.
     pub async fn confirm_offer_id(
         &self,
         tradeofferid: TradeOfferId,
@@ -388,57 +441,14 @@ impl TradeOfferManager {
         self.api.get_trade_history(options).await
     }
     
-    /// Starts polling offers. Listen to the returned receiver for events. To stop polling simply 
-    /// drop the receiver. If this method is called again the previous polling task will be 
-    /// aborted.
-    pub fn start_polling(
+    /// Sets the offset of your system time with Steam's server. Use this if your system's time
+    /// differs from Steam's. This number is added onto your current system time. So if your offset 
+    /// is `-5`, 5 seconds will be subtracted from your system's time.
+    pub fn set_authenticator_steam_server_time_offset(
         &self,
-        options: PollOptions,
-    ) -> mpsc::Receiver<PollResult> {
-        let mut polling = self.polling.lock().unwrap();
-        
-        if let Some((_, handle)) = &*polling {
-            // Abort the previous polling.
-            handle.abort();
-        }
-        
-        let (
-            tx,
-            rx,
-            handle,
-        ) = polling::create_poller(
-            self.api.clone(),
-            self.data_directory.clone(),
-            options,
-        );
-        
-        *polling = Some((tx, handle));
-        
-        rx
-    }
-    
-    /// Sends a message to the poller to do a poll now. Returns an error if polling is not setup.
-    /// Remember to start polling using the `start_polling` method before calling this method.
-    /// The message will be ignored if a message with the same [`PollType`] was sent within the 
-    /// last half a second.
-    pub fn do_poll(
-        &self,
-        poll_type: PollType,
-    ) -> Result<(), Error> {
-        use tokio::sync::mpsc::error::TrySendError;
-        
-        if let Some((sender, _)) = &*self.polling.lock().unwrap() {
-            sender.try_send(PollAction::DoPoll(poll_type))
-                .map_err(|error| match error {
-                    TrySendError::Full(_) => Error::PollingBufferFull,
-                    // Probably should happen, but if it does the handle was closed.
-                    TrySendError::Closed(_) => Error::PollingNotSetup,
-                })?;
-            
-            Ok(())
-        } else {
-            Err(Error::PollingNotSetup)
-        }
+        time_offset: i32,
+    ) {
+        self.mobile_api.set_steam_server_time_offset(time_offset);
     }
 }
 
@@ -482,6 +492,7 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
                 language: builder.language.clone(),
                 identity_secret: builder.identity_secret,
                 sessionid: Arc::new(std::sync::RwLock::new(None)),
+                time_offset: Arc::new(std::sync::atomic::AtomicI32::new(0)),
             },
             data_directory: builder.data_directory,
             polling: Arc::new(Mutex::new(None)),

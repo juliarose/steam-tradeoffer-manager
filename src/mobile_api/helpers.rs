@@ -1,4 +1,4 @@
-use crate::{SteamID, time, error::ParseHtmlError, response::Confirmation, enums::ConfirmationType};
+use crate::{SteamID, error::ParseHtmlError, response::Confirmation, enums::ConfirmationType};
 use hmacsha1::hmac_sha1;
 use sha1::{Sha1, Digest};
 use lazy_regex::regex_replace_all;
@@ -10,7 +10,7 @@ const MALFORMED_DESCRIPTION: &str = "Unexpected description format";
 pub fn generate_confirmation_hash_for_time(
     time: i64,
     tag: &str,
-    identity_secret: &String,
+    identity_secret: &str,
 ) -> Result<String, base64::DecodeError> {
     let decode: &[u8] = &base64::decode(identity_secret)?;
     let time_bytes = time.to_be_bytes();
@@ -104,8 +104,4 @@ pub fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlE
         .collect::<Result<Vec<Confirmation>, ParseHtmlError>>()?;
     
     Ok(confirmations)
-}
-
-pub fn server_time(time_offset: i64) -> i64 {
-    time::get_system_time() as i64 + time_offset
 }
