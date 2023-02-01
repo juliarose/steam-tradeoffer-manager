@@ -6,7 +6,7 @@ use crate::{
     ServerTime,
     types::*,
     internal_types::*,
-    error::MissingClassInfoError,
+    error::{MissingClassInfoError, TryIntoNewAssetError},
     response::{TradeOffer, Asset, Trade, TradeAsset},
     enums::{TradeStatus, ConfirmationMethod, TradeOfferState},
     serialize::{
@@ -148,6 +148,42 @@ pub struct RawAsset {
     pub amount: Amount,
 }
 
+/// Converts a [`RawTradeAsset`] into a[`RawAsset`]. The `contextid` and `assetid` are taken from 
+/// `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
+/// 
+/// If you need a [`RawAsset`] of the newly acquired item, call `try_into_new_asset` on the
+/// [`RawTradeAsset`].
+impl From<RawTradeAsset> for RawAsset {
+    fn from(raw_trade_asset: RawTradeAsset) -> Self {
+        Self {
+            appid: raw_trade_asset.appid,
+            contextid: raw_trade_asset.contextid,
+            assetid: raw_trade_asset.assetid,
+            amount: raw_trade_asset.amount,
+            classid: raw_trade_asset.classid,
+            instanceid: raw_trade_asset.instanceid,
+        }
+    }
+}
+
+/// Converts a borrowed [`RawTradeAsset`] into a[`RawAsset`]. The `contextid` and `assetid` are 
+/// taken from `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
+/// 
+/// If you need a [`RawAsset`] of the newly acquired item, call `try_into_new_asset` on the
+/// [`RawTradeAsset`].
+impl From<&RawTradeAsset> for RawAsset {
+    fn from(raw_trade_asset: &RawTradeAsset) -> Self {
+        Self {
+            appid: raw_trade_asset.appid,
+            contextid: raw_trade_asset.contextid,
+            assetid: raw_trade_asset.assetid,
+            amount: raw_trade_asset.amount,
+            classid: raw_trade_asset.classid,
+            instanceid: raw_trade_asset.instanceid,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RawReceiptAsset {
     /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
@@ -187,8 +223,11 @@ pub struct RawAssetOld {
 /// Details from a GetTradeHistory response.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTrades {
+    /// The trades.
     pub trades: Vec<RawTrade>,
+    /// Whether more trades can be fetched.
     pub more: bool,
+    /// The total trades of your account.
     pub total_trades: u32,
 }
 
@@ -231,13 +270,49 @@ pub struct RawTradeAsset {
     /// The amount. If this item is not stackable the amount will be `1`.
     #[serde(with = "string")]
     pub amount: Amount,
-    /// The context ID of the item received.
-    #[serde(with = "string")]
-    pub new_contextid: ContextId,
-    /// The unique asset ID of the item received. This value is unique to the item's `appid` and
-    /// `contextid`.
-    #[serde(with = "string")]
-    pub new_assetid: AssetId,
+    /// The context ID of the item received. `None` if this item has not yet finished 
+    /// transferring.
+    #[serde(with = "option_string")]
+    pub new_contextid: Option<ContextId>,
+    /// The unique asset ID of the item received. `None` if this item has not yet finished t
+    /// ransferring.
+    #[serde(with = "option_string")]
+    pub new_assetid: Option<AssetId>,
+}
+
+impl RawTradeAsset {
+    /// Attempts to convert this [`TradeAsset`] into an [`Asset`] of the newly acquired item. The 
+    /// `contextid` and `assetid` are taken from `new_contextid` and `new_assetid` respectively.
+    /// 
+    /// Fails if the `new_contextid` and `new_assetid` properties are not present. This occurs 
+    /// during trades that have either failed or have yet to complete and the item has not been
+    /// transferred. Check that the `trade_status` of the [`Trade`] this asset belongs to is 
+    /// [`crate::enums::TradeStatus::Complete`].
+    pub fn try_into_new_asset(&self) -> Result<RawAsset, TryIntoNewAssetError> {
+        let contextid = self.new_contextid
+            .ok_or_else(|| TryIntoNewAssetError {
+                appid: self.appid,
+                contextid: self.contextid,
+                assetid: self.assetid,
+                amount: self.amount,
+            })?;
+        let assetid = self.new_assetid
+            .ok_or_else(|| TryIntoNewAssetError {
+                appid: self.appid,
+                contextid: self.contextid,
+                assetid: self.assetid,
+                amount: self.amount,
+            })?;
+        
+        Ok(RawAsset {
+            appid: self.appid,
+            contextid,
+            assetid,
+            amount: self.amount,
+            classid: self.classid,
+            instanceid: self.instanceid,
+        })
+    }
 }
 
 impl RawTrade {

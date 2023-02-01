@@ -1,4 +1,7 @@
-use crate::{types::{AppId, ClassId, InstanceId, TradeOfferId}, enums::TradeOfferState};
+use crate::{
+    enums::TradeOfferState,
+    types::{AppId, ContextId, AssetId, Amount, ClassId, InstanceId, TradeOfferId},
+};
 use std::{fmt, num::ParseIntError, time::SystemTimeError};
 use reqwest_middleware;
 
@@ -265,6 +268,16 @@ pub enum ParseHtmlError {
     /// An error occurred parsing an integer in the response.
     #[error("{}", .0)]
     ParseInt(#[from] ParseIntError),
+}
+
+/// An asset for an item into a trade failed to be converted into its acquired item.
+#[derive(thiserror::Error, Debug)]
+#[error("Failed to convert item {}:{}:{} into acquired item as it is missing either the new_contextid or new_assetid property. This usually means the trade it belongs to has not yet been completed.", .appid, .contextid, .assetid)]
+pub struct TryIntoNewAssetError {
+    pub appid: AppId,
+    pub contextid: ContextId,
+    pub assetid: AssetId,
+    pub amount: Amount,
 }
 
 #[cfg(test)]

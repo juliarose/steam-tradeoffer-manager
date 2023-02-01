@@ -32,14 +32,17 @@ impl Asset {
     }
 }
 
-/// Converts a [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are taken from
-/// `new_contextid` and `new_assetid` respectively.
+/// Converts a [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are taken from 
+/// `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
+/// 
+/// If you need an [`Asset`] of the newly acquired item, call `try_into_new_asset` on the
+/// [`TradeAsset`].
 impl From<TradeAsset> for Asset {
     fn from(trade_asset: TradeAsset) -> Self {
         Asset {
             appid: trade_asset.appid,
-            contextid: trade_asset.new_contextid,
-            assetid: trade_asset.new_assetid,
+            contextid: trade_asset.contextid,
+            assetid: trade_asset.assetid,
             amount: trade_asset.amount,
             classinfo: trade_asset.classinfo,
         }
@@ -47,13 +50,16 @@ impl From<TradeAsset> for Asset {
 }
 
 /// Converts a borrowed [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are taken 
-/// from`new_contextid` and `new_assetid` respectively.
+/// from `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
+/// 
+/// If you need an [`Asset`] of the newly acquired item, call `try_into_new_asset` on the
+/// [`TradeAsset`].
 impl From<&TradeAsset> for Asset {
     fn from(trade_asset: &TradeAsset) -> Self {
         Asset {
             appid: trade_asset.appid,
-            contextid: trade_asset.new_contextid,
-            assetid: trade_asset.new_assetid,
+            contextid: trade_asset.contextid,
+            assetid: trade_asset.assetid,
             amount: trade_asset.amount,
             classinfo: Arc::clone(&trade_asset.classinfo),
         }
