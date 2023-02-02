@@ -7,7 +7,7 @@ use poller::Poller;
 pub use poller::{PollResult, Poll, PollType};
 pub use poll_data::PollData;
 
-use crate::api::SteamTradeOfferAPI;
+use crate::{SteamID, api::SteamTradeOfferAPI};
 use std::{path::PathBuf, collections::HashMap, sync::Arc};
 use chrono::{Duration, DateTime};
 use tokio::{sync::{Mutex, mpsc}, task::JoinHandle};
@@ -51,6 +51,7 @@ pub enum PollAction {
 }
 
 pub fn create_poller(
+    steamid: SteamID,
     api: SteamTradeOfferAPI,
     data_directory: PathBuf,
     options: PollOptions,
@@ -59,9 +60,8 @@ pub fn create_poller(
     mpsc::Receiver<PollResult>,
     JoinHandle<()>,
 ) {
-    let steamid = api.steamid;
     let poll_data = file::load_poll_data(
-        &api.steamid,
+        &steamid,
         &data_directory,
     ).unwrap_or_else(|_| PollData::new());
     // Allows sending a message into the poller.

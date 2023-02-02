@@ -5,7 +5,7 @@ use lazy_regex::regex_captures;
 pub use polling::{PollAction, Poll, PollResult, PollType, PollOptions, PollData};
 pub use builder::TradeOfferManagerBuilder;
 
-use std::{sync::Mutex, path::PathBuf, sync::Arc};
+use std::{sync::Mutex, path::PathBuf, sync::{Arc, atomic::{Ordering, AtomicU64}}};
 use crate::{
     time,
     ServerTime,
@@ -30,13 +30,13 @@ type Polling = (mpsc::Sender<PollAction>, JoinHandle<()>);
 /// inventories.
 #[derive(Debug, Clone)]
 pub struct TradeOfferManager {
-    /// The account's SteamID.
-    pub steamid: SteamID,
     /// The underlying API. The methods on [`TradeOfferManager`] only include more conventional 
     /// ease-of-use methods. Use this API if you have a more specific use-case.
     pub api: SteamTradeOfferAPI,
     /// The underlying API for mobile confirmations.
     mobile_api: MobileAPI,
+    /// The account's SteamID.
+    pub steamid: Arc<AtomicU64>,
     /// The directory to store poll data and [`crate::response::ClassInfo`] data.
     data_directory: PathBuf,
     /// The sender for sending messages to polling
@@ -46,12 +46,10 @@ pub struct TradeOfferManager {
 impl TradeOfferManager {
     /// Creates a new [`TradeOfferManager`].
     pub fn new(
-        steamid: SteamID,
         api_key: String,
         data_directory: PathBuf,
     ) -> Self {
         Self::builder(
-            steamid,
             api_key,
             data_directory,
         ).build()
@@ -59,15 +57,25 @@ impl TradeOfferManager {
     
     /// Builder for new manager.
     pub fn builder(
-        steamid: SteamID,
         api_key: String,
         data_directory: PathBuf,
     ) -> TradeOfferManagerBuilder {
         TradeOfferManagerBuilder::new(
-            steamid,
             api_key,
             data_directory,
         )
+    }
+    
+    fn get_steamid(
+        &self,
+    ) -> Result<SteamID, Error> {
+        let steamid_64 = self.steamid.load(Ordering::Relaxed);
+        
+        if steamid_64 == 0 {
+            return Err(Error::NotLoggedIn);
+        }
+        
+        Ok(SteamID::from(steamid_64))
     }
     
     /// Sets cookies.
@@ -80,11 +88,19 @@ impl TradeOfferManager {
     ) {
         let mut cookies = cookies.to_owned();
         let mut sessionid = None;
+        let mut steamid = None;
         
         for cookie in &cookies {
             if let Some((_, key, value)) = regex_captures!(r#"([^=]+)=(.+)"#, cookie) {
-                if key == "sessionid" {
-                    sessionid = Some(value.to_string());
+                match key {
+                    "sessionid" => sessionid = Some(value.to_string()),
+                    "steamLogin" |
+                    "steamLoginSecure" => if let Some((_, steamid_str)) = regex_captures!(r#"^(\d+)/"#, value) {
+                        if let Ok(steamid_64) = steamid_str.parse::<u64>() {
+                            steamid = Some(steamid_64);
+                        }
+                    },
+                    _ => {},
                 }
             }
         }
@@ -99,6 +115,10 @@ impl TradeOfferManager {
             sessionid
         };
         
+        if let Some(steamid) = steamid {
+            self.steamid.store(steamid, Ordering::Relaxed);
+        }
+        
         self.api.set_session(&sessionid, &cookies);
         self.mobile_api.set_session(&sessionid, &cookies);
     }
@@ -106,10 +126,13 @@ impl TradeOfferManager {
     /// Starts polling offers. Listen to the returned receiver for events. To stop polling simply 
     /// drop the receiver. If this method is called again the previous polling task will be 
     /// aborted.
+    /// 
+    /// Fails if you are not logged in. Make sure to set your cookies before using this method.
     pub fn start_polling(
         &self,
         options: PollOptions,
-    ) -> mpsc::Receiver<PollResult> {
+    ) -> Result<mpsc::Receiver<PollResult>, Error> {
+        let steamid = self.get_steamid()?;
         let mut polling = self.polling.lock().unwrap();
         
         if let Some((_, handle)) = &*polling {
@@ -122,6 +145,7 @@ impl TradeOfferManager {
             rx,
             handle,
         ) = polling::create_poller(
+            steamid,
             self.api.clone(),
             self.data_directory.clone(),
             options,
@@ -129,7 +153,7 @@ impl TradeOfferManager {
         
         *polling = Some((tx, handle));
         
-        rx
+        Ok(rx)
     }
     
     /// Sends a message to the poller to do a poll now. Returns an error if polling is not setup.
@@ -244,7 +268,13 @@ impl TradeOfferManager {
         appid: AppId,
         contextid: ContextId,
     ) -> Result<Vec<Asset>, Error> {
-        self.api.get_inventory(&self.steamid, appid, contextid, true).await
+        let steamid_64 = self.steamid.load(Ordering::Relaxed);
+        
+        if steamid_64 == 0 {
+            return Err(Error::NotLoggedIn);
+        }
+        
+        self.api.get_inventory(&SteamID::from(steamid_64), appid, contextid, true).await
     }
     
     /// Gets a user's inventory. This method **does not** include untradable items.
@@ -462,13 +492,13 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
                 Arc::clone(&cookies),
                 builder.user_agent,
             ));
+        let steamid = Arc::new(AtomicU64::new(0));
         
         Self {
-            steamid: builder.steamid,
+            steamid: Arc::clone(&steamid),
             api: SteamTradeOfferAPI {
                 client: client.clone(),
                 cookies: Arc::clone(&cookies),
-                steamid: builder.steamid,
                 api_key: builder.api_key,
                 language: builder.language.clone(),
                 classinfo_cache: builder.classinfo_cache,
@@ -478,7 +508,7 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
             mobile_api: MobileAPI {
                 client,
                 cookies,
-                steamid: builder.steamid,
+                steamid,
                 language: builder.language.clone(),
                 identity_secret: builder.identity_secret,
                 sessionid: Arc::new(std::sync::RwLock::new(None)),

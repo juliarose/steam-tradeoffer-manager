@@ -1,13 +1,11 @@
 use super::{TradeOfferManager, USER_AGENT_STRING};
-use crate::{SteamID, ClassInfoCache};
+use crate::ClassInfoCache;
 use std::{path::PathBuf, sync::{Mutex, Arc}};
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
 
 /// Builder for constructing a trade offer manager.
 pub struct TradeOfferManagerBuilder {
-    /// Your account's Steam ID.
-    pub steamid: SteamID,
     /// Your account's API key from <https://steamcommunity.com/dev/apikey>.
     pub api_key: String,
     /// The identity secret for the account (optional). Required for mobile confirmations.
@@ -30,14 +28,13 @@ pub struct TradeOfferManagerBuilder {
 }
 
 impl TradeOfferManagerBuilder {
-    /// Creates a new [`TradeOfferManagerBuilder`].
+    /// Creates a new [`TradeOfferManagerBuilder`]. The `data_directory` is the directory used to 
+    /// store poll data and classinfo data.
     pub fn new(
-        steamid: SteamID,
         api_key: String,
         data_directory: PathBuf,
     ) -> Self {
         Self {
-            steamid,
             api_key,
             identity_secret: None,
             language: String::from("english"),

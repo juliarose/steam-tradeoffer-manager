@@ -38,8 +38,6 @@ pub struct SteamTradeOfferAPI {
     pub cookies: Arc<Jar>,
     /// The language for descriptions.
     pub language: String,
-    /// The SteamID of the account.
-    pub steamid: SteamID,
     /// The session ID.
     pub sessionid: Arc<RwLock<Option<String>>>,
     /// The cache for setting and getting [`ClassInfo`] data.

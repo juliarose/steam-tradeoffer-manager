@@ -8,7 +8,7 @@ use serde::Deserialize;
 use reqwest::cookie::Jar;
 use url::Url;
 use reqwest_middleware::ClientWithMiddleware;
-use std::{collections::HashMap, sync::{Arc, RwLock}};
+use std::{collections::HashMap, sync::{Arc, RwLock, atomic::{Ordering, AtomicU64}}};
 use crate::{
     SteamID,
     error::{Error, ParameterError},
@@ -22,7 +22,7 @@ pub struct MobileAPI {
     pub client: ClientWithMiddleware,
     pub cookies: Arc<Jar>,
     pub language: String,
-    pub steamid: SteamID,
+    pub steamid: Arc<AtomicU64>,
     pub identity_secret: Option<String>,
     pub sessionid: Arc<RwLock<Option<String>>>,
     pub time_offset: i64,
@@ -36,6 +36,18 @@ impl MobileAPI {
         pathname: &str,
     ) -> String {
         format!("{}{pathname}", Self::HOSTNAME)
+    }
+    
+    fn get_steamid(
+        &self,
+    ) -> Result<SteamID, Error> {
+        let steamid_64 = self.steamid.load(Ordering::Relaxed);
+        
+        if steamid_64 == 0 {
+            return Err(Error::NotLoggedIn);
+        }
+        
+        Ok(SteamID::from(steamid_64))
     }
     
     /// Sets cookies.
@@ -98,6 +110,7 @@ impl MobileAPI {
         &self,
         tag: Tag,
     ) -> Result<HashMap<&'a str, String>, Error> {
+        let steamid = self.get_steamid()?;
         let identity_secret = self.identity_secret.as_ref()
             .ok_or(ParameterError::NoIdentitySecret)?;
         let (key, time) = generate_confirmation_key(
@@ -106,10 +119,10 @@ impl MobileAPI {
             Some(self.time_offset),
         )?;
         let mut params: HashMap<&str, String> = HashMap::new();
-        let device_id = get_device_id(u64::from(self.steamid));
+        let device_id = get_device_id(u64::from(steamid));
         
         params.insert("p", device_id);
-        params.insert("a", u64::from(self.steamid).to_string());
+        params.insert("a", u64::from(steamid).to_string());
         params.insert("k", key);
         params.insert("t", time.to_string());
         params.insert("m", "android".into());

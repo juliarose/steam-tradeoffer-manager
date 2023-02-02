@@ -1,5 +1,4 @@
 use steam_tradeoffer_manager::{
-    SteamID,
     TradeOfferManager,
     response::{TradeOffer, Asset},
     enums::TradeOfferState,
@@ -51,9 +50,8 @@ async fn handle_offer(
 #[tokio::main]
 async fn main() {
     let data_directory = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
-    let (steamid, api_key, cookies) = get_session();
+    let (api_key, cookies) = get_session();
     let manager = TradeOfferManager::builder(
-        steamid,
         api_key,
         data_directory,
     )
@@ -66,7 +64,7 @@ async fn main() {
     // By default PollOptions does not have a cancel duration.
     options.cancel_duration = Some(Duration::minutes(30));
     
-    let mut rx = manager.start_polling(options);
+    let mut rx = manager.start_polling(options).unwrap();
     
     // Listen to the receiver for events.
     while let Some(message) = rx.recv().await {
@@ -101,18 +99,15 @@ async fn main() {
 }
 
 /// Gets session from environment variable.
-fn get_session() -> (SteamID, String, Vec<String>) {
+fn get_session() -> (String, Vec<String>) {
     dotenv::dotenv().ok();
     
     let api_key = std::env::var("API_KEY").expect("API_KEY missing");
-    let sid_str = std::env::var("STEAMID")
-        .unwrap_or_else(|_| panic!("STEAMID missing"));
-    let steamid = SteamID::from(sid_str.parse::<u64>().unwrap());
     let cookies = std::env::var("COOKIES")
         .expect("COOKIES missing")
         .split('&')
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
     
-    (steamid, api_key, cookies)
+    (api_key, cookies)
 }
