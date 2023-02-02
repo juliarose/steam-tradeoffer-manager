@@ -79,7 +79,7 @@ fn is_login(location_option: Option<&header::HeaderValue>) -> bool {
 
 pub async fn check_response(
     response: reqwest::Response,
-) -> Result<bytes::Bytes, Error> {
+) -> Result<Vec<u8>, Error> {
     let status = &response.status();
     
     match status.as_u16() {
@@ -88,7 +88,7 @@ pub async fn check_response(
         },
         400..=499 => Err(Error::Http(response)),
         500..=599 => Err(Error::Http(response)),
-        _ => Ok(response.bytes().await?)
+        _ => Ok(response.bytes().await?.to_vec()),
     }
 }
 
