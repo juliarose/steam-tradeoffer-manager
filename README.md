@@ -14,7 +14,7 @@ Based on the excellent [node-steam-tradeoffer-manager](https://github.com/Doctor
 - Automatically cancels offers past a set duration during polls.
 - Loads descriptions (classinfos) for assets. Classinfos are cached to file and read when available. The manager holds a [Least frequently used (LFU) cache](https://en.wikipedia.org/wiki/Least_frequently_used) of classinfos in memory to reduce file reads.
 - Uses [tokio](https://crates.io/crates/tokio) asynchronous runtime for performing polling.
-- And of course the blazingly fast performance and data integrity you'd expect from Rust.
+- Trade items on Steam <em>blazingly fast!</em>.
 
 ## Usage
 

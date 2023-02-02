@@ -66,15 +66,10 @@ impl TradeOfferManagerBuilder {
         self
     }
     
-    /// Client to use for requests. Remember to also include the cookies connected to this client
-    /// or you will need to set the cookies outside of the module.
-    pub fn client(mut self, client: ClientWithMiddleware) -> Self {
+    /// Client to use for requests. It is also required to include the associated cookies with this
+    /// client so that the `set_cookies` method works as expected.
+    pub fn client(mut self, client: ClientWithMiddleware, cookies: Arc<Jar>) -> Self {
         self.client = Some(client);
-        self
-    }
-    
-    /// Request cookies.
-    pub fn cookies(mut self, cookies: Arc<Jar>) -> Self {
         self.cookies = Some(cookies);
         self
     }

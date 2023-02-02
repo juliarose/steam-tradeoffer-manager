@@ -1,7 +1,6 @@
 mod builder;
 mod polling;
 
-use lazy_regex::regex_captures;
 pub use polling::{PollAction, Poll, PollResult, PollType, PollOptions, PollData};
 pub use builder::TradeOfferManagerBuilder;
 
@@ -11,7 +10,7 @@ use crate::{
     ServerTime,
     api::SteamTradeOfferAPI,
     mobile_api::MobileAPI,
-    helpers::{generate_sessionid, get_default_middleware},
+    helpers::{generate_sessionid, get_default_middleware, get_sessionid_and_steamid_from_cookies},
     error::{ParameterError, Error},
     request::{NewTradeOffer, GetTradeHistoryOptions},
     enums::{TradeOfferState, OfferFilter},
@@ -66,18 +65,6 @@ impl TradeOfferManager {
         )
     }
     
-    fn get_steamid(
-        &self,
-    ) -> Result<SteamID, Error> {
-        let steamid_64 = self.steamid.load(Ordering::Relaxed);
-        
-        if steamid_64 == 0 {
-            return Err(Error::NotLoggedIn);
-        }
-        
-        Ok(SteamID::from(steamid_64))
-    }
-    
     /// Sets cookies.
     /// 
     /// **IMPORTANT:** If you passed in a client to the builder for this manager but did not also 
@@ -86,25 +73,8 @@ impl TradeOfferManager {
         &self,
         cookies: &[String],
     ) {
+        let (sessionid, steamid) = get_sessionid_and_steamid_from_cookies(cookies);
         let mut cookies = cookies.to_owned();
-        let mut sessionid = None;
-        let mut steamid = None;
-        
-        for cookie in &cookies {
-            if let Some((_, key, value)) = regex_captures!(r#"([^=]+)=(.+)"#, cookie) {
-                match key {
-                    "sessionid" => sessionid = Some(value.to_string()),
-                    "steamLogin" |
-                    "steamLoginSecure" => if let Some((_, steamid_str)) = regex_captures!(r#"^(\d{17})"#, value) {
-                        if let Ok(steamid_64) = steamid_str.parse::<u64>() {
-                            steamid = Some(steamid_64);
-                        }
-                    },
-                    _ => {},
-                }
-            }
-        }
-        
         let sessionid = if let Some(sessionid) = sessionid {
             sessionid
         } else {
@@ -469,6 +439,19 @@ impl TradeOfferManager {
         options: &GetTradeHistoryOptions,
     ) -> Result<Trades, Error> {
         self.api.get_trade_history(options).await
+    }
+    
+    /// Gets the logged-in user's SteamID.
+    fn get_steamid(
+        &self,
+    ) -> Result<SteamID, Error> {
+        let steamid_64 = self.steamid.load(Ordering::Relaxed);
+        
+        if steamid_64 == 0 {
+            return Err(Error::NotLoggedIn);
+        }
+        
+        Ok(SteamID::from(steamid_64))
     }
 }
 

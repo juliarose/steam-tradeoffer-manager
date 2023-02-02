@@ -1,21 +1,18 @@
 use crate::{error::ParseHtmlError, response::Confirmation, enums::ConfirmationType};
 use scraper::{Html, Selector, element_ref::ElementRef};
 
-const MALFORMED_CONTENT: &str = "Unexpected content format";
-const MALFORMED_DESCRIPTION: &str = "Unexpected description format";
-
 pub fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlError> {
     fn parse_description(element: ElementRef, description_selector: &Selector) -> Result<Confirmation, ParseHtmlError> {
         let description = element.select(description_selector).next()
-            .ok_or(ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+            .ok_or(ParseHtmlError::Malformed("Description is missing from confirmation"))?;
         let data_type = element.value().attr("data-type")
-            .ok_or(ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+            .ok_or(ParseHtmlError::Malformed("Description is missing data-type attribute"))?;
         let id = element.value().attr("data-confid")
-            .ok_or(ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+            .ok_or(ParseHtmlError::Malformed("Description is missing data-confid attribute"))?;
         let key = element.value().attr("data-key")
-            .ok_or(ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+            .ok_or(ParseHtmlError::Malformed("Description is missing data-key attribute"))?;
         let creator = element.value().attr("data-creator")
-            .ok_or(ParseHtmlError::Malformed(MALFORMED_DESCRIPTION))?;
+            .ok_or(ParseHtmlError::Malformed("Description is missing data-creator attribute"))?;
         let description = description
             .text()
             .map(|t| t.trim())
@@ -38,11 +35,11 @@ pub fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlE
     let fragment = Html::parse_fragment(&text);
     // these should probably never fail
     let mobileconf_empty_selector = Selector::parse("#mobileconf_empty")
-        .map_err(|_error| ParseHtmlError::Malformed(MALFORMED_CONTENT))?;
+        .map_err(|_e| ParseHtmlError::ParseSelector)?;
     let mobileconf_done_selector = Selector::parse(".mobileconf_done")
-        .map_err(|_error| ParseHtmlError::Malformed(MALFORMED_CONTENT))?;
+        .map_err(|_e| ParseHtmlError::ParseSelector)?;
     let div_selector = Selector::parse("div")
-        .map_err(|_error| ParseHtmlError::Malformed(MALFORMED_CONTENT))?;
+        .map_err(|_e| ParseHtmlError::ParseSelector)?;
     
     if let Some(element) = fragment.select(&mobileconf_empty_selector).next() {
         if mobileconf_done_selector.matches(&element) {
@@ -61,9 +58,9 @@ pub fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlE
     }
     
     let confirmation_list_selector = Selector::parse(".mobileconf_list_entry")
-        .map_err(|_error| ParseHtmlError::Malformed(MALFORMED_CONTENT))?;
+        .map_err(|_e| ParseHtmlError::ParseSelector)?;
     let description_selector = Selector::parse(".mobileconf_list_entry_description")
-        .map_err(|_error| ParseHtmlError::Malformed(MALFORMED_CONTENT))?;
+        .map_err(|_e| ParseHtmlError::ParseSelector)?;
     let confirmations = fragment.select(&confirmation_list_selector)
         .map(|description| parse_description(description, &description_selector))
         .collect::<Result<Vec<Confirmation>, ParseHtmlError>>()?;

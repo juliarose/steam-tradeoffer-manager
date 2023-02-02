@@ -8,7 +8,7 @@ mod helpers;
 
 use response::*;
 use response_wrappers::*;
-use crate::response::*;
+use crate::{response::*, error::ParseHtmlError};
 use std::{path::PathBuf, collections::{HashMap, HashSet}, sync::{Arc, RwLock, Mutex}};
 use crate::{
     SteamID,
@@ -16,7 +16,7 @@ use crate::{
     types::*,
     internal_types::*,
     serialize::{string, steamid_as_string},
-    helpers::parses_response,
+    helpers::{get_sessionid_and_steamid_from_cookies, parses_response},
     error::{Error, ParameterError, MissingClassInfoError},
     classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
     request::{NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions},
@@ -29,10 +29,10 @@ use lazy_regex::{regex_captures, regex_is_match};
 /// The underlying API.for interacting with Steam trade offers.
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPI {
-    /// The client for making requests.
-    pub client: Client,
     /// The API key.
     pub api_key: String,
+    /// The client for making requests.
+    pub client: Client,
     /// The cookies to make requests with. Since the requests are made with the provided client, 
     /// the cookies should be the same as what the client uses.
     pub cookies: Arc<Jar>,
@@ -95,14 +95,14 @@ impl SteamTradeOfferAPI {
         offer: &NewTradeOffer,
         counter_tradeofferid: Option<TradeOfferId>,
     ) -> Result<SentOffer, Error> {
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct OfferFormUser<'b> {
             assets: &'b Vec<NewTradeOfferItem>,
             currency: Vec<Currency>,
             ready: bool,
         }
 
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct OfferForm<'b> {
             newversion: bool,
             version: u32,
@@ -110,13 +110,13 @@ impl SteamTradeOfferAPI {
             them: OfferFormUser<'b>,
         }
 
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct TradeOfferCreateParams<'b> {
             #[serde(skip_serializing_if = "Option::is_none")]
             trade_offer_access_token: &'b Option<String>,
         }
 
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct SendOfferParams<'b> {
             sessionid: String,
             serverid: u32,
@@ -129,7 +129,7 @@ impl SteamTradeOfferAPI {
             partner: &'b SteamID,
         }
         
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct RefererParams<'b> {
             partner: u32,
             token: &'b Option<String>,
@@ -399,7 +399,7 @@ impl SteamTradeOfferAPI {
         get_descriptions: bool,
         historical_cutoff: Option<ServerTime>,
     ) -> Result<(Vec<response::RawTradeOffer>, Option<ClassInfoMap>), Error> {
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct Form<'a> {
             key: &'a str,
             language: &'a str,
@@ -549,7 +549,7 @@ impl SteamTradeOfferAPI {
         &self,
         tradeofferid: TradeOfferId,
     ) -> Result<response::RawTradeOffer, Error> {
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct Form<'a> {
             key: &'a str,
             tradeofferid: TradeOfferId,
@@ -646,7 +646,7 @@ impl SteamTradeOfferAPI {
         include_failed: bool,
         include_total: bool,
     ) -> Result<GetTradeHistoryResponseBody, Error> {
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct Form<'a> {
             key: &'a str,
             max_trades: u32,
@@ -685,7 +685,7 @@ impl SteamTradeOfferAPI {
         tradeofferid: Option<TradeOfferId>,
         token: &Option<String>,
     ) -> Result<UserDetails, Error> {
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct Params<'b> {
             partner: u32,
             token: &'b Option<String>,
@@ -722,7 +722,7 @@ impl SteamTradeOfferAPI {
         tradeofferid: TradeOfferId,
         partner: &SteamID,
     ) -> Result<AcceptedOffer, Error> {
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct AcceptOfferParams<'b> {
             sessionid: String,
             serverid: u32,
@@ -759,7 +759,7 @@ impl SteamTradeOfferAPI {
         &self,
         tradeofferid: TradeOfferId,
     ) -> Result<TradeOfferId, Error> {
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct DeclineOfferParams {
             sessionid: String,
         }
@@ -791,7 +791,7 @@ impl SteamTradeOfferAPI {
         &self,
         tradeofferid: TradeOfferId,
     ) -> Result<TradeOfferId, Error> {
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct CancelOfferParams {
             sessionid: String,
         }
@@ -826,7 +826,7 @@ impl SteamTradeOfferAPI {
         contextid: ContextId,
         tradable_only: bool,
     ) -> Result<Vec<Asset>, Error> { 
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct Query<'a> {
             l: &'a str,
             start: Option<u64>,
@@ -917,7 +917,7 @@ impl SteamTradeOfferAPI {
         contextid: ContextId,
         tradable_only: bool,
     ) -> Result<Vec<Asset>, Error> { 
-        #[derive(Serialize, Debug)]
+        #[derive(Serialize)]
         struct Query<'a> {
             l: &'a str,
             count: u32,
@@ -996,6 +996,106 @@ impl SteamTradeOfferAPI {
     }
 }
 
+use scraper::{Html, Selector};
+
+pub async fn get_web_api_key(cookies: &Vec<String>) -> Result<String, Error> {
+    async fn try_get_key(client: &reqwest::Client) -> Result<String, Error> {
+        let hostname = SteamTradeOfferAPI::HOSTNAME;
+        let uri = format!("{hostname}/dev/apikey");
+        let response = client.get(uri)
+            .send()
+            .await?;
+        let text = response.text().await?;
+        let fragment = Html::parse_fragment(&text);
+        let main_selector = Selector::parse("#mainContents h2")
+            .map_err(|_error| ParseHtmlError::ParseSelector)?;
+        let api_key_selector = Selector::parse("#bodyContents_ex h2")
+            .map_err(|_error| ParseHtmlError::ParseSelector)?;
+        let api_key_p_selector = Selector::parse("#bodyContents_ex p")
+            .map_err(|_error| ParseHtmlError::ParseSelector)?;
+        
+        if let Some(element) = fragment.select(&main_selector).next() {
+            if element.text().collect::<String>() == "Access Denied" {
+                return Err(Error::NotLoggedIn);
+            }
+        }
+        
+        if let Some(element) = fragment.select(&api_key_selector).next() {
+            if element.text().collect::<String>() == "Your Steam Web API Key" {
+                if let Some(element) = element.select(&api_key_p_selector).next() {
+                    let text = element.text().collect::<String>();
+                    let mut text = text.split(' ');
+                    
+                    text.next();
+                    
+                    if let Some(api_key) = text.next() {
+                        return Ok(api_key.to_string());
+                    } else {
+                        return Err(Error::ParseHtml(
+                            ParseHtmlError::Malformed(COULD_NOT_GET_KEY)
+                        ));
+                    }
+                }
+            }
+        }
+        
+        return Err(Error::ParseHtml(
+            ParseHtmlError::Malformed(NO_API_KEY)
+        ));
+    }
+    
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct CreateAPIKey {
+        domain: String,
+        agree_to_terms: String,
+        sessionid: String,
+        submit: String,
+    }
+    
+    const MALFORMED_CONTENT: &str = "Unexpected content format";
+    const COULD_NOT_GET_KEY: &str = "API key could not be parsed from response";
+    const NO_API_KEY: &str = "This account does not have an API key";
+    
+    let (
+        sessionid,
+        _steamid,
+    ) = get_sessionid_and_steamid_from_cookies(cookies);
+    let sessionid = sessionid
+        .ok_or(Error::NotLoggedIn)?;
+    let hostname = SteamTradeOfferAPI::HOSTNAME;
+    let cookie_store = Arc::new(Jar::default());
+    let url = hostname.parse::<Url>()
+        .unwrap_or_else(|_| panic!("URL could not be parsed from {hostname}"));
+    
+    for cookie in cookies {
+        cookie_store.add_cookie_str(cookie, &url);
+    }
+    
+    let client = reqwest::ClientBuilder::new()
+        .cookie_provider(cookie_store)
+        .build()?;
+    
+    match try_get_key(&client).await {
+        Ok(api_key) => Ok(api_key),
+        Err(Error::ParseHtml(ParseHtmlError::Malformed(message))) if message == NO_API_KEY => {
+            let uri = format!("{hostname}/dev/registerkey");
+            let _response = client.post(uri)
+                .form(&CreateAPIKey {
+                    domain: "localhost".into(),
+                    sessionid,
+                    agree_to_terms: "agreed".into(),
+                    submit: "Register".into(),
+                })
+                .send()
+                .await?;
+            
+            try_get_key(&client).await
+        },
+        Err(error) => Err(error),
+    }
+}
+
 /// A stand-alone method for getting a user's inventory.
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::too_many_arguments))]
 pub async fn get_inventory(
@@ -1006,7 +1106,7 @@ pub async fn get_inventory(
     tradable_only: bool,
     language: &str,
 ) -> Result<Vec<Asset>, Error> { 
-    #[derive(Serialize, Debug)]
+    #[derive(Serialize)]
     struct Query<'a> {
         l: &'a str,
         count: u32,

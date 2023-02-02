@@ -2,7 +2,9 @@
 // modifications to fit with the rest of this crate.
 
 mod helpers;
+mod operation;
 
+use operation::Operation;
 use another_steam_totp::{get_device_id, Tag, generate_confirmation_key};
 use serde::Deserialize;
 use reqwest::cookie::Jar;
@@ -19,36 +21,25 @@ use crate::{
 /// The API for mobile confirmations.
 #[derive(Debug, Clone)]
 pub struct MobileAPI {
+    /// The client for making requests.
     pub client: ClientWithMiddleware,
+    /// The cookies to make requests with. Since the requests are made with the provided client, 
+    /// the cookies should be the same as what the client uses.
     pub cookies: Arc<Jar>,
+    /// The language for descriptions.
     pub language: String,
-    pub steamid: Arc<AtomicU64>,
-    pub identity_secret: Option<String>,
+    /// The session ID.
     pub sessionid: Arc<RwLock<Option<String>>>,
+    /// The SteamID  of the logged in user. `0` if no login cookies were passed.
+    pub steamid: Arc<AtomicU64>,
+    /// The identity secret for mobile confirmations.
+    pub identity_secret: Option<String>,
+    /// The time offset from Steam's servers.
     pub time_offset: i64,
 }
 
 impl MobileAPI {
     pub const HOSTNAME: &str = "https://steamcommunity.com";
-    
-    fn get_uri(
-        &self,
-        pathname: &str,
-    ) -> String {
-        format!("{}{pathname}", Self::HOSTNAME)
-    }
-    
-    fn get_steamid(
-        &self,
-    ) -> Result<SteamID, Error> {
-        let steamid_64 = self.steamid.load(Ordering::Relaxed);
-        
-        if steamid_64 == 0 {
-            return Err(Error::NotLoggedIn);
-        }
-        
-        Ok(SteamID::from(steamid_64))
-    }
     
     /// Sets cookies.
     pub fn set_cookies(
@@ -78,7 +69,7 @@ impl MobileAPI {
         &self,
         confirmation: &Confirmation,
     ) -> Result<(), Error> {
-        self.send_confirmation_ajax(confirmation, "allow").await
+        self.send_confirmation_ajax(confirmation, Operation::Allow).await
     }
 
     /// Cancels a confirmation.
@@ -86,7 +77,7 @@ impl MobileAPI {
         &self,
         confirmation: &Confirmation,
     ) -> Result<(), Error> {
-        self.send_confirmation_ajax(confirmation, "cancel").await
+        self.send_confirmation_ajax(confirmation, Operation::Cancel).await
     }
     
     /// Gets the trade confirmations.
@@ -134,7 +125,7 @@ impl MobileAPI {
     async fn send_confirmation_ajax(
         &self,
         confirmation: &Confirmation,
-        operation: &str,
+        operation: Operation,
     ) -> Result<(), Error>  {
         #[derive(Debug, Clone, Copy, Deserialize)]
         struct SendConfirmationResponse {
@@ -143,7 +134,7 @@ impl MobileAPI {
         
         let mut query = self.get_confirmation_query_params(Tag::Conf)?;
         
-        query.insert("op", operation.into());
+        query.insert("op", operation.to_string());
         query.insert("cid", confirmation.id.to_string());
         query.insert("ck", confirmation.key.to_string());
         
@@ -160,5 +151,25 @@ impl MobileAPI {
         }
         
         Ok(())
+    }
+    
+    /// Gets the logged-in user's SteamID.
+    fn get_steamid(
+        &self,
+    ) -> Result<SteamID, Error> {
+        let steamid_64 = self.steamid.load(Ordering::Relaxed);
+        
+        if steamid_64 == 0 {
+            return Err(Error::NotLoggedIn);
+        }
+        
+        Ok(SteamID::from(steamid_64))
+    }
+    
+    fn get_uri(
+        &self,
+        pathname: &str,
+    ) -> String {
+        format!("{}{pathname}", Self::HOSTNAME)
     }
 }

@@ -267,6 +267,9 @@ pub enum ParseHtmlError {
     /// An error occurred parsing an integer in the response.
     #[error("{}", .0)]
     ParseInt(#[from] ParseIntError),
+    /// A selector could not be parsed
+    #[error("Invalid selector")]
+    ParseSelector,
 }
 
 /// An asset for an item into a trade failed to be converted into its acquired item.
