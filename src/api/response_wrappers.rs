@@ -4,7 +4,6 @@ use crate::{
     internal_types::{ClassInfoAppClass, ClassInfoMap},
     serialize::{
         from_int_to_bool,
-        to_classinfo_map,
         to_trade_offers_classinfo_map,
         option_str_to_number,
         deserialize_classinfo_map_raw,
@@ -70,23 +69,6 @@ pub struct GetTradeOffersResponseBody {
 #[derive(Deserialize, Debug)]
 pub struct GetTradeOffersResponse {
     pub response: GetTradeOffersResponseBody,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct GetInventoryResponse {
-    #[serde(default)]
-    #[serde(deserialize_with = "from_int_to_bool")]
-    pub success: bool,
-    #[serde(default)]
-    #[serde(deserialize_with = "from_int_to_bool")]
-    pub more_items: bool,
-    #[serde(default)]
-    pub assets: Vec<api_response::RawAsset>,
-    #[serde(deserialize_with = "to_classinfo_map")]
-    pub descriptions: HashMap<ClassInfoAppClass, Arc<response::ClassInfo>>,
-    #[serde(default)]
-    #[serde(deserialize_with = "option_str_to_number")]
-    pub last_assetid: Option<u64>,
 }
 
 // This ignores parsing the descriptions.
@@ -163,13 +145,5 @@ mod tests {
         let offer = response.response.trade_offers_sent.first().unwrap();
 
         assert_eq!(offer.message, Some(String::from("give me that key")));
-    }
-    
-    #[test]
-    fn parses_get_inventory_response() {
-        let response: GetInventoryResponse = serde_json::from_str(include_str!("fixtures/inventory.json")).unwrap();
-        let asset = response.assets.first().unwrap();
-
-        assert_eq!(asset.assetid, 11152148507);
     }
 }
