@@ -48,13 +48,12 @@ pub enum Error {
     /// having issues.
     #[error("{}", .0)]
     MissingClassInfo(#[from] MissingClassInfoError),
+    /// An error occurred within Steam TOTP.
+    #[error("{}", .0)]
+    TOTP(#[from] another_steam_totp::Error),
     /// This trade offer has no confirmations.
     #[error("No confirmation for offer {}", .0)]
     NoConfirmationForOffer(TradeOfferId),
-    /// A number could not be decoded from base64. This means your identity_secret was used and is 
-    /// not a valid base64 number.
-    #[error("Identity secret is invalid base64: {}", .0)]
-    InvalidIdentitySecret(#[from] base64::DecodeError),
     /// A confirmation could not be confirmed.
     #[error("Confirmation unsuccessful. The confirmation may have succeeded, the confirmation no longer exists, or another trade may be going through. Check confirmations again to verify.")]
     ConfirmationUnsuccessful,

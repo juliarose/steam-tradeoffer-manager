@@ -25,6 +25,8 @@ pub struct TradeOfferManagerBuilder {
     pub client: Option<ClientWithMiddleware>,
     /// User agent for requests.
     pub user_agent: &'static str,
+    /// How many seconds your computer is behind Steam's servers. Used in mobile confirmations.
+    pub time_offset: i64,
 }
 
 impl TradeOfferManagerBuilder {
@@ -44,6 +46,7 @@ impl TradeOfferManagerBuilder {
             cookies: None,
             client: None,
             user_agent: USER_AGENT_STRING,
+            time_offset: 0,
         }
     }
     
@@ -83,6 +86,12 @@ impl TradeOfferManagerBuilder {
     /// associated with the client is used.
     pub fn user_agent(mut self, user_agent: &'static str) -> Self {
         self.user_agent = user_agent;
+        self
+    }
+    
+    /// How many seconds your computer is behind Steam's servers. Used in mobile confirmations.
+    pub fn time_offset(mut self, time_offset: i64) -> Self {
+        self.time_offset = time_offset;
         self
     }
     

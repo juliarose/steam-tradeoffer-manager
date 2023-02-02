@@ -31,15 +31,13 @@ futures = "0.3.0"
 bytes = "1.1.0"
 url = "2.2.0"
 lfu_cache = "1.2.1"
-base64 = "0.13.0"
-hmac-sha1 = "0.1.0"
-sha-1 = "0.10.0"
 scraper = "0.12.0"
 thiserror = "1.0.30"
 log = "0.4.0"
 async-std = "1.12.0"
 unescape = "0.1.0"
 rand = "0.8"
+another-steam-totp = { version = "0.2.0", features = ["reqwest"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }

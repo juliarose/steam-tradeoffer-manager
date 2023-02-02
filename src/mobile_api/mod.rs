@@ -3,14 +3,14 @@
 
 mod helpers;
 
+use another_steam_totp::{get_device_id, Tag, generate_confirmation_key};
 use serde::Deserialize;
 use reqwest::cookie::Jar;
 use url::Url;
 use reqwest_middleware::ClientWithMiddleware;
-use std::{collections::HashMap, sync::{Arc, RwLock, atomic::{Ordering, AtomicI32}}};
+use std::{collections::HashMap, sync::{Arc, RwLock}};
 use crate::{
     SteamID,
-    time::get_system_time,
     error::{Error, ParameterError},
     helpers::parses_response,
     response::Confirmation,
@@ -25,7 +25,7 @@ pub struct MobileAPI {
     pub steamid: SteamID,
     pub identity_secret: Option<String>,
     pub sessionid: Arc<RwLock<Option<String>>>,
-    pub time_offset: Arc<AtomicI32>,
+    pub time_offset: i64,
 }
 
 impl MobileAPI {
@@ -36,16 +36,6 @@ impl MobileAPI {
         pathname: &str,
     ) -> String {
         format!("{}{pathname}", Self::HOSTNAME)
-    }
-    
-    /// Sets the offset of your system time with Steam's server. Use this if your system's time
-    /// differs from Steam's. This number is added onto your current system time. So if your offset 
-    /// is `-5`, 5 seconds will be subtracted from your system's time.
-    pub fn set_steam_server_time_offset(
-        &self,
-        time_offset: i32,
-    ) {
-        self.time_offset.store(time_offset, Ordering::Relaxed);
     }
     
     /// Sets cookies.
@@ -92,7 +82,7 @@ impl MobileAPI {
         &self,
     ) -> Result<Vec<Confirmation>, Error> {
         let uri = self.get_uri("/mobileconf/conf");
-        let query = self.get_confirmation_query_params("conf")?;
+        let query = self.get_confirmation_query_params(Tag::Conf)?;
         let response = self.client.get(&uri)
             .header("X-Requested-With", "com.valvesoftware.android.steam.community")
             .query(&query)
@@ -106,25 +96,24 @@ impl MobileAPI {
     
     fn get_confirmation_query_params<'a>(
         &self,
-        tag: &str,
+        tag: Tag,
     ) -> Result<HashMap<&'a str, String>, Error> {
         let identity_secret = self.identity_secret.as_ref()
             .ok_or(ParameterError::NoIdentitySecret)?;
-        let time_offset = self.time_offset.load(Ordering::Relaxed);
-        let time = (get_system_time() as i64) + time_offset as i64;
-        let key = helpers::generate_confirmation_hash_for_time(
-            time,
+        let (key, time) = generate_confirmation_key(
+            identity_secret.to_owned(),
             tag,
-            identity_secret,
+            Some(self.time_offset),
         )?;
         let mut params: HashMap<&str, String> = HashMap::new();
+        let device_id = get_device_id(u64::from(self.steamid));
         
-        params.insert("p", helpers::get_device_id(&self.steamid));
+        params.insert("p", device_id);
         params.insert("a", u64::from(self.steamid).to_string());
         params.insert("k", key);
         params.insert("t", time.to_string());
         params.insert("m", "android".into());
-        params.insert("tag", tag.into());
+        params.insert("tag", tag.to_string());
         
         Ok(params)
     }
@@ -139,7 +128,7 @@ impl MobileAPI {
             pub success: bool,
         }
         
-        let mut query = self.get_confirmation_query_params("conf")?;
+        let mut query = self.get_confirmation_query_params(Tag::Conf)?;
         
         query.insert("op", operation.into());
         query.insert("cid", confirmation.id.to_string());

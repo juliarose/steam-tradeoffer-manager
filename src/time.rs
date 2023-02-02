@@ -1,4 +1,4 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::SystemTime;
 use chrono::{NaiveDateTime, DateTime, Utc, Duration};
 
 /// The datetime formated used for requests and responses.
@@ -19,15 +19,6 @@ pub fn timestamp_to_server_time(timestamp: i64) -> ServerTime {
 /// Gets current time.
 pub fn get_server_time_now() -> ServerTime {
     ServerTime::from(SystemTime::now())
-}
-
-/// Gets current timestamp.
-pub fn get_system_time() -> u64 {
-    match SystemTime::now().duration_since(UNIX_EPOCH) {
-        Ok(n) => n.as_secs(),
-        // should never occur
-        Err(_) => 0,
-    }
 }
 
 /// Date difference from now.

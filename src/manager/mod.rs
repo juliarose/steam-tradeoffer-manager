@@ -440,16 +440,6 @@ impl TradeOfferManager {
     ) -> Result<Trades, Error> {
         self.api.get_trade_history(options).await
     }
-    
-    /// Sets the offset of your system time with Steam's server. Use this if your system's time
-    /// differs from Steam's. This number is added onto your current system time. So if your offset 
-    /// is `-5`, 5 seconds will be subtracted from your system's time.
-    pub fn set_authenticator_steam_server_time_offset(
-        &self,
-        time_offset: i32,
-    ) {
-        self.mobile_api.set_steam_server_time_offset(time_offset);
-    }
 }
 
 impl std::ops::Drop for TradeOfferManager {
@@ -492,7 +482,7 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
                 language: builder.language.clone(),
                 identity_secret: builder.identity_secret,
                 sessionid: Arc::new(std::sync::RwLock::new(None)),
-                time_offset: Arc::new(std::sync::atomic::AtomicI32::new(0)),
+                time_offset: builder.time_offset,
             },
             data_directory: builder.data_directory,
             polling: Arc::new(Mutex::new(None)),

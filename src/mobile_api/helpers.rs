@@ -1,43 +1,8 @@
-use crate::{SteamID, error::ParseHtmlError, response::Confirmation, enums::ConfirmationType};
-use hmacsha1::hmac_sha1;
-use sha1::{Sha1, Digest};
-use lazy_regex::regex_replace_all;
+use crate::{error::ParseHtmlError, response::Confirmation, enums::ConfirmationType};
 use scraper::{Html, Selector, element_ref::ElementRef};
 
 const MALFORMED_CONTENT: &str = "Unexpected content format";
 const MALFORMED_DESCRIPTION: &str = "Unexpected description format";
-
-pub fn generate_confirmation_hash_for_time(
-    time: i64,
-    tag: &str,
-    identity_secret: &str,
-) -> Result<String, base64::DecodeError> {
-    let decode: &[u8] = &base64::decode(identity_secret)?;
-    let time_bytes = time.to_be_bytes();
-    let tag_bytes = tag.as_bytes();
-    let array = [&time_bytes, tag_bytes].concat();
-    let hash = hmac_sha1(decode, &array);
-    
-    Ok(base64::encode(hash))
-}
-
-pub fn get_device_id(steamid: &SteamID) -> String {
-    let mut hasher = Sha1::new();
-
-    hasher.update(u64::from(*steamid).to_string().as_bytes());
-    
-    let result = hasher.finalize();
-    let hash = result.iter()
-        .map(|b| format!("{b:02x}"))
-        .collect::<String>();
-    let device_id = regex_replace_all!(
-        r#"^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12}).*$"#i,
-        &hash,
-        |_, a, b, c, d, e| format!("{a}-{b}-{c}-{d}-{e}"),
-    );
-    
-    format!("android:{device_id}")
-}
 
 pub fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlError> {
     fn parse_description(element: ElementRef, description_selector: &Selector) -> Result<Confirmation, ParseHtmlError> {
