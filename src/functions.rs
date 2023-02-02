@@ -1,3 +1,5 @@
+// Contains exported functions in lib.rs
+
 use std::{collections::HashMap, sync::Arc};
 use crate::{
     SteamID,
@@ -14,6 +16,9 @@ use reqwest::{cookie::Jar, header::REFERER};
 use scraper::{Html, Selector};
 use url::Url;
 
+/// Gets your Steam web api key. This method requires your cookies. If your account does not have
+/// an API key set, one will be created using `localhost` as the domain. By calling this method you
+/// are agreeing to the [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms). 
 pub async fn get_api_key(cookies: &Vec<String>) -> Result<String, Error> {
     async fn try_get_key(client: &reqwest::Client) -> Result<String, Error> {
         let hostname = SteamTradeOfferAPI::HOSTNAME;
