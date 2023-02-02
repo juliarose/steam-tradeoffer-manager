@@ -77,26 +77,19 @@ fn is_login(location_option: Option<&header::HeaderValue>) -> bool {
     }
 }
 
-pub async fn check_response(
-    response: reqwest::Response,
-) -> Result<Vec<u8>, Error> {
+pub async fn parses_response<D>(response: reqwest::Response) -> Result<D, Error>
+where
+    D: DeserializeOwned,
+{
     let status = &response.status();
-    
-    match status.as_u16() {
+    let body = match status.as_u16() {
         300..=399 if is_login(response.headers().get("location")) => {
             Err(Error::NotLoggedIn)
         },
         400..=499 => Err(Error::Http(response)),
         500..=599 => Err(Error::Http(response)),
-        _ => Ok(response.bytes().await?.to_vec()),
-    }
-}
-
-pub async fn parses_response<D>(response: reqwest::Response) -> Result<D, Error>
-where
-    D: DeserializeOwned,
-{
-    let body = check_response(response).await?;
+        _ => Ok(response.bytes().await?),
+    }?;
     // let html = String::from_utf8_lossy(&body);
 
     // println!("{}", html);
