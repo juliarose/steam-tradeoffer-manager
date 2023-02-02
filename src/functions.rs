@@ -60,9 +60,9 @@ pub async fn get_api_key(cookies: &Vec<String>) -> Result<String, Error> {
             }
         }
         
-        return Err(Error::ParseHtml(
+        Err(Error::ParseHtml(
             ParseHtmlError::Malformed(NO_API_KEY)
-        ));
+        ))
     }
     
     #[derive(Serialize)]
