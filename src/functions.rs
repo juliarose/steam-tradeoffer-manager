@@ -30,9 +30,11 @@ pub async fn get_api_key(cookies: &Vec<String>) -> Result<String, Error> {
         let fragment = Html::parse_fragment(&text);
         let main_selector = Selector::parse("#mainContents h2")
             .map_err(|_error| ParseHtmlError::ParseSelector)?;
-        let api_key_selector = Selector::parse("#bodyContents_ex h2")
+        let body_contents_selector = Selector::parse("#bodyContents_ex")
             .map_err(|_error| ParseHtmlError::ParseSelector)?;
-        let api_key_p_selector = Selector::parse("#bodyContents_ex p")
+        let h2_selector = Selector::parse("h2")
+            .map_err(|_error| ParseHtmlError::ParseSelector)?;
+        let p_selector = Selector::parse("p")
             .map_err(|_error| ParseHtmlError::ParseSelector)?;
         
         if let Some(element) = fragment.select(&main_selector).next() {
@@ -41,23 +43,26 @@ pub async fn get_api_key(cookies: &Vec<String>) -> Result<String, Error> {
             }
         }
         
-        if let Some(element) = fragment.select(&api_key_selector).next() {
-            if element.text().collect::<String>() == "Your Steam Web API Key" {
-                if let Some(element) = element.select(&api_key_p_selector).next() {
-                    let text = element.text().collect::<String>();
-                    let mut text = text.split(' ');
-                    
-                    text.next();
-                    
-                    if let Some(api_key) = text.next() {
-                        return Ok(api_key.to_string());
-                    } else {
-                        return Err(Error::ParseHtml(
-                            ParseHtmlError::Malformed(COULD_NOT_GET_KEY)
-                        ));
+        if let Some(body_contents_element) = fragment.select(&body_contents_selector).next() {
+            if let Some(element) = body_contents_element.select(&h2_selector).next() {
+                if element.text().collect::<String>().trim() == "Your Steam Web API Key" {
+                    if let Some(element) = body_contents_element.select(&p_selector).next() {
+                        let text = element.text().collect::<String>();
+                        let mut text = text.trim().split(' ');
+                        
+                        text.next();
+                        
+                        if let Some(api_key) = text.next() {
+                            return Ok(api_key.to_string());
+                        } else {
+                            return Err(Error::ParseHtml(
+                                ParseHtmlError::Malformed(COULD_NOT_GET_KEY)
+                            ));
+                        }
                     }
                 }
             }
+            
         }
         
         Err(Error::ParseHtml(
@@ -74,7 +79,6 @@ pub async fn get_api_key(cookies: &Vec<String>) -> Result<String, Error> {
         submit: String,
     }
     
-    const MALFORMED_CONTENT: &str = "Unexpected content format";
     const COULD_NOT_GET_KEY: &str = "API key could not be parsed from response";
     const NO_API_KEY: &str = "This account does not have an API key";
     
