@@ -59,10 +59,10 @@ async fn main() {
         .build();
     let mut options = PollOptions::default();
     
-    // Cookies are required to interact with trade offers.
-    manager.set_cookies(&cookies);
     // By default PollOptions does not have a cancel duration.
     options.cancel_duration = Some(Duration::minutes(30));
+    // Cookies are required before starting polling.
+    manager.set_cookies(&cookies);
     
     let mut rx = manager.start_polling(options).unwrap();
     
