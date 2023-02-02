@@ -290,14 +290,14 @@ impl RawTradeAsset {
     /// [`crate::enums::TradeStatus::Complete`].
     pub fn try_into_new_asset(&self) -> Result<RawAsset, TryIntoNewAssetError> {
         let contextid = self.new_contextid
-            .ok_or_else(|| TryIntoNewAssetError {
+            .ok_or(TryIntoNewAssetError {
                 appid: self.appid,
                 contextid: self.contextid,
                 assetid: self.assetid,
                 amount: self.amount,
             })?;
         let assetid = self.new_assetid
-            .ok_or_else(|| TryIntoNewAssetError {
+            .ok_or(TryIntoNewAssetError {
                 appid: self.appid,
                 contextid: self.contextid,
                 assetid: self.assetid,
