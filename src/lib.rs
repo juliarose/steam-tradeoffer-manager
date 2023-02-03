@@ -29,6 +29,8 @@
 //! An underlying API for [`TradeOfferManager`] is used for making requests which has more direct 
 //! control over API calls as well as its own set of response structs. Find them in [`api`].
 
+extern crate lazy_static;
+
 mod manager;
 mod serialize;
 mod mobile_api;

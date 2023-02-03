@@ -5,7 +5,22 @@ use serde::de::DeserializeOwned;
 use lazy_regex::{regex_is_match, regex_captures};
 use async_fs::File;
 use futures::io::AsyncWriteExt;
-use crate::error::{TradeOfferError, Error};
+use crate::{internal_types::Client, error::{TradeOfferError, Error}};
+use lazy_static::lazy_static;
+use reqwest::cookie::Jar;
+
+lazy_static! {
+    pub static ref DEFAULT_CLIENT: Client = {
+        let cookie_store = Arc::new(Jar::default());
+        
+        get_default_middleware(
+            cookie_store,
+            USER_AGENT_STRING,
+        )
+    };
+}
+
+pub const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
 
 /// Generates a random sessionid.
 pub fn generate_sessionid() -> String {

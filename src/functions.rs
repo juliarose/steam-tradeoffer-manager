@@ -2,12 +2,11 @@
 
 use std::{collections::HashMap, sync::Arc};
 use crate::{
-    SteamID,
-    types::*,
     internal_types::*,
     helpers::{parses_response, get_sessionid_and_steamid_from_cookies},
     api::{response as api_response, SteamTradeOfferAPI},
     response::{Asset, ClassInfo},
+    request::GetInventoryOptions,
     error::{Error, ParseHtmlError, MissingClassInfoError},
     serialize::{from_int_to_bool, to_classinfo_map, option_str_to_number},
 };
@@ -16,10 +15,12 @@ use reqwest::{cookie::Jar, header::REFERER};
 use scraper::{Html, Selector};
 use url::Url;
 
-/// Gets your Steam web api key. This method requires your cookies. If your account does not have
+/// Gets your Steam Web API key. This method requires your cookies. If your account does not have
 /// an API key set, one will be created using `localhost` as the domain. By calling this method you
 /// are agreeing to the [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms). 
-pub async fn get_api_key(cookies: &Vec<String>) -> Result<String, Error> {
+pub async fn get_api_key(
+    cookies: &Vec<String>,
+) -> Result<String, Error> {
     async fn try_get_key(client: &reqwest::Client) -> Result<String, Error> {
         let hostname = SteamTradeOfferAPI::HOSTNAME;
         let uri = format!("{hostname}/dev/apikey");
@@ -121,15 +122,9 @@ pub async fn get_api_key(cookies: &Vec<String>) -> Result<String, Error> {
     }
 }
 
-/// A stand-alone method for getting a user's inventory.
-#[cfg_attr(feature = "cargo-clippy", allow(clippy::too_many_arguments))]
-pub async fn get_inventory(
-    client: &Client,
-    steamid: &SteamID,
-    appid: AppId,
-    contextid: ContextId,
-    tradable_only: bool,
-    language: &str,
+/// Gets a user's inventory.
+pub async fn get_inventory<'a>(
+    options: &GetInventoryOptions<'a>,
 ) -> Result<Vec<Asset>, Error> { 
     #[derive(Serialize)]
     struct Query<'a> {
@@ -140,16 +135,18 @@ pub async fn get_inventory(
     
     let mut responses: Vec<GetInventoryResponse> = Vec::new();
     let mut start_assetid: Option<u64> = None;
-    let sid = u64::from(*steamid);
+    let sid = u64::from(options.steamid);
+    let appid = options.appid;
+    let contextid = options.contextid;
     let hostname = SteamTradeOfferAPI::HOSTNAME;
     let uri = format!("{hostname}/inventory/{sid}/{appid}/{contextid}");
     let referer = format!("{hostname}/profiles/{sid}/inventory");
     
     loop {
-        let response = client.get(&uri)
+        let response = options.client.get(&uri)
             .header(REFERER, &referer)
             .query(&Query {
-                l: language,
+                l: &options.language,
                 count: 2000,
                 start_assetid,
             })
@@ -188,7 +185,7 @@ pub async fn get_inventory(
                     }));
                 
                 match classinfo_result {
-                    Ok(classinfo) if tradable_only && !classinfo.tradable => {
+                    Ok(classinfo) if options.tradable_only && !classinfo.tradable => {
                         None
                     },
                     Ok(classinfo) => Some(Ok(Asset {

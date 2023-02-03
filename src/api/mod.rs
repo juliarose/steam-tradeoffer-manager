@@ -8,7 +8,7 @@ mod helpers;
 
 use response::*;
 use response_wrappers::*;
-use crate::response::*;
+use crate::{response::*, request::GetInventoryOptions};
 use std::{path::PathBuf, collections::{HashMap, HashSet}, sync::{Arc, RwLock, Mutex}};
 use crate::{
     SteamID,
@@ -23,9 +23,9 @@ use crate::{
     request::{NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions},
 };
 use serde::{Deserialize, Serialize};
-use url::Url;
 use reqwest::{cookie::Jar, header::REFERER};
 use lazy_regex::{regex_captures, regex_is_match};
+use url::Url;
 
 /// The underlying API.for interacting with Steam trade offers.
 #[derive(Debug, Clone)]
@@ -884,14 +884,14 @@ impl SteamTradeOfferAPI {
         contextid: ContextId,
         tradable_only: bool,
     ) -> Result<Vec<Asset>, Error> {
-        get_inventory(
-            &self.client,
-            steamid,
+        get_inventory(&GetInventoryOptions {
+            client: &self.client,
+            steamid: *steamid,
             appid,
             contextid,
             tradable_only,
-            &self.language,
-        ).await
+            language: self.language.clone(),
+        }).await
     }
     
     /// Gets a user's inventory which includes the `app_data` using the `GetAssetClassInfo` API.

@@ -21,8 +21,6 @@ use steamid_ng::SteamID;
 use tokio::{sync::mpsc, task::JoinHandle};
 use reqwest::cookie::Jar;
 
-const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
-
 type Polling = (mpsc::Sender<PollAction>, JoinHandle<()>);
 
 /// Manager which includes functionality for interacting with trade offers, confirmations and 

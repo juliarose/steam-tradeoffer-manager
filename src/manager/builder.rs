@@ -1,5 +1,5 @@
-use super::{TradeOfferManager, USER_AGENT_STRING};
-use crate::ClassInfoCache;
+use super::TradeOfferManager;
+use crate::{helpers::USER_AGENT_STRING, ClassInfoCache};
 use std::{path::PathBuf, sync::{Mutex, Arc}};
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
