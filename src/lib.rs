@@ -11,10 +11,11 @@
 //! - Mobile confirmations.
 //! - Loading inventories.
 //! - Trade history.
+//! - Helper method for getting your Steam Web API key.
 //! - Automatically cancels offers past a set duration during polls.
 //! - Loads descriptions (classinfos) for assets. Classinfos are cached to file and read when available. The manager holds a [Least frequently used (LFU) cache](https://en.wikipedia.org/wiki/Least_frequently_used) of classinfos in memory to reduce file reads.
 //! - Uses [tokio](https://crates.io/crates/tokio) asynchronous runtime for performing polling.
-//! - Trade items on Steam <em>blazingly fast!</em>.
+//! - Trade items <em>blazingly fast!</em>
 //! 
 //! ## Usage
 //!
