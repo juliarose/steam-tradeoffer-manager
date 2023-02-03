@@ -17,7 +17,7 @@ use url::Url;
 
 /// Gets your Steam Web API key. This method requires your cookies. If your account does not have
 /// an API key set, one will be created using `localhost` as the domain. By calling this method you
-/// are agreeing to the [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms). 
+/// are agreeing to the [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms).
 pub async fn get_api_key(
     cookies: &[String],
 ) -> Result<String, Error> {
@@ -121,8 +121,8 @@ pub async fn get_api_key(
     }
 }
 
-/// A stand-alone method for getting a user's inventory. Allows specifying a client to use for 
-/// requests.
+/// A stand-alone method for getting a user's inventory. Optionally allows specifying a client to 
+/// use for requests (useful if you need to proxy your requests, for example).
 pub async fn get_inventory<'a>(
     options: &GetInventoryOptions<'a>,
 ) -> Result<Vec<Asset>, Error> { 

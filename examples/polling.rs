@@ -24,13 +24,8 @@ async fn handle_offer(
     manager: &TradeOfferManager,
     offer: &mut TradeOffer,
 ) {
-    fn assets_item_names<'a>(
-        assets: &'a Vec<Asset>,
-    ) -> Vec<&'a str> {
-        assets
-            .iter()
-            .map(|item| item.classinfo.market_hash_name.as_ref())
-            .collect()
+    fn assets_item_names(assets: &Vec<Asset>) -> Vec<&str> {
+        assets.iter().map(|item| item.classinfo.market_name.as_ref()).collect()
     }
     
     println!("New offer {offer}");
@@ -50,7 +45,7 @@ async fn handle_offer(
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let (api_key, cookies) = get_session();
-    let manager = TradeOfferManager::builder(api_key, "../assets")
+    let manager = TradeOfferManager::builder(api_key, "./assets")
         .identity_secret(String::from("secret"))
         .build();
     let options = PollOptions {
