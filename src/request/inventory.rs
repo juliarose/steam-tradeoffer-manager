@@ -17,6 +17,20 @@ pub struct GetInventoryOptions<'a> {
     pub language: String,
 }
 
+impl<'a> GetInventoryOptions<'a> {
+    pub fn builder(
+        steamid: SteamID,
+        appid: AppId,
+        contextid: ContextId,
+    ) -> GetInventoryOptionsBuilder<'a> {
+        GetInventoryOptionsBuilder::new(
+            steamid,
+            appid,
+            contextid,
+        )
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct GetInventoryOptionsBuilder<'a> {
     client: &'a Client,
