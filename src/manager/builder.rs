@@ -30,16 +30,19 @@ pub struct TradeOfferManagerBuilder {
 impl TradeOfferManagerBuilder {
     /// Creates a new [`TradeOfferManagerBuilder`]. The `data_directory` is the directory used to 
     /// store poll data and classinfo data.
-    pub fn new(
+    pub fn new<T>(
         api_key: String,
-        data_directory: PathBuf,
-    ) -> Self {
+        data_directory: T,
+    ) -> Self
+    where
+        T: Into<PathBuf>,
+    {
         Self {
             api_key,
             identity_secret: None,
             language: String::from("english"),
             classinfo_cache: Arc::new(Mutex::new(ClassInfoCache::default())),
-            data_directory,
+            data_directory: data_directory.into(),
             cookies: None,
             client: None,
             user_agent: USER_AGENT_STRING,

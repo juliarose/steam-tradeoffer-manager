@@ -49,12 +49,8 @@ async fn handle_offer(
 
 #[tokio::main]
 async fn main() {
-    let data_directory = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
     let (api_key, cookies) = get_session();
-    let manager = TradeOfferManager::builder(
-        api_key,
-        data_directory,
-    )
+    let manager = TradeOfferManager::builder(api_key, "../assets")
         .identity_secret(String::from("secret"))
         .build();
     let mut options = PollOptions::default();

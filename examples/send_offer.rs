@@ -2,13 +2,9 @@ use steam_tradeoffer_manager::{TradeOfferManager, request::NewTradeOffer, SteamI
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let data_directory = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
     let (api_key, cookies) = get_session();
     let steamid_other = get_steamid("STEAMID_OTHER");
-    let manager = TradeOfferManager::builder(
-        api_key,
-        data_directory,
-    ).build();
+    let manager = TradeOfferManager::new(api_key, "../assets");
     // This method returns only tradable items.
     let inventory = manager.get_inventory(&steamid_other, 440, 2).await?;
     let items = inventory.into_iter().take(5);

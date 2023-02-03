@@ -43,10 +43,13 @@ pub struct TradeOfferManager {
 
 impl TradeOfferManager {
     /// Creates a new [`TradeOfferManager`].
-    pub fn new(
+    pub fn new<T>(
         api_key: String,
-        data_directory: PathBuf,
-    ) -> Self {
+        data_directory: T,
+    ) -> Self
+    where
+        T: Into<PathBuf>,
+    {
         Self::builder(
             api_key,
             data_directory,
@@ -54,10 +57,13 @@ impl TradeOfferManager {
     }
     
     /// Builder for new manager.
-    pub fn builder(
+    pub fn builder<T>(
         api_key: String,
-        data_directory: PathBuf,
-    ) -> TradeOfferManagerBuilder {
+        data_directory: T,
+    ) -> TradeOfferManagerBuilder
+    where
+        T: Into<PathBuf>,
+    {
         TradeOfferManagerBuilder::new(
             api_key,
             data_directory,

@@ -15,16 +15,15 @@ fn assets_item_names<'a>(
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let data_directory = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
+    dotenv::dotenv().ok();
+    
     let api_key = std::env::var("API_KEY").expect("API_KEY missing");
-    let manager = TradeOfferManager::builder(
-        api_key,
-        data_directory,
-    ).build();
+    let manager = TradeOfferManager::new(api_key, "../assets");
     let mut options = GetTradeHistoryOptions::default();
     
-    options.max_trades = 3;
+    options.max_trades = 1;
     
+    // Gets your last trade.
     let trades = manager.get_trade_history(&options).await?.trades;
     let trade = trades.into_iter().next().unwrap();
     
