@@ -6,29 +6,10 @@ use strum_macros::{Display, EnumString};
 #[derive(Debug, Serialize_repr, Deserialize_repr, Display, EnumString, PartialEq, TryFromPrimitive, IntoPrimitive, Clone, Copy)]
 #[repr(u8)]
 pub enum ConfirmationMethod {
+    /// Invalid.
     None = 0,
+    /// An email was sent with details on how to confirm the trade offer.
     Email = 1,
+    /// The trade offer may be confirmed via the mobile app.
     MobileApp = 2,
-}
-
-/// The type of confirmation.
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum ConfirmationType {
-    Generic = 1,
-    Trade = 2,
-    MarketSell = 3,
-    AccountRecovery = 6,
-    Unknown,
-}
-
-impl From<&str> for ConfirmationType {
-    fn from(text: &str) -> Self {
-        match text {
-            "1" => ConfirmationType::Generic,
-            "2" => ConfirmationType::Trade,
-            "3" => ConfirmationType::MarketSell,
-            "6" => ConfirmationType::AccountRecovery,
-            _ => ConfirmationType::Unknown,
-        }
-    }
 }
