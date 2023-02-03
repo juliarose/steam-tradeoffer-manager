@@ -1,7 +1,7 @@
 use std::time::SystemTime;
 use chrono::{NaiveDateTime, DateTime, Utc, Duration};
 
-/// The datetime formated used for requests and responses.
+/// The datetime format used for requests and responses.
 pub type ServerTime = DateTime<Utc>;
 
 /// Converts a unix timestamp to a [`DateTime`].

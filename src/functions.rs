@@ -63,7 +63,6 @@ pub async fn get_api_key(
                     }
                 }
             }
-            
         }
         
         Err(Error::ParseHtml(
