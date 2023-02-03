@@ -141,7 +141,7 @@ where
             
             if regex_is_match!(r#"<h1>Sorry!</h1>"#, &html) {
                 if let Some((_, message)) = regex_captures!("<h3>(.+)</h3>", &html) {
-                    Err(Error::Response(message.into()))
+                    Err(Error::UnexpectedResponse(message.into()))
                 } else {
                     Err(Error::MalformedResponse)
                 }

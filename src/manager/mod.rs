@@ -64,31 +64,26 @@ impl TradeOfferManager {
     }
     
     /// Sets cookies.
-    /// 
-    /// **IMPORTANT:** If you passed in a client to the builder for this manager but did not also 
-    /// pass in the cookies connected to the client this method will effectively do nothing.
     pub fn set_cookies(
         &self,
         cookies: &[String],
     ) {
         let (sessionid, steamid) = get_sessionid_and_steamid_from_cookies(cookies);
         let mut cookies = cookies.to_owned();
-        let sessionid = if let Some(sessionid) = sessionid {
-            sessionid
-        } else {
+        
+        if sessionid.is_none() {
             // the cookies don't contain a sessionid
             let sessionid = generate_sessionid();
             
             cookies.push(format!("sessionid={sessionid}"));
-            sessionid
-        };
+        }
         
         if let Some(steamid) = steamid {
             self.steamid.store(steamid, Ordering::Relaxed);
         }
         
-        self.api.set_session(&sessionid, &cookies);
-        self.mobile_api.set_session(&sessionid, &cookies);
+        self.api.set_cookies(&cookies);
+        self.mobile_api.set_cookies(&cookies);
     }
     
     /// Starts polling offers. Listen to the returned receiver for events. To stop polling simply 

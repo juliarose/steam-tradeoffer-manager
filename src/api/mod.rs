@@ -17,7 +17,7 @@ use crate::{
     internal_types::*,
     get_inventory,
     serialize::{string, steamid_as_string},
-    helpers::parses_response,
+    helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies},
     error::{Error, ParameterError, MissingClassInfoError},
     classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
     request::{NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions},
@@ -56,22 +56,25 @@ impl SteamTradeOfferAPI {
         &self,
         cookies: &[String],
     ) {
+        let (sessionid, _steamid) = get_sessionid_and_steamid_from_cookies(cookies);
+        let mut cookies = cookies.to_owned();
+        let sessionid = if let Some(sessionid) = sessionid {
+            sessionid
+        } else {
+            // the cookies don't contain a sessionid
+            let sessionid = generate_sessionid();
+            
+            cookies.push(format!("sessionid={sessionid}"));
+            sessionid
+        };
         let url = Self::HOSTNAME.parse::<Url>()
             .unwrap_or_else(|_| panic!("URL could not be parsed from {}", Self::HOSTNAME));
         
-        for cookie_str in cookies {
+        *self.sessionid.write().unwrap() = Some(sessionid.to_string());
+        
+        for cookie_str in &cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
         }
-    }
-    
-    /// Sets session.
-    pub fn set_session(
-        &self,
-        sessionid: &str,
-        cookies: &[String],
-    ) {
-        *self.sessionid.write().unwrap() = Some(sessionid.to_string());
-        self.set_cookies(cookies);
     }
     
     /// Sends an offer.
@@ -138,7 +141,7 @@ impl SteamTradeOfferAPI {
             let qs_params = serde_qs::to_string(&RefererParams {
                 partner: offer.partner.account_id(),
                 token: &offer.token,
-            })?;
+            }).map_err(|error| ParameterError::SerdeQS(error))?;
             
             self.get_uri(&format!(
                 "/tradeoffer/{pathname}?{qs_params}"
@@ -198,7 +201,7 @@ impl SteamTradeOfferAPI {
         let body = response.text().await?;
         
         if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &body) {
-           Err(Error::Response(message.trim().into()))
+           Err(Error::UnexpectedResponse(message.trim().into()))
         } else if let Some((_, script)) = regex_captures!(r#"(var oItem;[\s\S]*)</script>"#, &body) {
             let raw_assets = helpers::parse_receipt_script(script)?;
             let classes = raw_assets
@@ -592,7 +595,7 @@ impl SteamTradeOfferAPI {
                 total_trades: body.total_trades.unwrap_or_default(),
             })
         } else {
-            Err(Error::Response("No descriptions in response body.".into()))
+            Err(Error::UnexpectedResponse("No descriptions in response body.".into()))
         }
     }
     
@@ -684,7 +687,7 @@ impl SteamTradeOfferAPI {
             let qs_params = serde_qs::to_string(&Params {
                 partner: partner.account_id(),
                 token,
-            })?;
+            }).map_err(|error| ParameterError::SerdeQS(error))?;
             
             self.get_uri(&format!(
                 "/tradeoffer/{pathname}?{qs_params}"

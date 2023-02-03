@@ -2,7 +2,10 @@ use crate::{error::ParseHtmlError, response::Confirmation, enums::ConfirmationTy
 use scraper::{Html, Selector, element_ref::ElementRef};
 
 pub fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlError> {
-    fn parse_description(element: ElementRef, description_selector: &Selector) -> Result<Confirmation, ParseHtmlError> {
+    fn parse_description(
+        element: ElementRef,
+        description_selector: &Selector,
+    ) -> Result<Confirmation, ParseHtmlError> {
         let description = element.select(description_selector).next()
             .ok_or(ParseHtmlError::Malformed("Description is missing from confirmation"))?;
         let data_type = element.value().attr("data-type")

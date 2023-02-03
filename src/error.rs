@@ -1,9 +1,5 @@
-use crate::{
-    enums::TradeOfferState,
-    types::{AppId, ContextId, AssetId, Amount, ClassId, InstanceId, TradeOfferId},
-};
-use std::{fmt, num::ParseIntError, time::SystemTimeError};
-use reqwest_middleware;
+use crate::{enums::TradeOfferState, types::*};
+use std::fmt;
 
 /// Any range of errors encountered when making requests.
 #[derive(thiserror::Error, Debug)]
@@ -14,21 +10,18 @@ pub enum Error {
     /// An unexpected response containing a message was received. Check the message for more 
     /// details.
     #[error("Unexpected response: {}", .0)]
-    Response(String),
-    /// An error was encountered during the request.
+    UnexpectedResponse(String),
+    /// An error was encountered making a request.
     #[error("Request error: {}", .0)]
     Reqwest(#[from] reqwest::Error),
     /// An error was encountered within the request middleware.
     #[error("Request middleware error: {}", .0)]
     ReqwestMiddleware(anyhow::Error),
-    /// An error was encountered converting parameters to a valid URL string.
-    #[error("Unable to convert to query parameters: {}", .0)]
-    QueryParameter(#[from] serde_qs::Error),
     /// An error was encountered parsing a JSON response body.
     #[error("Error parsing response: {}", .0)]
     Parse(#[from] serde_json::Error),
     /// An error was encountered on response. This is usually a response with an HTTP code other 
-    /// than 200.
+    /// than 200. Check the status code of the response for more information.
     #[error("Error {}", .0.status())]
     Http(reqwest::Response),
     /// You are not logged in.
@@ -74,22 +67,32 @@ pub enum Error {
 /// Any number of issues with a provided parameter.
 #[derive(thiserror::Error, Debug)]
 pub enum ParameterError {
-    #[error("Offer is missing trade ID")]
+    /// Offer is missing trade ID.
+    #[error("Offer is missing trade ID.")]
     MissingTradeId,
     #[error("Offer is not in accepted state. Offer state: {}", .0)]
     NotInAcceptedState(TradeOfferState),
-    #[error("Offer is empty")]
+    /// Offer is empty.
+    #[error("Offer is empty.")]
     EmptyOffer,
-    #[error("Cannot accept an offer that is ours")]
+    /// Cannot accept an offer that is ours.
+    #[error("Cannot accept an offer that is ours.")]
     CannotAcceptOfferThatIsOurs,
+    /// Cannot accept an offer that is not active.
     #[error("Cannot accept an offer that is not active. Offer state: {}", .0)]
     CannotAcceptOfferThatIsNotActive(TradeOfferState),
+    /// Cannot cancel an offer we did not create.
     #[error("Cannot cancel an offer we did not create.")]
     CannotCancelOfferWeDidNotCreate,
+    /// Cannot decline an offer we created.
     #[error("Cannot decline an offer we created.")]
     CannotDeclineOfferWeCreated,
+    /// No identity secret.
     #[error("No identity secret.")]
     NoIdentitySecret,
+    /// An error was encountered converting parameters to a valid URL string.
+    #[error("Unable to convert to query parameters: {}", .0)]
+    SerdeQS(#[from] serde_qs::Error)
 }
 
 /// An error occurred when working with the file system.
@@ -106,7 +109,7 @@ pub enum FileError {
     PathError,
     /// Error with system time.
     #[error("System time failure: {}", .0)]
-    SystemTime(SystemTimeError),
+    SystemTime(#[from] std::time::SystemTimeError),
 }
 
 /// An error received from a response when sending or acting of trade offers.
@@ -266,8 +269,8 @@ pub enum ParseHtmlError {
     Response(String),
     /// An error occurred parsing an integer in the response.
     #[error("{}", .0)]
-    ParseInt(#[from] ParseIntError),
-    /// A selector could not be parsed
+    ParseInt(#[from] std::num::ParseIntError),
+    /// A selector could not be parsed.
     #[error("Invalid selector")]
     ParseSelector,
 }

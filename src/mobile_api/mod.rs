@@ -14,7 +14,7 @@ use std::{collections::HashMap, sync::{Arc, RwLock, atomic::{Ordering, AtomicU64
 use crate::{
     SteamID,
     error::{Error, ParameterError},
-    helpers::parses_response,
+    helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies},
     response::Confirmation,
 };
 
@@ -46,22 +46,29 @@ impl MobileAPI {
         &self,
         cookies: &[String],
     ) {
+        let (sessionid, steamid) = get_sessionid_and_steamid_from_cookies(cookies);
+        let mut cookies = cookies.to_owned();
+        let sessionid = if let Some(sessionid) = sessionid {
+            sessionid
+        } else {
+            // the cookies don't contain a sessionid
+            let sessionid = generate_sessionid();
+            
+            cookies.push(format!("sessionid={sessionid}"));
+            sessionid
+        };
         let url = Self::HOSTNAME.parse::<Url>()
             .unwrap_or_else(|_| panic!("URL could not be parsed from {}", Self::HOSTNAME));
         
-        for cookie_str in cookies {
+        *self.sessionid.write().unwrap() = Some(sessionid.to_string());
+        
+        if let Some(steamid) = steamid {
+            self.steamid.store(steamid, Ordering::Relaxed);
+        }
+        
+        for cookie_str in &cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
         }
-    }
-    
-    /// Sets session.
-    pub fn set_session(
-        &self,
-        sessionid: &str,
-        cookies: &[String],
-    ) {
-        *self.sessionid.write().unwrap() = Some(sessionid.to_string());
-        self.set_cookies(cookies);
     }
     
     /// Accepts a confirmation.
