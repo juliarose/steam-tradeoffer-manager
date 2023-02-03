@@ -48,19 +48,22 @@ async fn handle_offer(
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Error> {
     let (api_key, cookies) = get_session();
     let manager = TradeOfferManager::builder(api_key, "../assets")
         .identity_secret(String::from("secret"))
         .build();
-    let mut options = PollOptions::default();
+    let options = PollOptions {
+        // By default PollOptions does not have a cancel duration.
+        cancel_duration: Some(Duration::minutes(30)),
+        ..PollOptions::default()
+    };
     
-    // By default PollOptions does not have a cancel duration.
-    options.cancel_duration = Some(Duration::minutes(30));
     // Cookies are required before starting polling.
     manager.set_cookies(&cookies);
     
-    let mut rx = manager.start_polling(options).unwrap();
+    // Fails if you did not set your cookies.
+    let mut rx = manager.start_polling(options)?;
     
     // Listen to the receiver for events.
     while let Some(message) = rx.recv().await {
@@ -92,6 +95,8 @@ async fn main() {
             },
         }
     }
+    
+    Ok(())
 }
 
 /// Gets session from environment variable.
@@ -99,8 +104,7 @@ fn get_session() -> (String, Vec<String>) {
     dotenv::dotenv().ok();
     
     let api_key = std::env::var("API_KEY").expect("API_KEY missing");
-    let cookies = std::env::var("COOKIES")
-        .expect("COOKIES missing")
+    let cookies = std::env::var("COOKIES").expect("COOKIES missing")
         .split('&')
         .map(|s| s.to_string())
         .collect::<Vec<_>>();

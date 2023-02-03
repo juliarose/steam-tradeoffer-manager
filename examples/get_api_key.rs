@@ -13,8 +13,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// Gets cookies from environment variable.
 fn get_cookies() -> Vec<String> {
     dotenv::dotenv().ok();
-    std::env::var("COOKIES")
-        .expect("COOKIES missing")
+    std::env::var("COOKIES").expect("COOKIES missing")
         .split('&')
         .map(|s| s.to_string())
         .collect()
