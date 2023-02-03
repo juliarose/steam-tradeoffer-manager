@@ -34,7 +34,7 @@ pub struct TradeOfferManager {
     /// The underlying API for mobile confirmations.
     mobile_api: MobileAPI,
     /// The account's SteamID.
-    pub steamid: Arc<AtomicU64>,
+    steamid: Arc<AtomicU64>,
     /// The directory to store poll data and [`crate::response::ClassInfo`] data.
     data_directory: PathBuf,
     /// The sender for sending messages to polling
@@ -42,7 +42,8 @@ pub struct TradeOfferManager {
 }
 
 impl TradeOfferManager {
-    /// Creates a new [`TradeOfferManager`].
+    /// Creates a new [`TradeOfferManager`]. Requires an `api_key` for making API calls and a 
+    /// `data_directory` for storing poll data and classinfo caches.
     pub fn new<T>(
         api_key: String,
         data_directory: T,
@@ -56,7 +57,8 @@ impl TradeOfferManager {
         ).build()
     }
     
-    /// Builder for new manager.
+    /// Builder for constructing a [`TradeOfferManager`].  Requires an `api_key` for making API 
+    /// calls and a `data_directory` for storing poll data and classinfo caches.
     pub fn builder<T>(
         api_key: String,
         data_directory: T,
@@ -100,6 +102,21 @@ impl TradeOfferManager {
         
         self.api.set_cookies(&cookies);
         self.mobile_api.set_cookies(&cookies);
+    }
+    
+    /// Gets the logged-in user's [`SteamID`].
+    /// 
+    /// Fails if no login is detected (cookies must be set first).
+    pub fn get_steamid(
+        &self,
+    ) -> Result<SteamID, Error> {
+        let steamid_64 = self.steamid.load(Ordering::Relaxed);
+        
+        if steamid_64 == 0 {
+            return Err(Error::NotLoggedIn);
+        }
+        
+        Ok(SteamID::from(steamid_64))
     }
     
     /// Starts polling offers. Listen to the returned receiver for events. To stop polling simply 
@@ -448,19 +465,6 @@ impl TradeOfferManager {
         options: &GetTradeHistoryOptions,
     ) -> Result<Trades, Error> {
         self.api.get_trade_history(options).await
-    }
-    
-    /// Gets the logged-in user's SteamID.
-    fn get_steamid(
-        &self,
-    ) -> Result<SteamID, Error> {
-        let steamid_64 = self.steamid.load(Ordering::Relaxed);
-        
-        if steamid_64 == 0 {
-            return Err(Error::NotLoggedIn);
-        }
-        
-        Ok(SteamID::from(steamid_64))
     }
 }
 
