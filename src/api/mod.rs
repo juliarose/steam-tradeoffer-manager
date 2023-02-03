@@ -15,7 +15,7 @@ use crate::{
     time::ServerTime,
     types::*,
     internal_types::*,
-    get_inventory,
+    static_functions::get_inventory,
     serialize::{string, steamid_as_string},
     helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies},
     error::{Error, ParameterError, MissingClassInfoError},

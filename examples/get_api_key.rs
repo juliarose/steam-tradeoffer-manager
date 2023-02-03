@@ -1,10 +1,10 @@
-use steam_tradeoffer_manager::get_api_key;
+use steam_tradeoffer_manager::TradeOfferManager;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cookies = get_cookies();
     // Just pass in a vec containing your login cookies.
-    let api_key = get_api_key(&cookies).await?;
+    let api_key = TradeOfferManager::get_api_key(&cookies).await?;
     
     println!("Your Steam Web API key is {api_key}");
     Ok(())

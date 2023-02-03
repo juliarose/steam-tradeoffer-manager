@@ -19,7 +19,7 @@ use url::Url;
 /// an API key set, one will be created using `localhost` as the domain. By calling this method you
 /// are agreeing to the [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms). 
 pub async fn get_api_key(
-    cookies: &Vec<String>,
+    cookies: &[String],
 ) -> Result<String, Error> {
     async fn try_get_key(client: &reqwest::Client) -> Result<String, Error> {
         let hostname = SteamTradeOfferAPI::HOSTNAME;
@@ -121,7 +121,8 @@ pub async fn get_api_key(
     }
 }
 
-/// Gets a user's inventory.
+/// A stand-alone method for getting a user's inventory. Allows specifying a client to use for 
+/// requests.
 pub async fn get_inventory<'a>(
     options: &GetInventoryOptions<'a>,
 ) -> Result<Vec<Asset>, Error> { 

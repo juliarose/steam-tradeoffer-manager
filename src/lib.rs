@@ -39,7 +39,7 @@ mod helpers;
 mod classinfo_cache;
 mod time;
 mod internal_types;
-mod functions;
+mod static_functions;
 
 pub mod api;
 pub mod enums;
@@ -48,7 +48,7 @@ pub mod request;
 pub mod response;
 pub mod error;
 
-pub use functions::{get_inventory, get_api_key};
+pub use static_functions::get_inventory;
 pub use classinfo_cache::ClassInfoCache;
 pub use time::ServerTime;
 pub use manager::{TradeOfferManager, TradeOfferManagerBuilder};

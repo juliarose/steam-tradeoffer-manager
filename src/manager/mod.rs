@@ -10,6 +10,7 @@ use crate::{
     ServerTime,
     api::SteamTradeOfferAPI,
     mobile_api::MobileAPI,
+    static_functions::get_api_key,
     helpers::{generate_sessionid, get_default_middleware, get_sessionid_and_steamid_from_cookies},
     error::{ParameterError, Error},
     request::{NewTradeOffer, GetTradeHistoryOptions},
@@ -61,6 +62,15 @@ impl TradeOfferManager {
             api_key,
             data_directory,
         )
+    }
+    
+    /// Gets your Steam Web API key. This method requires your cookies. If your account does not have
+    /// an API key set, one will be created using `localhost` as the domain. By calling this method you
+    /// are agreeing to the [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms). 
+    pub async fn get_api_key(
+        cookies: &[String],
+    ) -> Result<String, Error> {
+        get_api_key(cookies).await
     }
     
     /// Sets cookies.
