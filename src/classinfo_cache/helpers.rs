@@ -5,9 +5,10 @@ use crate::{
     internal_types::{ClassInfoClass, ClassInfoAppClass},
     helpers::write_file_atomic,
 };
-use super::types::ClassInfoFile;
 use std::{path::{Path, PathBuf}, collections::{HashMap, HashSet}};
 use futures::future::join_all;
+
+type ClassInfoFile = (ClassInfoClass, ClassInfo);
 
 /// Saves the classinfo.
 async fn save_classinfo(
