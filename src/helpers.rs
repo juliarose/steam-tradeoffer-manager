@@ -116,7 +116,9 @@ fn is_login(location_option: Option<&header::HeaderValue>) -> bool {
     }
 }
 
-pub async fn parses_response<D>(response: reqwest::Response) -> Result<D, Error>
+pub async fn parses_response<D>(
+    response: reqwest::Response,
+) -> Result<D, Error>
 where
     D: DeserializeOwned,
 {
