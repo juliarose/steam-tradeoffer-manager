@@ -2,10 +2,10 @@ mod file;
 mod poll_data;
 mod poller;
 
-use poller::Poller;
-
 pub use poller::{PollResult, Poll, PollType};
 pub use poll_data::PollData;
+
+use poller::Poller;
 
 use crate::{SteamID, api::SteamTradeOfferAPI};
 use std::{path::PathBuf, collections::HashMap, sync::Arc};

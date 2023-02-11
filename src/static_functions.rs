@@ -146,7 +146,7 @@ pub async fn get_inventory<'a>(
         let response = options.client.get(&uri)
             .header(REFERER, &referer)
             .query(&Query {
-                l: &options.language,
+                l: options.language.api_language_code(),
                 count: 2000,
                 start_assetid,
             })

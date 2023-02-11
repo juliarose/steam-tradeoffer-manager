@@ -46,9 +46,7 @@ pub fn get_sessionid_and_steamid_from_cookies(
                 "sessionid" => sessionid = Some(value.to_string()),
                 "steamLogin" |
                 "steamLoginSecure" => if let Some((_, steamid_str)) = regex_captures!(r#"^(\d{17})"#, value) {
-                    if let Ok(steamid_64) = steamid_str.parse::<u64>() {
-                        steamid = Some(steamid_64);
-                    }
+                    steamid = steamid_str.parse::<u64>().ok();
                 },
                 _ => {},
             }

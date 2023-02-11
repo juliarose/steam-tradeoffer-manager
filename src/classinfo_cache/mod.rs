@@ -15,9 +15,7 @@ pub struct ClassInfoCache {
 
 impl Default for ClassInfoCache {
     fn default() -> Self {
-        Self {
-            map: create_map(2000),
-        }
+        Self::new(2000)
     }
 }
 
@@ -26,8 +24,10 @@ impl ClassInfoCache {
     pub fn new(
         capacity: usize,
     ) -> Self {
+        let map = LfuClassInfoMap::with_capacity(capacity);
+        
         Self {
-            map: create_map(capacity),
+            map,
         }
     }
     
@@ -64,8 +64,4 @@ impl ClassInfoCache {
             self.map.insert(*class, Arc::clone(classinfo));
         }
     }
-}
-
-fn create_map(capacity: usize) -> LfuClassInfoMap {
-    LfuCache::with_capacity(capacity)
 }

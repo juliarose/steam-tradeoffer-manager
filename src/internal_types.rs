@@ -1,3 +1,5 @@
+//! Types internally used by the crate.
+
 use std::{sync::Arc, collections::HashMap};
 use reqwest_middleware::ClientWithMiddleware;
 use crate::{types::{AppId, ClassId, InstanceId}, response::ClassInfo};

@@ -3,11 +3,7 @@ use steam_tradeoffer_manager::{SteamID, request::GetInventoryOptions, get_invent
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let steamid = get_steamid("STEAMID_OTHER");
-    let options = GetInventoryOptions::builder(
-        steamid,
-        440,
-        2,
-    ).build();
+    let options = GetInventoryOptions::new(steamid, 440, 2);
     // Getting a user's inventory can be done using the manager but it is also provided as a 
     // stand-alone method.
     let inventory = get_inventory(&options).await?;

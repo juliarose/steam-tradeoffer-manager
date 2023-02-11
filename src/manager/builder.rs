@@ -1,5 +1,5 @@
 use super::TradeOfferManager;
-use crate::{helpers::USER_AGENT_STRING, ClassInfoCache};
+use crate::{helpers::USER_AGENT_STRING, ClassInfoCache, enums::Language};
 use std::{path::PathBuf, sync::{Mutex, Arc}};
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
@@ -11,7 +11,7 @@ pub struct TradeOfferManagerBuilder {
     /// The identity secret for the account (optional). Required for mobile confirmations.
     pub identity_secret: Option<String>,
     /// The language for API responses.
-    pub language: String,
+    pub language: Language,
     /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
     /// to share state.
     pub classinfo_cache: Arc<Mutex<ClassInfoCache>>,
@@ -40,7 +40,7 @@ impl TradeOfferManagerBuilder {
         Self {
             api_key,
             identity_secret: None,
-            language: String::from("english"),
+            language: Language::English,
             classinfo_cache: Arc::new(Mutex::new(ClassInfoCache::default())),
             data_directory: data_directory.into(),
             cookies: None,
@@ -57,7 +57,7 @@ impl TradeOfferManagerBuilder {
     }
     
     /// The language for API responses.
-    pub fn language(mut self, language: String) -> Self {
+    pub fn language(mut self, language: Language) -> Self {
         self.language = language;
         self
     }

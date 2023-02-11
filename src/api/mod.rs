@@ -8,19 +8,20 @@ mod helpers;
 
 use response::*;
 use response_wrappers::*;
-use crate::{response::*, request::GetInventoryOptions};
 use std::{path::PathBuf, collections::{HashMap, HashSet}, sync::{Arc, RwLock, Mutex}};
 use crate::{
     SteamID,
     time::ServerTime,
     types::*,
     internal_types::*,
+    response::*,
+    enums::Language,
     static_functions::get_inventory,
     serialize::{string, steamid_as_string},
     helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies},
     error::{Error, ParameterError, MissingClassInfoError},
     classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
-    request::{NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions},
+    request::{GetInventoryOptions, NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions},
 };
 use serde::{Deserialize, Serialize};
 use reqwest::{cookie::Jar, header::REFERER};
@@ -38,7 +39,7 @@ pub struct SteamTradeOfferAPI {
     /// the cookies should be the same as what the client uses.
     pub cookies: Arc<Jar>,
     /// The language for descriptions.
-    pub language: String,
+    pub language: Language,
     /// The session ID.
     pub sessionid: Arc<RwLock<Option<String>>>,
     /// The cache for setting and getting [`ClassInfo`] data.
@@ -234,7 +235,7 @@ impl SteamTradeOfferAPI {
             let mut query = vec![
                 ("key".to_string(), self.api_key.to_string()),
                 ("appid".to_string(), appid.to_string()),
-                ("language".to_string(), self.language.clone()),
+                ("language".to_string(), self.language.web_api_language_code().to_string()),
                 ("class_count".to_string(), classes.len().to_string()),
             ];
             
@@ -411,7 +412,7 @@ impl SteamTradeOfferAPI {
             let response = self.client.get(&uri)
                 .query(&Form {
                     key: &self.api_key,
-                    language: &self.language,
+                    language: self.language.web_api_language_code(),
                     active_only,
                     historical_only,
                     get_sent_offers,
@@ -831,7 +832,7 @@ impl SteamTradeOfferAPI {
             let response = self.client.get(&uri)
                 .header(REFERER, &referer)
                 .query(&Query {
-                    l: &self.language,
+                    l: self.language.api_language_code(),
                     trading: tradable_only,
                     start,
                 })
@@ -893,7 +894,7 @@ impl SteamTradeOfferAPI {
             appid,
             contextid,
             tradable_only,
-            language: self.language.clone(),
+            language: self.language,
         }).await
     }
     
@@ -922,7 +923,7 @@ impl SteamTradeOfferAPI {
             let response = self.client.get(&uri)
                 .header(REFERER, &referer)
                 .query(&Query {
-                    l: &self.language,
+                    l: self.language.api_language_code(),
                     count: 2000,
                     start_assetid,
                 })

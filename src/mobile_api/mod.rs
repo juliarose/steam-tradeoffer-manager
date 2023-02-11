@@ -5,7 +5,7 @@ mod helpers;
 mod operation;
 
 use operation::Operation;
-use another_steam_totp::{get_device_id, Tag, generate_confirmation_key};
+use another_steam_totp::{Tag, get_device_id, generate_confirmation_key};
 use serde::Deserialize;
 use reqwest::cookie::Jar;
 use url::Url;
@@ -13,9 +13,9 @@ use reqwest_middleware::ClientWithMiddleware;
 use std::{collections::HashMap, sync::{Arc, RwLock, atomic::{Ordering, AtomicU64}}};
 use crate::{
     SteamID,
-    error::{Error, ParameterError},
-    helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies},
     response::Confirmation,
+    error::{Error, ParameterError}, 
+    helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies},
 };
 
 /// The API for mobile confirmations.
@@ -26,8 +26,6 @@ pub struct MobileAPI {
     /// The cookies to make requests with. Since the requests are made with the provided client, 
     /// the cookies should be the same as what the client uses.
     pub cookies: Arc<Jar>,
-    /// The language for descriptions.
-    pub language: String,
     /// The session ID.
     pub sessionid: Arc<RwLock<Option<String>>>,
     /// The SteamID  of the logged in user. `0` if no login cookies were passed.

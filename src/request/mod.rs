@@ -6,4 +6,4 @@ mod inventory;
 
 pub use trade_history::GetTradeHistoryOptions;
 pub use trade_offer::{NewTradeOffer, NewTradeOfferItem, NewTradeOfferBuilder};
-pub use inventory::{GetInventoryOptions, GetInventoryOptionsBuilder};
+pub use inventory::GetInventoryOptions;
