@@ -52,7 +52,7 @@ impl Default for Language {
 impl Language {
     /// API language codes are used with the clientside APIs in the 
     /// [Steamworks API](https://partner.steamgames.com/doc/sdk/api).
-    pub fn api_language_code(&self) -> &'static str {
+    pub fn web_api_language_code(&self) -> &'static str {
         match self {
             Self::Arabic => "ar",
             Self::Bulgarian => "bg",
@@ -88,7 +88,7 @@ impl Language {
     
     /// Web API language codes are used with the
     /// [Steamworks Web API](https://partner.steamgames.com/doc/webapi).
-    pub fn web_api_language_code(&self) -> &'static str {
+    pub fn api_language_code(&self) -> &'static str {
         match self {
             Self::Arabic => "arabic",
             Self::Bulgarian => "bulgarian",
