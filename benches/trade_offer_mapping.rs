@@ -26,7 +26,7 @@ fn get_classinfo_file_path(
 
 fn load_classinfo_sync(
     class: ClassInfoClass,
-    data_directory: &PathBuf, 
+    data_directory: &Path, 
 ) -> Result<ClassInfoFile, FileError> {
     let filepath = get_classinfo_file_path(&class, data_directory)?;
     let data = std::fs::read_to_string(&filepath)?;
@@ -70,7 +70,7 @@ fn get_offers() -> Vec<RawTradeOffer> {
 }
 
 fn get_classinfo_cache(
-    offers: &Vec<RawTradeOffer>,
+    offers: &[RawTradeOffer],
 ) -> Arc<Mutex<ClassInfoCache>> {
     let classinfos_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("benches/fixtures/classinfos");
     let classes = offers

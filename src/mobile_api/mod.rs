@@ -58,7 +58,7 @@ impl MobileAPI {
         let url = Self::HOSTNAME.parse::<Url>()
             .unwrap_or_else(|_| panic!("URL could not be parsed from {}", Self::HOSTNAME));
         
-        *self.sessionid.write().unwrap() = Some(sessionid.to_string());
+        *self.sessionid.write().unwrap() = Some(sessionid);
         
         if let Some(steamid) = steamid {
             self.steamid.store(steamid, Ordering::Relaxed);

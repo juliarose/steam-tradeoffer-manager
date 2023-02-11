@@ -20,11 +20,11 @@ async fn accept_offer(
     }
 }
 
-async fn handle_offer(
+async fn accept_free_items(
     manager: &TradeOfferManager,
     offer: &mut TradeOffer,
 ) {
-    fn assets_item_names(assets: &Vec<Asset>) -> Vec<&str> {
+    fn assets_item_names(assets: &[Asset]) -> Vec<&str> {
         assets.iter().map(|item| item.classinfo.market_name.as_ref()).collect()
     }
     
@@ -32,13 +32,16 @@ async fn handle_offer(
     println!("Receiving: {:?}", assets_item_names(&offer.items_to_receive));
     println!("Giving: {:?}", assets_item_names(&offer.items_to_give));
     
+    // we're giving soemthing
+    if !offer.items_to_give.is_empty() {
+        return;
+    }
+    
     // free items
-    if offer.items_to_give.is_empty() {
-        if let Err(error) = accept_offer(manager, offer).await {
-            println!("Error accepting offer {offer}: {error}");
-        } else {
-            println!("Accepted offer {offer}");
-        }
+    if let Err(error) = accept_offer(manager, offer).await {
+        println!("Error accepting offer {offer}: {error}");
+    } else {
+        println!("Accepted offer {offer}");
     }
 }
 
@@ -80,7 +83,7 @@ async fn main() -> Result<(), Error> {
                     }
                     
                     if offer.trade_offer_state == TradeOfferState::Active {
-                        handle_offer(&manager, &mut offer).await;
+                        accept_free_items(&manager, &mut offer).await;
                     }
                 }
             },

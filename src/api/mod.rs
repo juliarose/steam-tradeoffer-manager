@@ -71,7 +71,7 @@ impl SteamTradeOfferAPI {
         let url = Self::HOSTNAME.parse::<Url>()
             .unwrap_or_else(|_| panic!("URL could not be parsed from {}", Self::HOSTNAME));
         
-        *self.sessionid.write().unwrap() = Some(sessionid.to_string());
+        *self.sessionid.write().unwrap() = Some(sessionid);
         
         for cookie_str in &cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
@@ -142,7 +142,7 @@ impl SteamTradeOfferAPI {
             let qs_params = serde_qs::to_string(&RefererParams {
                 partner: offer.partner.account_id(),
                 token: &offer.token,
-            }).map_err(|error| ParameterError::SerdeQS(error))?;
+            }).map_err(ParameterError::SerdeQS)?;
             
             self.get_uri(&format!(
                 "/tradeoffer/{pathname}?{qs_params}"
@@ -688,7 +688,7 @@ impl SteamTradeOfferAPI {
             let qs_params = serde_qs::to_string(&Params {
                 partner: partner.account_id(),
                 token,
-            }).map_err(|error| ParameterError::SerdeQS(error))?;
+            }).map_err(ParameterError::SerdeQS)?;
             
             self.get_uri(&format!(
                 "/tradeoffer/{pathname}?{qs_params}"
