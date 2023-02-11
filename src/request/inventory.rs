@@ -25,7 +25,7 @@ pub struct GetInventoryOptions<'a> {
 
 impl<'a> GetInventoryOptions<'a> {
     /// Creates a new [`GetInventoryOptions`]. `tradable_only` will be set to `true` and 
-    /// `language` will be set to `"english"`.
+    /// `language` will be set to [`Language::English`].
     pub fn new(
         steamid: SteamID,
         appid: AppId,
