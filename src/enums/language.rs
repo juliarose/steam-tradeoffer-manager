@@ -43,6 +43,12 @@ impl fmt::Display for Language {
     }
 }
 
+impl Default for Language {
+    fn default() -> Self {
+        Language::English
+    }
+}
+
 impl Language {
     /// API language codes are used with the clientside APIs in the 
     /// [Steamworks API](https://partner.steamgames.com/doc/sdk/api).
