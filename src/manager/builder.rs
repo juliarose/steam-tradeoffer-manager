@@ -86,6 +86,12 @@ impl TradeOfferManagerBuilder {
         self
     }
     
+    /// The API key.
+    pub fn api_key(mut self, api_key: String) -> Self {
+        self.api_key = api_key;
+        self
+    }
+    
     /// Builds the [`TradeOfferManager`].
     pub fn build(self) -> TradeOfferManager {
         self.into()

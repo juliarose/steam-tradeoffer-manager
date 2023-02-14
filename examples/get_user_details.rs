@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .split("; ")
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
-    // An api key isn't needed for this method...
+    // A blank key can be passed, it isn't needed in this example.
     let manager = TradeOfferManager::builder(String::from(""), "./assets")
         .identity_secret(String::from("secret"))
         .build();

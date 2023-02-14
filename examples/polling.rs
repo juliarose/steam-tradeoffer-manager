@@ -43,6 +43,8 @@ async fn accept_free_items(
         return;
     }
     
+    println!("{}", "This offer is giving us free items - accepting".bright_blue());
+    
     // Free items.
     if let Err(error) = accept_offer(manager, offer).await {
         println!("Error accepting offer {offer}: {error}");
