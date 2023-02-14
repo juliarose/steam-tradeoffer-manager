@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn get_cookies() -> Vec<String> {
     dotenv::dotenv().ok();
     std::env::var("COOKIES").expect("COOKIES missing")
-        .split('&')
+        .split("; ")
         .map(|s| s.to_string())
         .collect()
 }

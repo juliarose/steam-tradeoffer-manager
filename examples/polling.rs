@@ -28,20 +28,20 @@ async fn accept_free_items(
         assets.iter().map(|item| item.classinfo.market_name.as_ref()).collect()
     }
     
-    println!("New offer {offer}");
+    println!("{offer} Active");
     println!("Receiving: {:?}", assets_item_names(&offer.items_to_receive));
     println!("Giving: {:?}", assets_item_names(&offer.items_to_give));
     
-    // we're giving soemthing
+    // We're giving something.
     if !offer.items_to_give.is_empty() {
         return;
     }
     
-    // free items
+    // Free items.
     if let Err(error) = accept_offer(manager, offer).await {
         println!("Error accepting offer {offer}: {error}");
     } else {
-        println!("Accepted offer {offer}");
+        println!("{offer} Accepted");
     }
 }
 
@@ -67,6 +67,8 @@ async fn main() -> Result<(), Error> {
     while let Some(message) = rx.recv().await {
         match message {
             Ok(offers) => {
+                println!("Got poll: {} update(s)", offers.len());
+                
                 for (mut offer, old_state) in offers {
                     if let Some(state) = old_state {
                         println!(
@@ -77,8 +79,8 @@ async fn main() -> Result<(), Error> {
                         );
                     }
                     
-                    // This isn't our offer.
-                    if !offer.is_our_offer {
+                    // Skip offers that are ours.
+                    if offer.is_our_offer {
                         continue;
                     }
                     
@@ -103,7 +105,7 @@ fn get_session() -> (String, Vec<String>) {
     
     let api_key = std::env::var("API_KEY").expect("API_KEY missing");
     let cookies = std::env::var("COOKIES").expect("COOKIES missing")
-        .split('&')
+        .split("; ")
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
     

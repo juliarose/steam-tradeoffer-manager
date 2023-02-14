@@ -32,7 +32,7 @@ fn get_session() -> (String, Vec<String>) {
     
     let api_key = std::env::var("API_KEY").expect("API_KEY missing");
     let cookies = std::env::var("COOKIES").expect("COOKIES missing")
-        .split('&')
+        .split("; ")
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
     
