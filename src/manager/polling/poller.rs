@@ -2,6 +2,7 @@
 use super::{file, PollData};
 use crate::{
     time,
+    ServerTime,
     enums::TradeOfferState,
     types::TradeOfferId,
     response::TradeOffer,
@@ -21,15 +22,16 @@ pub enum PollType {
     /// Let the manager decide. Unless you need to fetch offers in special cases this is what 
     /// should be used.
     Auto,
-    /// Fastest method for obtaining new offers when new offers. This will fetch only active 
-    /// offers and includes descriptions in the response rather than relying on 
-    /// ISteamEconomy/GetAssetClassInfo. For this reason, items in the response will also not 
-    /// contain app_data. This will not update the timestamps in the poll data. For this reason, 
-    /// this should not be used as your only method of polling if you care about checking the 
-    /// state of changed offers.
+    /// Fastest method for obtaining new offers. This will fetch only active offers and includes 
+    /// descriptions in the response rather than relying on ISteamEconomy/GetAssetClassInfo. 
+    /// For this reason, items in the response will also not contain app_data. This will not update 
+    /// the timestamps in the poll data. For this reason, this should not be used as your only 
+    /// method of polling if you care about checking the state of changed offers.
     NewOffers,
     /// Do a full update.
     FullUpdate,
+    /// Performs a poll fetching offers since the given time.
+    OffersSince(ServerTime),
 }
 
 impl PollType {
@@ -65,7 +67,7 @@ impl Poller {
             // We need to handle this. Let's add a 30-minute buffer.
             .map(|date| date.timestamp() - (60 * 30))
             .unwrap_or(1);
-        let mut active_only = true;
+        let mut active_only = poll_type.is_active_only();
         let mut full_update = {
             poll_type.is_full_update() || 
             // The date of the last full poll is outdated.
@@ -79,6 +81,10 @@ impl Poller {
         } else if full_update {
             offers_since = 1;
             active_only = false;
+        }
+        
+        if let PollType::OffersSince(date) = poll_type {
+            offers_since = date.timestamp();
         }
         
         let (mut offers, descriptions) = self.api.get_raw_trade_offers(
