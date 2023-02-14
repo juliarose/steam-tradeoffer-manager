@@ -67,7 +67,7 @@ impl Poller {
             // We need to handle this. Let's add a 30-minute buffer.
             .map(|date| date.timestamp() - (60 * 30))
             .unwrap_or(1);
-        let mut active_only = poll_type.is_active_only();
+        let mut active_only = true;
         let mut full_update = {
             poll_type.is_full_update() || 
             // The date of the last full poll is outdated.
@@ -85,6 +85,7 @@ impl Poller {
         
         if let PollType::OffersSince(date) = poll_type {
             offers_since = date.timestamp();
+            active_only = false;
         }
         
         let (mut offers, descriptions) = self.api.get_raw_trade_offers(
