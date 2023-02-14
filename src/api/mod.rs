@@ -146,9 +146,7 @@ impl SteamTradeOfferAPI {
                 token: &offer.token,
             }).map_err(ParameterError::SerdeQS)?;
             
-            self.get_uri(&format!(
-                "/tradeoffer/{pathname}?{qs_params}"
-            ))
+            self.get_uri(&format!("/tradeoffer/{pathname}?{qs_params}"))
         };
         let params = {
             let json_tradeoffer = serde_json::to_string(&OfferForm {
@@ -228,7 +226,7 @@ impl SteamTradeOfferAPI {
     }
     
     /// Gets a chunk of [`ClassInfo`] data.
-    pub async fn get_app_asset_classinfos_chunk(
+    async fn get_app_asset_classinfos_chunk(
         &self,
         appid: AppId,
         classes: &[ClassInfoAppClass],
@@ -291,8 +289,8 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         classes: Vec<ClassInfoAppClass>,
     ) -> Result<Vec<ClassInfoMap>, Error> {
-        let chuck_size = 100;
-        let chunks = classes.chunks(chuck_size);
+        let chunk_size = 100;
+        let chunks = classes.chunks(chunk_size);
         let mut maps = Vec::with_capacity(chunks.len());
         
         for chunk in chunks {
@@ -500,7 +498,7 @@ impl SteamTradeOfferAPI {
     /// Maps trade offer data with given descriptions. Ignores offers with missing descriptions.
     pub fn map_raw_trade_offers_with_descriptions(
         &self,
-        offers: Vec<response::RawTradeOffer>,
+        offers: Vec<RawTradeOffer>,
         map: ClassInfoMap,
     ) -> Vec<TradeOffer> {
         offers
@@ -899,7 +897,7 @@ impl SteamTradeOfferAPI {
         }).await
     }
     
-    /// Gets a user's inventory which includes the `app_data` using the `GetAssetClassInfo` API.
+    /// Gets a user's inventory which includes `app_data` using the `GetAssetClassInfo` API.
     pub async fn get_inventory_with_classinfos(
         &self,
         steamid: SteamID,

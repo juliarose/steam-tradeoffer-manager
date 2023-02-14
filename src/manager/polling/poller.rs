@@ -14,6 +14,11 @@ use steamid_ng::SteamID;
 pub type Poll = Vec<(TradeOffer, Option<TradeOfferState>)>;
 pub type PollResult = Result<Poll, Error>;
 
+const OFFERS_SINCE_BUFFER_SECONDS: i64 = 60 * 30;
+const OFFERS_SINCE_ALL_TIMESTAMP: i64 = 1;
+const STATE_MAP_SIZE_LIMIT: usize = 2500;
+const STATE_MAP_SPLIT_AT: usize = 2000;
+
 pub struct Poller {
     pub steamid: SteamID,
     pub api: SteamTradeOfferAPI,
@@ -31,10 +36,9 @@ impl Poller {
     ) -> PollResult {
         let now = time::get_server_time_now();
         let mut offers_since = self.poll_data.offers_since
-            // It looks like sometimes Steam can be dumb and backdate a modified offer.
-            // We need to handle this. Let's add a 30-minute buffer.
-            .map(|date| date.timestamp() - (60 * 30))
-            .unwrap_or(1);
+            // Steam can be dumb and backdate a modified offer. We need to handle this by adding a buffer.
+            .map(|date| date.timestamp() - OFFERS_SINCE_BUFFER_SECONDS)
+            .unwrap_or(OFFERS_SINCE_ALL_TIMESTAMP);
         let mut active_only = true;
         let mut full_update = {
             poll_type.is_full_update() || 
@@ -51,7 +55,7 @@ impl Poller {
             active_only = false;
             full_update = false;
         } else if full_update {
-            offers_since = 1;
+            offers_since = OFFERS_SINCE_ALL_TIMESTAMP;
             active_only = false;
         }
         
@@ -140,10 +144,12 @@ impl Poller {
             self.poll_data.set_offers_since(offers_since);
         }
         
-        // Clear poll data offers otherwise this could expand infinitely.
-        // Using a higher number than is removed so this process needs to run less frequently.
-        // This could be better but it works.
-        if self.poll_data.state_map.len() > 2500 {
+        // Eventually the state map gets very large. This needs to be trimmed so it does not 
+        // expand infintely.
+        //
+        // This isn't perfect and I may change this later on.
+        if self.poll_data.state_map.len() > STATE_MAP_SIZE_LIMIT {
+            // Using a higher number than is removed so this process needs to run less frequently.
             let mut tradeofferids = self.poll_data.state_map
                 .keys()
                 .cloned()
@@ -155,7 +161,7 @@ impl Poller {
             let (
                 _tradeofferids,
                 tradeofferids_to_remove,
-            ) = tradeofferids.split_at(2000);
+            ) = tradeofferids.split_at(STATE_MAP_SPLIT_AT);
             
             self.poll_data.clear_offers(tradeofferids_to_remove);
         }

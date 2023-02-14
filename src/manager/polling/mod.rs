@@ -18,6 +18,11 @@ use chrono::{Duration, DateTime};
 use tokio::sync::{Mutex, mpsc};
 use tokio::task::JoinHandle;
 
+const DEFAULT_POLL_INTERVAL_SECONDS: i64 = 30;
+const DEFAULT_FULL_UPDATE_SECONDS: i64 = 5 * 60;
+// Duration in milliseconds for when a poll was called too recently.
+const CALLED_TOO_RECENTLY_MILLISECONDS: i64 = 400;
+
 /// Options for polling.
 #[derive(Debug, Clone, Copy)]
 pub struct PollOptions {
@@ -35,8 +40,8 @@ impl Default for PollOptions {
     fn default() -> Self {
         Self {
             cancel_duration: None,
-            poll_full_update_duration: Duration::minutes(5),
-            poll_interval: Duration::seconds(30),
+            poll_full_update_duration: Duration::seconds(DEFAULT_FULL_UPDATE_SECONDS),
+            poll_interval: Duration::seconds(DEFAULT_POLL_INTERVAL_SECONDS),
         }
     }
 }
@@ -46,8 +51,8 @@ impl PollOptions {
     pub fn default_with_cancel_duration(duration: Duration) -> Self {
         Self {
             cancel_duration: Some(duration),
-            poll_full_update_duration: Duration::minutes(5),
-            poll_interval: Duration::seconds(30),
+            poll_full_update_duration: Duration::seconds(DEFAULT_FULL_UPDATE_SECONDS),
+            poll_interval: Duration::seconds(DEFAULT_POLL_INTERVAL_SECONDS),
         }
     }
 }
@@ -93,7 +98,7 @@ pub fn create_poller(
         let receiver_poller = Arc::clone(&poller);
         let receiver_polling_tx = polling_tx.clone();
         let poll_interval = options.poll_interval.to_std()
-            .unwrap_or_else(|_| std::time::Duration::from_secs(60 * 5));
+            .unwrap_or_else(|_| std::time::Duration::from_secs(DEFAULT_POLL_INTERVAL_SECONDS as u64));
         let handle = tokio::spawn(async move {
             // To prevent spam.
             let mut poll_events: HashMap<PollType, DateTime<chrono::Utc>> = HashMap::new();
@@ -107,8 +112,7 @@ pub fn create_poller(
                             
                             *last_poll_date = now;
                             
-                            // Last called with the last half a second.
-                            duration < Duration::milliseconds(500)
+                            duration < Duration::milliseconds(CALLED_TOO_RECENTLY_MILLISECONDS)
                         } else {
                             poll_events.insert(poll_type, chrono::Utc::now());
                             false
