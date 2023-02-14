@@ -35,7 +35,7 @@ pub struct TradeOfferManager {
     mobile_api: MobileAPI,
     /// The account's SteamID.
     steamid: Arc<AtomicU64>,
-    /// The directory to store poll data and [`crate::response::ClassInfo`] data.
+    /// The directory to store poll data and classinfo data.
     data_directory: PathBuf,
     /// The sender for sending messages to polling
     polling: Arc<Mutex<Option<Polling>>>,
@@ -177,7 +177,7 @@ impl TradeOfferManager {
     }
     
     /// Accepts an offer. This checks if the offer can be acted on and updates the state of the 
-    /// offer upon success.
+    /// offer upon success as long as it does not require mobile confirmation.
     pub async fn accept_offer(
         &self,
         offer: &mut TradeOffer,
@@ -193,7 +193,11 @@ impl TradeOfferManager {
         }
         
         let accepted_offer = self.api.accept_offer(offer.tradeofferid, &offer.partner).await?;
-        offer.trade_offer_state = TradeOfferState::Accepted;
+        
+        // This offer doesn't need confirmation, so we can update its state here.
+        if !accepted_offer.needs_confirimation() {
+            offer.trade_offer_state = TradeOfferState::Accepted;
+        }
         
         Ok(accepted_offer)
     }

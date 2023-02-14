@@ -135,7 +135,7 @@ mod tests {
         let response: GetAssetClassInfoResponse = serde_json::from_str(include_str!("fixtures/get_asset_classinfo.json")).unwrap();
         let classinfo_string = response.result.get(&(101785959, Some(11040578))).unwrap();
         let parsed = serde_json::from_str::<response::ClassInfo>(classinfo_string).unwrap();
-
+        
         assert_eq!(parsed.market_hash_name, String::from("Mann Co. Supply Crate Key"));
     }
     
@@ -143,7 +143,8 @@ mod tests {
     fn parses_get_trade_offers_response() {
         let response: GetTradeOffersResponse = serde_json::from_str(include_str!("fixtures/get_trade_offers.json")).unwrap();
         let offer = response.response.trade_offers_sent.first().unwrap();
-
+        
+        assert!(offer.escrow_end_date.is_none());
         assert_eq!(offer.message, Some(String::from("give me that key")));
     }
 }

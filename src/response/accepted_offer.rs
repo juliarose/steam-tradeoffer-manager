@@ -12,3 +12,10 @@ pub struct AcceptedOffer {
     /// The email domain for this account.
     pub email_domain: Option<String>,
 }
+
+impl AcceptedOffer {
+    /// Whether the offer needs to be confirmed by mobile or email.
+    pub fn needs_confirimation(&self) -> bool {
+        self.needs_mobile_confirmation || self.needs_email_confirmation
+    }
+}

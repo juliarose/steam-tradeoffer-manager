@@ -25,7 +25,8 @@ pub struct RawTradeOffer {
     #[serde(with = "string")]
     pub tradeofferid: TradeOfferId,
     /// The trade ID for this offer. This should be present when the `trade_offer_state` of this 
-    /// offer is [`TradeOfferState::Accepted`].
+    /// offer is [`TradeOfferState::Accepted`]. It can also be present if the offer was accepted 
+    /// but the trade is not yet complete. The trade should appear in your trade history.
     #[serde(default)]
     #[serde(with = "option_string")]
     pub tradeid: Option<TradeId>,

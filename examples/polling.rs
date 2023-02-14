@@ -25,16 +25,21 @@ async fn accept_free_items(
     manager: &TradeOfferManager,
     offer: &mut TradeOffer,
 ) {
-    fn assets_item_names(assets: &[Asset]) -> Vec<&str> {
-        assets.iter().map(|item| item.classinfo.market_name.as_ref()).collect()
+    fn assets_item_names(assets: &[Asset]) -> String {
+        assets
+            .iter()
+            .map(|item| item.classinfo.market_name.as_str())
+            .collect::<Vec<_>>()
+            .join(", ")
     }
     
     println!("{} Active", offer.bright_magenta().bold());
-    println!("Receiving: {:?}", assets_item_names(&offer.items_to_receive));
-    println!("Giving: {:?}", assets_item_names(&offer.items_to_give));
+    println!("Receiving: {}", assets_item_names(&offer.items_to_receive));
+    println!("Giving: {}", assets_item_names(&offer.items_to_give));
     
     // We're giving something.
     if !offer.items_to_give.is_empty() {
+        println!("This offer is not giving us free items - skipping");
         return;
     }
     
@@ -50,11 +55,11 @@ async fn accept_free_items(
 async fn main() -> Result<(), Error> {
     dotenv::dotenv().ok();
     
-    let api_key = std::env::var("API_KEY").expect("API_KEY missing");
     let cookies = std::env::var("COOKIES").expect("COOKIES missing")
         .split("; ")
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
+    let api_key = TradeOfferManager::get_api_key(&cookies).await?;
     let manager = TradeOfferManager::builder(api_key, "./assets")
         .identity_secret(String::from("secret"))
         .build();
@@ -74,7 +79,9 @@ async fn main() -> Result<(), Error> {
     while let Some(message) = rx.recv().await {
         match message {
             Ok(offers) => {
-                println!("Got poll: {} update(s)", offers.len());
+                if offers.is_empty() {
+                    println!("Got poll; no changes");
+                }
                 
                 for (mut offer, old_state) in offers {
                     if let Some(state) = old_state {

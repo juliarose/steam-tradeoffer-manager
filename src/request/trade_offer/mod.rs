@@ -1,14 +1,15 @@
 mod item;
 mod builder;
 
+use steamid_ng::SteamID;
 pub use item::NewTradeOfferItem;
 pub use builder::NewTradeOfferBuilder;
-use steamid_ng::SteamID;
 use crate::response::{TradeOffer, Asset};
 
 /// Represents a trade offer not yet sent. A template including items from an existing offer can
-/// created by calling `from` on the owned or borrowed [`TradeOffer`]. For constructing blank 
-/// offers [`NewTradeOffer::builder`] to create a new [`NewTradeOfferBuilder`] is useful.
+/// be created by calling `NewTradeOffer::from(offer)` on the owned or borrowed [`TradeOffer`].
+/// 
+/// For constructing offers with a blank starting point, use `NewTradeOffer::builder`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct NewTradeOffer {
     /// The partner's [`SteamID`] for this offer.

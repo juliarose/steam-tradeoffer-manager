@@ -22,7 +22,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let offer = NewTradeOffer::builder(steamid_other)
         // Any items that implement Into<NewTradeOfferItem> are fine.
         .items_to_receive(items)
+        .message("ayo the pizza here".into())
         .build();
+    // This isn't a full offer, but rather some details about the offer sent such as its 
+    // tradeofferid and whether it needs mobile confirmation.
     let sent_offer = manager.send_offer(&offer).await?;
     
     // Since we didn't add any items on our side this doesn't need mobile confirmation.

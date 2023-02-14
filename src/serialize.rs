@@ -32,12 +32,7 @@ pub mod ts_seconds_option_none_when_zero {
         S: ser::Serializer,
     {
         match *opt {
-            Some(ref dt) => {
-                match dt.timestamp() {
-                    0 => serializer.serialize_none(),
-                    dt => serializer.serialize_some(&dt)
-                }
-            },
+            Some(ref dt) => serializer.serialize_some(&dt.timestamp()),
             None => serializer.serialize_none(),
         }
     }
@@ -63,7 +58,11 @@ pub mod ts_seconds_option_none_when_zero {
         where
             D: de::Deserializer<'de>,
         {
-            d.deserialize_i64(SecondsTimestampVisitor).map(Some)
+            match d.deserialize_i64(SecondsTimestampVisitor) {
+                Ok(date) if date.timestamp() == 0 => Ok(None),
+                Ok(date) => Ok(date).map(Some),
+                Err(error) => Err(error),
+            }
         }
         
         /// Deserialize a timestamp in seconds since the epoch

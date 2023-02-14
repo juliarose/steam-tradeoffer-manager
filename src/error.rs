@@ -36,9 +36,8 @@ pub enum Error {
     /// An error was encountered when sending or acting on trade offers.
     #[error("Trade error: {}", .0)]
     TradeOffer(TradeOfferError),
-    /// A [`crate::response::ClassInfo`] is missing. For some reason a classinfo could not be 
-    /// obtained from Steam or the file system. This can sometimes occur if Steam's servers are 
-    /// having issues.
+    /// A classinfo is missing. For some reason a classinfo could not be obtained from Steam or 
+    /// the file system. This can sometimes occur if Steam's servers are having issues.
     #[error("{}", .0)]
     MissingClassInfo(#[from] MissingClassInfoError),
     /// An error occurred within Steam TOTP.
