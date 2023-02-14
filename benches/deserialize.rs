@@ -1,7 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use steam_tradeoffer_manager::{
-    response::ClassInfo,
-};
+use steam_tradeoffer_manager::response::ClassInfo;
 
 fn criterion_benchmark(c: &mut Criterion) {
     let classinfo_bytes = include_bytes!("fixtures/classinfos/440_101785959_11040578.json");

@@ -1,4 +1,5 @@
-use super::{file, PollData, PollType};
+use super::file;
+use super::{PollData, PollType};
 use crate::time;
 use crate::enums::TradeOfferState;
 use crate::types::TradeOfferId;
