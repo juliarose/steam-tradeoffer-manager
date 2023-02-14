@@ -74,7 +74,7 @@ pub struct ClassInfo {
     #[serde(default)]
     #[serde(deserialize_with = "hashmap_or_vec")]
     pub actions: Vec<Action>,
-    /// This contains extra data from the app's internal schema. This is only included in the 
+    /// This contains extra data from the app's internal schema. This is only included in  
     /// `GetAssetClassInfo` and `inventory/json` responses.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub app_data: AppData,
@@ -106,12 +106,12 @@ impl ClassInfo {
         }
     }
     
-    /// Gets `def_index` value out of app_data parsed as a `u64`.
+    /// Gets `def_index` value out of app_data parsed as a [`u64`].
     pub fn get_app_data_defindex(&self) -> Option<u64> {
         self.get_app_data_value_parsed("def_index")
     }
     
-    /// Gets `quality` value out of app_data parsed as a `u64`.
+    /// Gets `quality` value out of app_data parsed as a [`u64`].
     pub fn get_app_data_quality(&self) -> Option<u64> {
         self.get_app_data_value_parsed("quality")
     }
@@ -153,7 +153,8 @@ pub struct Tag {
     /// under the "Quality" category or "primary" for items under the "Type" category.
     pub internal_name: String,
     /// The name of this tag e.g. for Team Fortress 2 items: "Unique" for items under the 
-    /// "Quality" category or "Primary weapon" for items under the "Type" category.
+    /// "Quality" category or "Primary weapon" for items under the "Type" category. This value 
+    /// has the alias of `localized_tag_name`.
     #[serde(alias = "localized_tag_name")]
     pub name: String,
     /// The category of this tag e.g. for Team Fortress the "Quality" category.
@@ -162,7 +163,7 @@ pub struct Tag {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub color: Option<String>,
     /// The category name of this tag. This is usually the same as category but can sometimes be 
-    /// different and is not always present.
+    /// different and is not always present. This value has the alias of `localized_category_name`.
     #[serde(alias = "localized_category_name")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub category_name: Option<String>,

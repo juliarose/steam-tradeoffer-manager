@@ -1,0 +1,26 @@
+use steam_tradeoffer_manager::{TradeOfferManager, SteamID, enums::GetUserDetailsMethod};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dotenv::dotenv().ok();
+    
+    let steamid = SteamID::from(u64::from(
+        std::env::var("STEAMID_OTHER").unwrap().parse::<u64>().unwrap()
+    ));
+    let cookies = std::env::var("COOKIES").expect("COOKIES missing")
+        .split("; ")
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
+    let api_key = TradeOfferManager::get_api_key(&cookies).await?;
+    let manager = TradeOfferManager::builder(api_key, "./assets")
+        .identity_secret(String::from("secret"))
+        .build();
+    
+    manager.set_cookies(&cookies);
+    
+    // Passing in none assumes we are friends with the user.
+    let user_details = manager.get_user_details(&steamid, GetUserDetailsMethod::None).await?;
+    
+    println!("{user_details:?}");
+    Ok(())
+}

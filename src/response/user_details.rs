@@ -1,7 +1,7 @@
 use std::cmp;
 use serde::{Serialize, Deserialize};
 
-/// Details for user.
+/// Details for users.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserDetails {
     /// Details about you.
@@ -13,8 +13,6 @@ pub struct UserDetails {
 /// Details for a single user.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct User {
-    // Persona name.
-    pub persona_name: String,
     /// Their escrow duration in days.
     pub escrow_days: u32,
 }
@@ -39,11 +37,9 @@ mod tests {
     fn escrow_works() {
         let details = UserDetails {
             me: User {
-                persona_name: "gaming".into(),
                 escrow_days: 0,
             },
             them: User {
-                persona_name: "gaming".into(),
                 escrow_days: 3,
             },
         };
@@ -55,11 +51,9 @@ mod tests {
     fn hold_duration_days_works() {
         let details = UserDetails {
             me: User {
-                persona_name: "gaming".into(),
                 escrow_days: 0,
             },
             them: User {
-                persona_name: "gaming".into(),
                 escrow_days: 15,
             },
         };

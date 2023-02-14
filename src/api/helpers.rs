@@ -7,7 +7,6 @@ use crate::{
     response::{self, User, UserDetails},
 };
 use lazy_regex::regex_captures;
-use unescape::unescape;
 
 pub fn from_raw_receipt_asset(
     asset: api_response::RawReceiptAsset,
@@ -44,38 +43,32 @@ pub fn parse_user_details(
         }
     }
     
-    fn get_persona_names(contents: &str) -> Result<(String, String), ParseHtmlError> {
-        let my_persona_name = regex_captures!(r#"var g_strYourPersonaName = "(.*)";\n"#, contents)
-            .map(|(_, name)| unescape(name))
-            .flatten()
-            .ok_or_else(|| ParseHtmlError::Malformed("Missing persona name for me"))?;
-        let them_persona_name = regex_captures!(r#"var g_strTradePartnerPersonaName = "(.*)";\n"#, contents)
-            .map(|(_, name)| unescape(name))
-            .flatten()
-            .ok_or_else(|| ParseHtmlError::Malformed("Missing persona name for them"))?;
+    // fn get_persona_names(contents: &str) -> Result<(String, String), ParseHtmlError> {
+    //     let my_persona_name = regex_captures!(r#"var g_strYourPersonaName = "(?:[^"\\]|\\.)*";\n"#, contents)
+    //         .map(|(_, name)| unescape(name))
+    //         .flatten()
+    //         .ok_or_else(|| ParseHtmlError::Malformed("Missing persona name for me"))?;
+    //     let them_persona_name = regex_captures!(r#"var g_strTradePartnerPersonaName = "(.*)";\n"#, contents)
+    //         .map(|(_, name)| unescape(name))
+    //         .flatten()
+    //         .ok_or_else(|| ParseHtmlError::Malformed("Missing persona name for them"))?;
         
-        Ok((my_persona_name, them_persona_name))
-    }
+    //     Ok((my_persona_name, them_persona_name))
+    // }
     
-    if let Some((_, contents)) = regex_captures!(r#"\n\W*<script type="text/javascript">\W*\r?\n?(\W*var g_rgAppContextData[\s\S]*)</script>"#, body) {
+    if let Some((_, _contents)) = regex_captures!(r#"\n\W*<script type="text/javascript">\W*\r?\n?(\W*var g_rgAppContextData[\s\S]*)</script>"#, body) {
         let my_escrow_days = get_days(
             regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, body)
         );
         let them_escrow_days = get_days(
             regex_captures!(r#"var g_daysTheirEscrow = (\d+);"#, body)
         );
-        let (
-            my_persona_name,
-            them_persona_name,
-        ) = get_persona_names(contents)?;
         
         Ok(UserDetails {
             me: User {
-                persona_name: my_persona_name,
                 escrow_days: my_escrow_days,
             },
             them: User {
-                persona_name: them_persona_name,
                 escrow_days: them_escrow_days,
             }
         })

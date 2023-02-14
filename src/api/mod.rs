@@ -15,7 +15,7 @@ use crate::{
     types::*,
     internal_types::*,
     response::*,
-    enums::Language,
+    enums::{Language, GetUserDetailsMethod},
     static_functions::get_inventory,
     serialize::{string, steamid_as_string},
     helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies},
@@ -667,32 +667,30 @@ impl SteamTradeOfferAPI {
         Ok(body)
     }
     
-    /// Gets escrow details for user.
-    pub async fn get_user_details(
+    /// Gets escrow details for a user. The `method` for obtaining details can be a `tradeofferid` 
+    /// or `access_token` or neither.
+    pub async fn get_user_details<T>(
         &self,
         partner: &SteamID,
-        tradeofferid: Option<TradeOfferId>,
-        token: &Option<String>,
-    ) -> Result<UserDetails, Error> {
+        method: T,
+    ) -> Result<UserDetails, Error> 
+        where T: Into<GetUserDetailsMethod>,
+    {
         #[derive(Serialize)]
         struct Params<'b> {
             partner: u32,
-            token: &'b Option<String>,
+            token: Option<&'b str>,
         }
         
         let uri = {
-            let pathname: String = match tradeofferid {
-                Some(id) => id.to_string(),
-                None => String::from("new"),
-            };
+            let method = method.into();
+            let pathname = method.pathname();
             let qs_params = serde_qs::to_string(&Params {
                 partner: partner.account_id(),
-                token,
+                token: method.token(),
             }).map_err(ParameterError::SerdeQS)?;
             
-            self.get_uri(&format!(
-                "/tradeoffer/{pathname}?{qs_params}"
-            ))
+            self.get_uri(&format!("/tradeoffer/{pathname}?{qs_params}"))
         };
         let response = self.client.get(&uri)
             .send()

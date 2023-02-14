@@ -14,7 +14,7 @@ use crate::{
     helpers::{generate_sessionid, get_default_middleware, get_sessionid_and_steamid_from_cookies},
     error::{ParameterError, Error},
     request::{NewTradeOffer, GetTradeHistoryOptions},
-    enums::{TradeOfferState, OfferFilter},
+    enums::{TradeOfferState, OfferFilter, GetUserDetailsMethod},
     types::{AppId, ContextId, TradeOfferId},
     response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Confirmation, Trades},
 };
@@ -297,22 +297,16 @@ impl TradeOfferManager {
         self.api.get_inventory(steamid, appid, contextid, false).await
     }
     
-    /// Gets escrow details for user.
-    pub async fn get_user_details_with_tradeofferid(
+    /// Gets escrow details for a user. The `method` for obtaining details can be a `tradeofferid` 
+    /// or `access_token` or neither.
+    pub async fn get_user_details<T>(
         &self,
         partner: &SteamID,
-        tradeofferid: TradeOfferId,
-    ) -> Result<UserDetails, Error> {
-        self.api.get_user_details(partner, Some(tradeofferid), &None).await
-    }
-    
-    /// Gets escrow details for user.
-    pub async fn get_user_details_with_access_token(
-        &self,
-        partner: &SteamID,
-        token: &str,
-    ) -> Result<UserDetails, Error> {
-        self.api.get_user_details(partner, None, &Some(token.into())).await
+        method: T,
+    ) -> Result<UserDetails, Error> 
+        where T: Into<GetUserDetailsMethod>,
+    {
+        self.api.get_user_details(partner, method).await
     }
     
     /// Gets trade confirmations.
