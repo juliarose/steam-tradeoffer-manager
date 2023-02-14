@@ -671,7 +671,7 @@ impl SteamTradeOfferAPI {
     /// or `access_token` or neither.
     pub async fn get_user_details<T>(
         &self,
-        partner: &SteamID,
+        partner: SteamID,
         method: T,
     ) -> Result<UserDetails, Error> 
         where T: Into<GetUserDetailsMethod>,
@@ -707,17 +707,17 @@ impl SteamTradeOfferAPI {
     pub async fn accept_offer(
         &self,
         tradeofferid: TradeOfferId,
-        partner: &SteamID,
+        partner: SteamID,
     ) -> Result<AcceptedOffer, Error> {
         #[derive(Serialize)]
-        struct AcceptOfferParams<'b> {
+        struct AcceptOfferParams {
             sessionid: String,
             serverid: u32,
             #[serde(with = "string")]
             tradeofferid: TradeOfferId,
             captcha: &'static str,
             #[serde(serialize_with = "steamid_as_string")]
-            partner: &'b SteamID,
+            partner: SteamID,
         }
         
         let sessionid = self.sessionid.read().unwrap().clone()
@@ -808,7 +808,7 @@ impl SteamTradeOfferAPI {
     /// Gets a user's inventory using the old endpoint.
     pub async fn get_inventory_old(
         &self,
-        steamid: &SteamID,
+        steamid: SteamID,
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
@@ -822,7 +822,7 @@ impl SteamTradeOfferAPI {
         
         let mut responses: Vec<GetInventoryOldResponse> = Vec::new();
         let mut start: Option<u64> = None;
-        let sid = u64::from(*steamid);
+        let sid = u64::from(steamid);
         let uri = self.get_uri(&format!("/profiles/{sid}/inventory/json/{appid}/{contextid}"));
         let referer = self.get_uri(&format!("/profiles/{sid}/inventory"));
         
@@ -882,14 +882,14 @@ impl SteamTradeOfferAPI {
     /// Gets a user's inventory.
     pub async fn get_inventory(
         &self,
-        steamid: &SteamID,
+        steamid: SteamID,
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
     ) -> Result<Vec<Asset>, Error> {
         get_inventory(&GetInventoryOptions {
             client: &self.client,
-            steamid: *steamid,
+            steamid,
             appid,
             contextid,
             tradable_only,
@@ -900,7 +900,7 @@ impl SteamTradeOfferAPI {
     /// Gets a user's inventory which includes the `app_data` using the `GetAssetClassInfo` API.
     pub async fn get_inventory_with_classinfos(
         &self,
-        steamid: &SteamID,
+        steamid: SteamID,
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
@@ -914,7 +914,7 @@ impl SteamTradeOfferAPI {
         
         let mut responses: Vec<GetInventoryResponseIgnoreDescriptions> = Vec::new();
         let mut start_assetid: Option<u64> = None;
-        let sid = u64::from(*steamid);
+        let sid = u64::from(steamid);
         let uri = self.get_uri(&format!("/inventory/{sid}/{appid}/{contextid}"));
         let referer = self.get_uri(&format!("/profiles/{sid}/inventory"));
         

@@ -192,7 +192,7 @@ impl TradeOfferManager {
             ));
         }
         
-        let accepted_offer = self.api.accept_offer(offer.tradeofferid, &offer.partner).await?;
+        let accepted_offer = self.api.accept_offer(offer.tradeofferid, offer.partner).await?;
         
         // This offer doesn't need confirmation, so we can update its state here.
         if !accepted_offer.needs_confirimation() {
@@ -274,13 +274,13 @@ impl TradeOfferManager {
             return Err(Error::NotLoggedIn);
         }
         
-        self.api.get_inventory(&SteamID::from(steamid_64), appid, contextid, true).await
+        self.api.get_inventory(SteamID::from(steamid_64), appid, contextid, true).await
     }
     
     /// Gets a user's inventory. This method **does not** include untradable items.
     pub async fn get_inventory(
         &self,
-        steamid: &SteamID,
+        steamid: SteamID,
         appid: AppId,
         contextid: ContextId,
     ) -> Result<Vec<Asset>, Error> {
@@ -290,7 +290,7 @@ impl TradeOfferManager {
     /// Gets a user's inventory including untradable items.
     pub async fn get_inventory_with_untradables(
         &self,
-        steamid: &SteamID,
+        steamid: SteamID,
         appid: AppId,
         contextid: ContextId,
     ) -> Result<Vec<Asset>, Error> {
@@ -301,7 +301,7 @@ impl TradeOfferManager {
     /// or `access_token` or neither.
     pub async fn get_user_details<T>(
         &self,
-        partner: &SteamID,
+        partner: SteamID,
         method: T,
     ) -> Result<UserDetails, Error> 
         where T: Into<GetUserDetailsMethod>,

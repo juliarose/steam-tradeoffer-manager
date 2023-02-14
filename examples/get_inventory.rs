@@ -4,9 +4,7 @@ use steam_tradeoffer_manager::{SteamID, request::GetInventoryOptions, get_invent
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
     
-    let steamid = SteamID::from(u64::from(
-        std::env::var("STEAMID_OTHER").unwrap().parse::<u64>().unwrap()
-    ));
+    let steamid: SteamID = std::env::var("STEAMID_OTHER").unwrap().parse::<u64>().unwrap().into();
     let options = GetInventoryOptions::new(steamid, 440, 2);
     // Getting a user's inventory can be done using the manager but it is also provided as a 
     // stand-alone method.

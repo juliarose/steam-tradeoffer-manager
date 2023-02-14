@@ -224,7 +224,7 @@ impl Poller {
             // It's really not a problem to await on this.
             // Saving the file takes under a millisecond.
             let _ = file::save_poll_data(
-                &self.steamid,
+                self.steamid,
                 &serde_json::to_string(&self.poll_data)?,
                 &self.data_directory,
             ).await;

@@ -61,7 +61,7 @@ pub fn create_poller(
     JoinHandle<()>,
 ) {
     let poll_data = file::load_poll_data(
-        &steamid,
+        steamid,
         &data_directory,
     ).unwrap_or_else(|_| PollData::new());
     // Allows sending a message into the poller.

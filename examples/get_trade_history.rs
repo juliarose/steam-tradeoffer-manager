@@ -4,8 +4,12 @@ use steam_tradeoffer_manager::{
     request::GetTradeHistoryOptions,
 };
 
-fn assets_item_names(assets: &[TradeAsset]) -> Vec<&str> {
-    assets.iter().map(|item| item.classinfo.market_name.as_ref()).collect()
+fn assets_item_names(assets: &[TradeAsset]) -> String {
+    assets
+        .iter()
+        .map(|item| item.classinfo.market_name.as_str())
+        .collect::<Vec<_>>()
+        .join("\n ")
 }
 
 #[tokio::main]

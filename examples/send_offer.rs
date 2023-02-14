@@ -9,17 +9,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .split("; ")
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
-    let steamid_other = SteamID::from(u64::from(
-        std::env::var("STEAMID_OTHER").unwrap().parse::<u64>().unwrap()
-    ));
+    let steamid: SteamID = std::env::var("STEAMID_OTHER").unwrap().parse::<u64>().unwrap().into();
     let manager = TradeOfferManager::new(api_key, "./assets");
     
     manager.set_cookies(&cookies);
     
     // This method returns only tradable items.
-    let inventory = manager.get_inventory(&steamid_other, 440, 2).await?;
+    let inventory = manager.get_inventory(steamid, 440, 2).await?;
     let items = inventory.into_iter().take(5);
-    let offer = NewTradeOffer::builder(steamid_other)
+    let offer = NewTradeOffer::builder(steamid)
         // Any items that implement Into<NewTradeOfferItem> are fine.
         .items_to_receive(items)
         .message("ayo the pizza here".into())
