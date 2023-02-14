@@ -1,10 +1,8 @@
-use serde::{Serialize, Deserialize};
+use crate::time::{date_difference_from_now, ServerTime};
+use crate::types::TradeOfferId;
+use crate::enums::TradeOfferState;
 use std::collections::HashMap;
-use crate::{
-    time::{date_difference_from_now, ServerTime},
-    types::TradeOfferId,
-    enums::TradeOfferState,
-};
+use serde::{Serialize, Deserialize};
 use chrono::Duration;
 
 /// Used for storing account poll data.

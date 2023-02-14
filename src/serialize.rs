@@ -1,13 +1,15 @@
+use crate::response::ClassInfo;
+use crate::internal_types::{ClassInfoAppClass, ClassInfoAppMap, ClassInfoMap};
+use std::collections::HashMap;
+use std::str::FromStr;
+use std::sync::Arc;
+use std::marker::PhantomData;
+use std::fmt::{self, Display};
 use steamid_ng::SteamID;
-use serde::Serializer;
-use std::{collections::HashMap, str::FromStr, sync::Arc, marker::PhantomData, fmt::{self, Display}};
-use serde::{Deserialize, de::{self, MapAccess, Visitor, SeqAccess, Deserializer, Unexpected}};
+use serde::{Serializer, Deserialize};
+use serde::de::{self, MapAccess, Visitor, SeqAccess, Deserializer, Unexpected};
 use serde_json::value::RawValue;
 use lazy_regex::{regex_is_match, regex_captures};
-use crate::{
-    response::ClassInfo,
-    internal_types::{ClassInfoAppClass, ClassInfoAppMap, ClassInfoMap},
-};
 
 pub fn empty_string_is_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
 where

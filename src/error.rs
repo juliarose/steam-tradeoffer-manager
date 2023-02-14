@@ -1,4 +1,5 @@
-use crate::{enums::TradeOfferState, types::*};
+use crate::enums::TradeOfferState;
+use crate::types::*;
 use std::fmt;
 
 /// Any range of errors encountered when making requests.

@@ -1,17 +1,18 @@
 // Contains exported functions in lib.rs
 
-use std::{collections::HashMap, sync::Arc};
-use crate::{
-    internal_types::*,
-    helpers::{parses_response, get_sessionid_and_steamid_from_cookies},
-    api::{response as api_response, SteamTradeOfferAPI},
-    response::{Asset, ClassInfo},
-    request::GetInventoryOptions,
-    error::{Error, ParseHtmlError, MissingClassInfoError},
-    serialize::{from_int_to_bool, to_classinfo_map, option_str_to_number},
-};
+use crate::api::SteamTradeOfferAPI;
+use crate::api::response as api_response;
+use crate::response::{Asset, ClassInfo};
+use crate::request::GetInventoryOptions;
+use crate::internal_types::*;
+use crate::helpers::{parses_response, get_sessionid_and_steamid_from_cookies};
+use crate::error::{Error, ParseHtmlError, MissingClassInfoError};
+use crate::serialize;
+use std::collections::HashMap;
+use std::sync::Arc;
 use serde::{Serialize, Deserialize};
-use reqwest::{cookie::Jar, header::REFERER};
+use reqwest::cookie::Jar;
+use reqwest::header::REFERER;
 use scraper::{Html, Selector};
 use url::Url;
 
@@ -210,17 +211,17 @@ pub async fn get_inventory<'a>(
 #[derive(Deserialize)]
 struct GetInventoryResponse {
     #[serde(default)]
-    #[serde(deserialize_with = "from_int_to_bool")]
+    #[serde(deserialize_with = "serialize::from_int_to_bool")]
     success: bool,
     #[serde(default)]
-    #[serde(deserialize_with = "from_int_to_bool")]
+    #[serde(deserialize_with = "serialize::from_int_to_bool")]
     more_items: bool,
     #[serde(default)]
     assets: Vec<api_response::RawAsset>,
-    #[serde(deserialize_with = "to_classinfo_map")]
+    #[serde(deserialize_with = "serialize::to_classinfo_map")]
     descriptions: HashMap<ClassInfoAppClass, Arc<ClassInfo>>,
     #[serde(default)]
-    #[serde(deserialize_with = "option_str_to_number")]
+    #[serde(deserialize_with = "serialize::option_str_to_number")]
     last_assetid: Option<u64>,
 }
 

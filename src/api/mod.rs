@@ -8,23 +8,25 @@ mod helpers;
 
 use response::*;
 use response_wrappers::*;
-use std::{path::PathBuf, collections::{HashMap, HashSet}, sync::{Arc, RwLock, Mutex}};
-use crate::{
-    SteamID,
-    time::ServerTime,
-    types::*,
-    internal_types::*,
-    response::*,
-    enums::{Language, GetUserDetailsMethod},
-    static_functions::get_inventory,
-    serialize::{string, steamid_as_string},
-    helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies},
-    error::{Error, ParameterError, MissingClassInfoError},
-    classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers},
-    request::{GetInventoryOptions, NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions},
-};
+
+use crate::SteamID;
+use crate::time::ServerTime;
+use crate::types::*;
+use crate::internal_types::*;
+use crate::response::*;
+use crate::enums::{Language, GetUserDetailsMethod};
+use crate::static_functions::get_inventory;
+use crate::serialize;
+use crate::helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies};
+use crate::error::{Error, ParameterError, MissingClassInfoError};
+use crate::classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers};
+use crate::request::{GetInventoryOptions, NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions};
+use std::path::PathBuf;
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, RwLock, Mutex};
 use serde::{Deserialize, Serialize};
-use reqwest::{cookie::Jar, header::REFERER};
+use reqwest::cookie::Jar;
+use reqwest::header::REFERER;
 use lazy_regex::{regex_captures, regex_is_match};
 use url::Url;
 
@@ -114,7 +116,7 @@ impl SteamTradeOfferAPI {
             captcha: &'static str,
             trade_offer_create_params: String,
             tradeofferid_countered: &'b Option<u64>,
-            #[serde(serialize_with = "steamid_as_string")]
+            #[serde(serialize_with = "serialize::steamid_as_string")]
             partner: &'b SteamID,
         }
         
@@ -713,10 +715,10 @@ impl SteamTradeOfferAPI {
         struct AcceptOfferParams {
             sessionid: String,
             serverid: u32,
-            #[serde(with = "string")]
+            #[serde(with = "serialize::string")]
             tradeofferid: TradeOfferId,
             captcha: &'static str,
-            #[serde(serialize_with = "steamid_as_string")]
+            #[serde(serialize_with = "serialize::steamid_as_string")]
             partner: SteamID,
         }
         
@@ -753,7 +755,7 @@ impl SteamTradeOfferAPI {
         
         #[derive(Deserialize, Debug)]
         struct Response {
-            #[serde(with = "string")]
+            #[serde(with = "serialize::string")]
             tradeofferid: TradeOfferId,
         }
         
@@ -785,7 +787,7 @@ impl SteamTradeOfferAPI {
         
         #[derive(Deserialize, Debug)]
         struct Response {
-            #[serde(with = "string")]
+            #[serde(with = "serialize::string")]
             tradeofferid: TradeOfferId,
         }
         

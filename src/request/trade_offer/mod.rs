@@ -1,10 +1,11 @@
 mod item;
 mod builder;
 
-use steamid_ng::SteamID;
 pub use item::NewTradeOfferItem;
 pub use builder::NewTradeOfferBuilder;
+
 use crate::response::{TradeOffer, Asset};
+use steamid_ng::SteamID;
 
 /// Represents a trade offer not yet sent. A template including items from an existing offer can
 /// be created by calling `NewTradeOffer::from(offer)` on the owned or borrowed [`TradeOffer`].

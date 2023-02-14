@@ -1,6 +1,9 @@
-use crate::{error::FileError, SteamID, helpers::write_file_atomic};
-use std::{path::Path, fs};
 use super::poll_data::PollData;
+use crate::error::FileError;
+use crate::SteamID;
+use crate::helpers::write_file_atomic;
+use std::path::Path;
+use std::fs;
 
 pub fn load_poll_data(
     steamid: SteamID,

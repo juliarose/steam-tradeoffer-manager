@@ -1,11 +1,12 @@
+use crate::types::TradeOfferId;
+use crate::serialize;
 use serde::{Serialize, Deserialize};
-use crate::{types::TradeOfferId, serialize::string};
 
 /// The result returned after sending a new trade offer.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SentOffer {
     /// The ID of the offer sent.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub tradeofferid: TradeOfferId,
     #[serde(default)]
     /// Whether the offer needs mobile confirmation or not.

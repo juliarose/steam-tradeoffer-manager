@@ -1,13 +1,12 @@
 use super::{file, PollData, PollType};
-use crate::{
-    time,
-    enums::TradeOfferState,
-    types::TradeOfferId,
-    response::TradeOffer,
-    api::SteamTradeOfferAPI,
-    error::Error,
-};
-use std::{path::PathBuf, collections::HashMap};
+use crate::time;
+use crate::enums::TradeOfferState;
+use crate::types::TradeOfferId;
+use crate::response::TradeOffer;
+use crate::api::SteamTradeOfferAPI;
+use crate::error::Error;
+use std::path::PathBuf;
+use std::collections::HashMap;
 use chrono::Duration;
 use steamid_ng::SteamID;
 

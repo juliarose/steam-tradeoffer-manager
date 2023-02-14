@@ -1,41 +1,33 @@
+use crate::ServerTime;
+use crate::types::*;
+use crate::internal_types::*;
+use crate::error::{MissingClassInfoError, TryIntoNewAssetError};
+use crate::response::{TradeOffer, Asset, Trade, TradeAsset};
+use crate::enums::{TradeStatus, ConfirmationMethod, TradeOfferState};
+use crate::serialize;
 use std::sync::Arc;
 use serde::{Serialize, Deserialize};
 use steamid_ng::SteamID;
 use chrono::serde::ts_seconds;
-use crate::{
-    ServerTime,
-    types::*,
-    internal_types::*,
-    error::{MissingClassInfoError, TryIntoNewAssetError},
-    response::{TradeOffer, Asset, Trade, TradeAsset},
-    enums::{TradeStatus, ConfirmationMethod, TradeOfferState},
-    serialize::{
-        string,
-        option_string,
-        option_string_0_as_none,
-        ts_seconds_option_none_when_zero,
-        empty_string_is_none,
-    },
-};
 
 /// A trade offer.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTradeOffer {
     /// The ID for this offer.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub tradeofferid: TradeOfferId,
     /// The trade ID for this offer. This should be present when the `trade_offer_state` of this 
     /// offer is [`TradeOfferState::Accepted`]. It can also be present if the offer was accepted 
     /// but the trade is not yet complete. The trade should appear in your trade history.
     #[serde(default)]
-    #[serde(with = "option_string")]
+    #[serde(with = "serialize::option_string")]
     pub tradeid: Option<TradeId>,
     /// The [`SteamID`] of our partner.
     pub accountid_other: u32,
     /// The message included in the offer. If the message is empty or not present this will be 
     /// `None`.
     #[serde(default)]
-    #[serde(deserialize_with = "empty_string_is_none")]
+    #[serde(deserialize_with = "serialize::empty_string_is_none")]
     pub message: Option<String>,
     /// The items we're receiving in this offer.
     #[serde(default)]
@@ -61,7 +53,7 @@ pub struct RawTradeOffer {
     /// The state of this offer.
     pub trade_offer_state: TradeOfferState,
     /// The end date if this trade is in escrow. `None` when this offer is not in escrow.
-    #[serde(with = "ts_seconds_option_none_when_zero")]
+    #[serde(with = "serialize::ts_seconds_option_none_when_zero")]
     pub escrow_end_date: Option<ServerTime>,
     /// The confirmation method for this offer.
     pub confirmation_method: ConfirmationMethod,
@@ -136,22 +128,22 @@ pub struct RawAsset {
     /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
     /// The context ID.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub contextid: ContextId,
     /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub assetid: AssetId,
     /// The amount. If this item is not stackable the amount will be `1`.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub amount: Amount,
     /// `true` if the item no longer exists in the inventory.
     #[serde(default)]
     pub missing: bool,
     /// The ID of the classinfo.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub classid: ClassId,
     /// The specific instance ID of the classinfo belonging to the class ID.
-    #[serde(with = "option_string_0_as_none")]
+    #[serde(with = "serialize::option_string_0_as_none")]
     pub instanceid: InstanceId,
 }
 
@@ -201,16 +193,16 @@ pub struct RawReceiptAsset {
     /// The context ID.
     pub contextid: ContextId,
     /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
-    #[serde(with = "string", rename = "id")]
+    #[serde(with = "serialize::string", rename = "id")]
     pub assetid: AssetId,
     /// The amount. If this item is not stackable the amount will be `1`.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub amount: Amount,
     /// The ID of the classinfo.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub classid: ClassId,
     /// The specific instance ID of the classinfo belonging to the class ID.
-    #[serde(with = "option_string_0_as_none")]
+    #[serde(with = "serialize::option_string_0_as_none")]
     pub instanceid: InstanceId,
 }
 
@@ -218,16 +210,16 @@ pub struct RawReceiptAsset {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RawAssetOld {
     /// The unique asset ID.
-    #[serde(with = "string", rename = "id")]
+    #[serde(with = "serialize::string", rename = "id")]
     pub assetid: AssetId,
     /// The amount. If this item is not stackable the amount will be `1`.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub amount: Amount,
     /// The ID of the classinfo.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub classid: ClassId,
     /// The specific instance ID of the classinfo belonging to the class ID.
-    #[serde(with = "option_string_0_as_none")]
+    #[serde(with = "serialize::option_string_0_as_none")]
     pub instanceid: InstanceId,
 }
 
@@ -246,7 +238,7 @@ pub struct RawTrades {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTrade {
     /// The trade ID.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub tradeid: TradeId,
     /// The [`SteamID`] of our partner.
     pub steamid_other: SteamID,
@@ -269,27 +261,27 @@ pub struct RawTradeAsset {
     /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
     /// The context ID.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub contextid: ContextId,
     /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub assetid: AssetId,
     /// The amount. If this item is not stackable the amount will be `1`.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub amount: Amount,
     /// The ID of the classinfo.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub classid: ClassId,
     /// The specific instance ID of the classinfo belonging to the class ID.
-    #[serde(with = "option_string_0_as_none")]
+    #[serde(with = "serialize::option_string_0_as_none")]
     pub instanceid: InstanceId,
     /// The context ID of the item received. `None` if this item has not yet finished 
     /// transferring.
-    #[serde(with = "option_string")]
+    #[serde(with = "serialize::option_string")]
     pub new_contextid: Option<ContextId>,
     /// The unique asset ID of the item received. `None` if this item has not yet finished t
     /// ransferring.
-    #[serde(with = "option_string")]
+    #[serde(with = "serialize::option_string")]
     pub new_assetid: Option<AssetId>,
 }
 

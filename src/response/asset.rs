@@ -1,11 +1,9 @@
-use serde::{Serialize, Deserialize};
-use std::sync::Arc;
 use super::{TradeAsset, ClassInfo};
-use crate::{
-    serialize::string,
-    types::{AppId, ContextId, AssetId, Amount},
-    internal_types::ClassInfoClass,
-};
+use crate::serialize;
+use crate::types::{AppId, ContextId, AssetId, Amount};
+use crate::internal_types::ClassInfoClass;
+use std::sync::Arc;
+use serde::{Serialize, Deserialize};
 
 /// An asset which includes its related [`ClassInfo`] mapping.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -13,13 +11,13 @@ pub struct Asset {
     /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
     /// The context ID.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub contextid: ContextId,
     /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub assetid: AssetId,
     /// The amount. If this item is not stackable the amount will be `1`.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub amount: Amount,
     /// `true` if the item no longer exists in the inventory.
     #[serde(default)]

@@ -1,8 +1,6 @@
+use crate::types::{AppId, ClassId, InstanceId};
+use crate::serialize;
 use serde::{Serialize, Deserialize};
-use crate::{
-    types::{AppId, ClassId, InstanceId}, serialize::{string, option_string_0_as_none},
-    serialize::{into_bool, hashmap_or_vec, from_fraudwarnings, string_or_number},
-};
 
 /// Contains details about an item including names and descriptions.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -12,12 +10,12 @@ pub struct ClassInfo {
     /// and `GetTradeHistory` response.
     pub appid: Option<AppId>,
     /// The ID for this classinfo.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub classid: ClassId,
     /// The specific instance ID for this classinfo.
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "option_string_0_as_none")]
+    #[serde(with = "serialize::option_string_0_as_none")]
     pub instanceid: InstanceId,
     /// The name of the item.
     pub name: String,
@@ -41,38 +39,38 @@ pub struct ClassInfo {
     #[serde(rename = "type")]
     pub r#type: String,
     /// Whether this item can be traded or not.
-    #[serde(deserialize_with = "into_bool")]
+    #[serde(deserialize_with = "serialize::into_bool")]
     pub tradable: bool,
     /// Whether this item is marketable or not.
-    #[serde(deserialize_with = "into_bool")]
+    #[serde(deserialize_with = "serialize::into_bool")]
     pub marketable: bool,
     /// Whether this item is a commodity item on the Steam Community Market.
-    #[serde(deserialize_with = "into_bool")]
+    #[serde(deserialize_with = "serialize::into_bool")]
     pub commodity: bool,
     /// How many days the item has left until it can be traded.
     #[serde(default)]
-    #[serde(deserialize_with = "string_or_number")]
+    #[serde(deserialize_with = "serialize::string_or_number")]
     pub market_tradable_restriction: u32,
     /// How many days the item has left until it can be listed on the Steam Community Market.
     #[serde(default)]
-    #[serde(deserialize_with = "string_or_number")]
+    #[serde(deserialize_with = "serialize::string_or_number")]
     pub market_marketable_restriction: u32,
     /// Fraud warnings for this item.
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(deserialize_with = "from_fraudwarnings")]
+    #[serde(deserialize_with = "serialize::from_fraudwarnings")]
     pub fraudwarnings: Option<Vec<String>>,
     /// Descriptions for this item.
     #[serde(default)]
-    #[serde(deserialize_with = "hashmap_or_vec")]
+    #[serde(deserialize_with = "serialize::hashmap_or_vec")]
     pub descriptions: Vec<Description>,
     /// Tags for this item.
     #[serde(default)]
-    #[serde(deserialize_with = "hashmap_or_vec")]
+    #[serde(deserialize_with = "serialize::hashmap_or_vec")]
     pub tags: Vec<Tag>,
     /// Actions for this item.
     #[serde(default)]
-    #[serde(deserialize_with = "hashmap_or_vec")]
+    #[serde(deserialize_with = "serialize::hashmap_or_vec")]
     pub actions: Vec<Action>,
     /// This contains extra data from the app's internal schema. This is only included in  
     /// `GetAssetClassInfo` and `inventory/json` responses.

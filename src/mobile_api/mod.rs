@@ -5,18 +5,19 @@ mod helpers;
 mod operation;
 
 use operation::Operation;
+
+use crate::SteamID;
+use crate::response::Confirmation;
+use crate::error::{Error, ParameterError};
+use crate::helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies};
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
+use std::sync::atomic::{Ordering, AtomicU64};
 use another_steam_totp::{Tag, get_device_id, generate_confirmation_key};
 use serde::Deserialize;
 use reqwest::cookie::Jar;
 use url::Url;
 use reqwest_middleware::ClientWithMiddleware;
-use std::{collections::HashMap, sync::{Arc, RwLock, atomic::{Ordering, AtomicU64}}};
-use crate::{
-    SteamID,
-    response::Confirmation,
-    error::{Error, ParameterError}, 
-    helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies},
-};
 
 /// The API for mobile confirmations.
 #[derive(Debug, Clone)]

@@ -1,8 +1,10 @@
 //! Types internally used by the crate.
 
-use std::{sync::Arc, collections::HashMap};
+use crate::types::{AppId, ClassId, InstanceId};
+use crate::response::ClassInfo;
+use std::sync::Arc;
+use std::collections::HashMap;
 use reqwest_middleware::ClientWithMiddleware;
-use crate::{types::{AppId, ClassId, InstanceId}, response::ClassInfo};
 
 pub type Client = ClientWithMiddleware;
 pub type ClassInfoClass = (AppId, ClassId, InstanceId);

@@ -1,7 +1,9 @@
 pub mod helpers;
 
-use crate::{response::ClassInfo, internal_types::ClassInfoClass};
-use std::{sync::{Arc, Mutex}, collections::HashMap};
+use crate::response::ClassInfo;
+use crate::internal_types::ClassInfoClass;
+use std::sync::{Arc, Mutex};
+use std::collections::HashMap;
 use lfu_cache::LfuCache;
 
 type LfuClassInfoMap = LfuCache<ClassInfoClass, Arc<ClassInfo>>;

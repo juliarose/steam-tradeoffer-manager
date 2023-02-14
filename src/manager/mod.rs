@@ -4,20 +4,21 @@ mod polling;
 pub use polling::{PollAction, Poll, PollResult, PollType, PollOptions, PollData};
 pub use builder::TradeOfferManagerBuilder;
 
-use std::{sync::Mutex, path::PathBuf, sync::{Arc, atomic::{Ordering, AtomicU64}}};
-use crate::{
-    time,
-    ServerTime,
-    api::SteamTradeOfferAPI,
-    mobile_api::MobileAPI,
-    static_functions::get_api_key,
-    helpers::{generate_sessionid, get_default_middleware, get_sessionid_and_steamid_from_cookies},
-    error::{ParameterError, Error},
-    request::{NewTradeOffer, GetTradeHistoryOptions},
-    enums::{TradeOfferState, OfferFilter, GetUserDetailsMethod},
-    types::{AppId, ContextId, TradeOfferId},
-    response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Confirmation, Trades},
-};
+use crate::time;
+use crate::ServerTime;
+use crate::api::SteamTradeOfferAPI;
+use crate::mobile_api::MobileAPI;
+use crate::static_functions::get_api_key;
+use crate::helpers::{generate_sessionid, get_default_middleware, get_sessionid_and_steamid_from_cookies};
+use crate::error::{ParameterError, Error};
+use crate::request::{NewTradeOffer, GetTradeHistoryOptions};
+use crate::enums::{TradeOfferState, OfferFilter, GetUserDetailsMethod};
+use crate::types::{AppId, ContextId, TradeOfferId};
+use crate::response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Confirmation, Trades};
+use std::sync::Mutex;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::sync::atomic::{Ordering, AtomicU64};
 use steamid_ng::SteamID;
 use tokio::{sync::mpsc, task::JoinHandle};
 use reqwest::cookie::Jar;

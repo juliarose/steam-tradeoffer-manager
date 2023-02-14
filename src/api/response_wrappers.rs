@@ -1,17 +1,12 @@
-use std::{collections::HashMap, sync::Arc, fmt};
-use crate::{
-    response,
-    internal_types::{ClassInfoAppClass, ClassInfoMap},
-    serialize::{
-        from_int_to_bool,
-        to_trade_offers_classinfo_map,
-        option_str_to_number,
-        deserialize_classinfo_map_raw,
-        deserialize_classinfo_map,
-    },
-};
-use super::{response as api_response, RawTrade};
-use serde::{Deserialize, de::{MapAccess, Visitor, SeqAccess, Deserializer}};
+use super::response as api_response;
+use super::RawTrade;
+use crate::internal_types::{ClassInfoAppClass, ClassInfoMap};
+use crate::{response, serialize};
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::fmt;
+use serde::Deserialize;
+use serde::de::{MapAccess, Visitor, SeqAccess, Deserializer};
 
 type RgInventory = HashMap<String, api_response::RawAssetOld>;
 
@@ -61,7 +56,7 @@ pub struct GetTradeOffersResponseBody {
     #[serde(default)]
     pub trade_offers_received: Vec<api_response::RawTradeOffer>,
     #[serde(default)]
-    #[serde(deserialize_with = "to_trade_offers_classinfo_map")]
+    #[serde(deserialize_with = "serialize::to_trade_offers_classinfo_map")]
     pub descriptions: Option<ClassInfoMap>,
     pub next_cursor: Option<u32>,
 }
@@ -75,15 +70,15 @@ pub struct GetTradeOffersResponse {
 #[derive(Deserialize, Debug)]
 pub struct GetInventoryResponseIgnoreDescriptions {
     #[serde(default)]
-    #[serde(deserialize_with = "from_int_to_bool")]
+    #[serde(deserialize_with = "serialize::from_int_to_bool")]
     pub success: bool,
     #[serde(default)]
-    #[serde(deserialize_with = "from_int_to_bool")]
+    #[serde(deserialize_with = "serialize::from_int_to_bool")]
     pub more_items: bool,
     #[serde(default)]
     pub assets: Vec<api_response::RawAsset>,
     #[serde(default)]
-    #[serde(deserialize_with = "option_str_to_number")]
+    #[serde(deserialize_with = "serialize::option_str_to_number")]
     pub last_assetid: Option<u64>,
     
 }
@@ -96,18 +91,18 @@ pub struct GetInventoryOldResponse {
     #[serde(rename = "more")]
     pub more_items: bool,
     #[serde(default)]
-    #[serde(deserialize_with = "option_str_to_number", rename = "more_start")]
+    #[serde(deserialize_with = "serialize::option_str_to_number", rename = "more_start")]
     pub more_start: Option<u64>,
     #[serde(default)]
     #[serde(deserialize_with = "deserialize_rg_inventory", rename = "rgInventory")]
     pub assets: RgInventory,
-    #[serde(deserialize_with = "deserialize_classinfo_map", rename = "rgDescriptions")]
+    #[serde(deserialize_with = "serialize::deserialize_classinfo_map", rename = "rgDescriptions")]
     pub descriptions: HashMap<ClassInfoAppClass, Arc<response::ClassInfo>>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct GetAssetClassInfoResponse {
-    #[serde(deserialize_with = "deserialize_classinfo_map_raw")]
+    #[serde(deserialize_with = "serialize::deserialize_classinfo_map_raw")]
     pub result: HashMap<ClassInfoAppClass, String>,
 }
 
@@ -122,7 +117,7 @@ pub struct GetTradeHistoryResponseBody {
     pub total_trades: Option<u32>,
     pub trades: Vec<RawTrade>,
     #[serde(default)]
-    #[serde(deserialize_with = "to_trade_offers_classinfo_map")]
+    #[serde(deserialize_with = "serialize::to_trade_offers_classinfo_map")]
     pub descriptions: Option<ClassInfoMap>,
 }
 

@@ -1,11 +1,10 @@
-use crate::{
-    response::ClassInfo,
-    error::FileError,
-    types::AppId,
-    internal_types::{ClassInfoClass, ClassInfoAppClass},
-    helpers::write_file_atomic,
-};
-use std::{path::{Path, PathBuf}, collections::{HashMap, HashSet}};
+use crate::response::ClassInfo;
+use crate::error::FileError;
+use crate::types::AppId;
+use crate::internal_types::{ClassInfoClass, ClassInfoAppClass};
+use crate::helpers::write_file_atomic;
+use std::path::{Path, PathBuf};
+use std::collections::{HashMap, HashSet};
 use futures::future::join_all;
 
 type ClassInfoFile = (ClassInfoClass, ClassInfo);

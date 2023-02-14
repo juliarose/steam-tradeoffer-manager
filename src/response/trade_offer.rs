@@ -1,25 +1,23 @@
+use super::asset::Asset;
+use crate::SteamID;
+use crate::time::ServerTime;
+use crate::enums::{TradeOfferState, ConfirmationMethod};
+use crate::types::{TradeId, TradeOfferId};
+use crate::serialize;
 use std::fmt;
-use crate::{
-    SteamID,
-    time::ServerTime,
-    enums::{TradeOfferState, ConfirmationMethod},
-    types::{TradeId, TradeOfferId},
-    serialize::{string, option_string, ts_seconds_option_none_when_zero},
-};
 use serde::{Deserialize, Serialize};
 use chrono::serde::ts_seconds;
-use super::asset::Asset;
 
 /// A trade offer.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TradeOffer {
     /// The ID for this offer.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub tradeofferid: TradeOfferId,
     /// The trade ID for this offer. This should be present when the `trade_offer_state` of this 
     /// offer is [`TradeOfferState::Accepted`]. It can also be present if the offer was accepted 
     /// but the trade is not yet complete. The trade should appear in your trade history.
-    #[serde(with = "option_string")]
+    #[serde(with = "serialize::option_string")]
     pub tradeid: Option<TradeId>,
     /// The [`SteamID`] of our partner.
     pub partner: SteamID,
@@ -46,7 +44,7 @@ pub struct TradeOffer {
     /// The state of this offer.
     pub trade_offer_state: TradeOfferState,
     /// The end date if this trade is in escrow. `None` when this offer is not in escrow.
-    #[serde(with = "ts_seconds_option_none_when_zero")]
+    #[serde(with = "serialize::ts_seconds_option_none_when_zero")]
     pub escrow_end_date: Option<ServerTime>,
     /// The confirmation method for this offer.
     pub confirmation_method: ConfirmationMethod,

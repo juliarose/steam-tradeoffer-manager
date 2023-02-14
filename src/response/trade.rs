@@ -1,16 +1,14 @@
-use crate::{
-    SteamID,
-    time::ServerTime,
-    response::ClassInfo,
-    enums::TradeStatus,
-    types::{TradeId, AppId, ContextId, AssetId, Amount},
-    error::TryIntoNewAssetError,
-    serialize::{string, option_string},
-};
+use super::Asset;
+use crate::SteamID;
+use crate::time::ServerTime;
+use crate::response::ClassInfo;
+use crate::enums::TradeStatus;
+use crate::types::{TradeId, AppId, ContextId, AssetId, Amount};
+use crate::error::TryIntoNewAssetError;
+use crate::serialize;
+use std::sync::Arc;
 use chrono::serde::ts_seconds;
 use serde::{self, Deserialize, Serialize};
-use std::sync::Arc;
-use super::Asset;
 
 /// Details from a GetTradeHistory response.
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -60,22 +58,22 @@ impl Default for Trade {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TradeAsset {
     /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub appid: AppId,
     /// The context ID.
     pub contextid: ContextId,
     /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub assetid: AssetId,
     /// The amount. If this item is not stackable the amount will be `1`.
-    #[serde(with = "string")]
+    #[serde(with = "serialize::string")]
     pub amount: Amount,
     /// The context ID of the item received. `None` if this item has not yet finished transferring.
-    #[serde(with = "option_string")]
+    #[serde(with = "serialize::option_string")]
     pub new_contextid: Option<ContextId>,
     /// The unique asset ID of the item received. `None` if this item has not yet finished t
     /// ransferring.
-    #[serde(with = "option_string")]
+    #[serde(with = "serialize::option_string")]
     pub new_assetid: Option<AssetId>,
     /// The [`ClassInfo`] containing names, descriptions, and other details about the item.
     pub classinfo: Arc<ClassInfo>,

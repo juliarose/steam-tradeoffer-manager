@@ -9,10 +9,14 @@ pub use poll_data::PollData;
 
 use poller::Poller;
 
-use crate::{SteamID, api::SteamTradeOfferAPI};
-use std::{path::PathBuf, collections::HashMap, sync::Arc};
+use crate::SteamID;
+use crate::api::SteamTradeOfferAPI;
+use std::path::PathBuf;
+use std::collections::HashMap;
+use std::sync::Arc;
 use chrono::{Duration, DateTime};
-use tokio::{sync::{Mutex, mpsc}, task::JoinHandle};
+use tokio::sync::{Mutex, mpsc};
+use tokio::task::JoinHandle;
 
 /// Options for polling.
 #[derive(Debug, Clone, Copy)]

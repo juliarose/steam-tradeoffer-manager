@@ -1,5 +1,9 @@
-use crate::{error::ParseHtmlError, response::Confirmation, enums::ConfirmationType};
-use scraper::{Html, Selector, element_ref::ElementRef};
+use crate::error::ParseHtmlError;
+use crate::response::Confirmation;
+use crate::enums::ConfirmationType;
+use scraper::Html;
+use scraper::Selector;
+use scraper::element_ref::ElementRef;
 
 pub fn parse_confirmations(text: String) -> Result<Vec<Confirmation>, ParseHtmlError> {
     fn parse_description(

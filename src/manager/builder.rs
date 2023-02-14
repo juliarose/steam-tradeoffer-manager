@@ -1,6 +1,9 @@
 use super::TradeOfferManager;
-use crate::{helpers::USER_AGENT_STRING, ClassInfoCache, enums::Language};
-use std::{path::PathBuf, sync::{Mutex, Arc}};
+use crate::helpers::USER_AGENT_STRING;
+use crate::ClassInfoCache;
+use crate::enums::Language;
+use std::path::PathBuf;
+use std::sync::{Mutex, Arc};
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
 
