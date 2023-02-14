@@ -134,24 +134,24 @@ impl RawTradeOffer {
 pub struct RawAsset {
     /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
     pub appid: AppId,
-    #[serde(with = "string")]
     /// The context ID.
+    #[serde(with = "string")]
     pub contextid: ContextId,
-    #[serde(with = "string")]
     /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
+    #[serde(with = "string")]
     pub assetid: AssetId,
-    #[serde(with = "string")]
-    /// The ID of the classinfo.
-    pub classid: ClassId,
-    #[serde(with = "option_string_0_as_none")]
-    /// The specific instance ID of the classinfo belonging to the class ID.
-    pub instanceid: InstanceId,
-    #[serde(with = "string")]
     /// The amount. If this item is not stackable the amount will be `1`.
+    #[serde(with = "string")]
     pub amount: Amount,
     /// `true` if the item no longer exists in the inventory.
     #[serde(default)]
     pub missing: bool,
+    /// The ID of the classinfo.
+    #[serde(with = "string")]
+    pub classid: ClassId,
+    /// The specific instance ID of the classinfo belonging to the class ID.
+    #[serde(with = "option_string_0_as_none")]
+    pub instanceid: InstanceId,
 }
 
 /// Converts a [`RawTradeAsset`] into a[`RawAsset`]. The `contextid` and `assetid` are taken from 
@@ -166,9 +166,9 @@ impl From<RawTradeAsset> for RawAsset {
             contextid: raw_trade_asset.contextid,
             assetid: raw_trade_asset.assetid,
             amount: raw_trade_asset.amount,
+            missing: false,
             classid: raw_trade_asset.classid,
             instanceid: raw_trade_asset.instanceid,
-            missing: false,
         }
     }
 }
@@ -185,9 +185,9 @@ impl From<&RawTradeAsset> for RawAsset {
             contextid: raw_trade_asset.contextid,
             assetid: raw_trade_asset.assetid,
             amount: raw_trade_asset.amount,
+            missing: false,
             classid: raw_trade_asset.classid,
             instanceid: raw_trade_asset.instanceid,
-            missing: false,
         }
     }
 }
@@ -199,18 +199,18 @@ pub struct RawReceiptAsset {
     pub appid: AppId,
     /// The context ID.
     pub contextid: ContextId,
-    #[serde(with = "string", rename = "id")]
     /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
+    #[serde(with = "string", rename = "id")]
     pub assetid: AssetId,
-    #[serde(with = "string")]
-    /// The ID of the classinfo.
-    pub classid: ClassId,
-    #[serde(with = "option_string_0_as_none")]
-    /// The specific instance ID of the classinfo belonging to the class ID.
-    pub instanceid: InstanceId,
-    #[serde(with = "string")]
     /// The amount. If this item is not stackable the amount will be `1`.
+    #[serde(with = "string")]
     pub amount: Amount,
+    /// The ID of the classinfo.
+    #[serde(with = "string")]
+    pub classid: ClassId,
+    /// The specific instance ID of the classinfo belonging to the class ID.
+    #[serde(with = "option_string_0_as_none")]
+    pub instanceid: InstanceId,
 }
 
 /// An asset from the old inventory API.
@@ -219,15 +219,15 @@ pub struct RawAssetOld {
     /// The unique asset ID.
     #[serde(with = "string", rename = "id")]
     pub assetid: AssetId,
+    /// The amount. If this item is not stackable the amount will be `1`.
+    #[serde(with = "string")]
+    pub amount: Amount,
     /// The ID of the classinfo.
     #[serde(with = "string")]
     pub classid: ClassId,
     /// The specific instance ID of the classinfo belonging to the class ID.
     #[serde(with = "option_string_0_as_none")]
     pub instanceid: InstanceId,
-    /// The amount. If this item is not stackable the amount will be `1`.
-    #[serde(with = "string")]
-    pub amount: Amount,
 }
 
 /// Details from a GetTradeHistory response.
@@ -273,15 +273,15 @@ pub struct RawTradeAsset {
     /// The unique asset ID. This value is unique to the item's `appid` and `contextid`.
     #[serde(with = "string")]
     pub assetid: AssetId,
+    /// The amount. If this item is not stackable the amount will be `1`.
+    #[serde(with = "string")]
+    pub amount: Amount,
     /// The ID of the classinfo.
     #[serde(with = "string")]
     pub classid: ClassId,
     /// The specific instance ID of the classinfo belonging to the class ID.
     #[serde(with = "option_string_0_as_none")]
     pub instanceid: InstanceId,
-    /// The amount. If this item is not stackable the amount will be `1`.
-    #[serde(with = "string")]
-    pub amount: Amount,
     /// The context ID of the item received. `None` if this item has not yet finished 
     /// transferring.
     #[serde(with = "option_string")]
@@ -321,9 +321,9 @@ impl RawTradeAsset {
             contextid,
             assetid,
             amount: self.amount,
+            missing: false,
             classid: self.classid,
             instanceid: self.instanceid,
-            missing: false,
         })
     }
 }
@@ -343,13 +343,13 @@ impl RawTrade {
                 .map(|asset| {
                     if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
                         Ok(TradeAsset {
-                            classinfo: Arc::clone(classinfo),
                             appid: asset.appid,
                             contextid: asset.contextid,
                             assetid: asset.assetid,
                             amount: asset.amount,
                             new_contextid: asset.new_contextid,
                             new_assetid: asset.new_assetid,
+                            classinfo: Arc::clone(classinfo),
                         })
                     } else {
                         // todo use a less broad error for this
