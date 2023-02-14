@@ -80,27 +80,20 @@ impl NewTradeOfferBuilder {
 }
         
 fn parse_offer_access_token(trade_offer_url: &str) -> Option<String> {
-    if let Ok(url) = url::Url::parse(trade_offer_url) {
-        let pairs = url.query_pairs();
-        let hostname = url.host_str();
-        
-        if hostname != Some("steamcommunity.com") {
-            return None;
-        }
-        
-        for (key, value) in pairs {
-            if key == std::borrow::Cow::Borrowed("token") {
-                if value.len() == 8 {
-                    return Some(value.to_string());
-                } else {
-                    // not a valid token
-                    return None;
-                }
-            }
-        }
+    let url = url::Url::parse(trade_offer_url).ok()?;
+    let hostname = url.host_str();
+    
+    if hostname != Some("steamcommunity.com") {
+        return None;
     }
     
-    None
+    url.query_pairs()
+        .find(|(key, value)| {
+            *key == std::borrow::Cow::Borrowed("token") &&
+            // tokens are 8 characters
+            value.len() == 8
+        })
+        .map(|(_, token)| token.to_string())
 }
 
 #[cfg(test)]
@@ -113,5 +106,19 @@ mod tests {
         let token = parse_offer_access_token(url).unwrap();
         
         assert_eq!(token, "TkA5KFkh");
+    }
+    
+    #[test]
+    fn none_when_hostname_is_wrong() {
+        let url = "https://stemcommunity.com/tradeoffer/new/?partner=0&token=TkA5KFkh";
+        
+        assert!(parse_offer_access_token(url).is_none());
+    }
+    
+    #[test]
+    fn none_when_token_is_missing() {
+        let url = "https://stemcommunity.com/tradeoffer/new/?partner=0&token=";
+        
+        assert!(parse_offer_access_token(url).is_none());
     }
 }

@@ -1,10 +1,15 @@
 /// The type of confirmation.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ConfirmationType {
+    /// Generic.
     Generic = 1,
+    /// Confirmation to confirm trade.
     Trade = 2,
+    /// Confirmation to confirm on market.
     MarketSell = 3,
+    /// Confirmation for account recovery.
     AccountRecovery = 6,
+    /// Uknnown.
     Unknown,
 }
 

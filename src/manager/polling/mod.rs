@@ -1,8 +1,10 @@
 mod file;
 mod poll_data;
 mod poller;
+mod poll_type;
 
-pub use poller::{PollResult, Poll, PollType};
+pub use poll_type::PollType;
+pub use poller::{PollResult, Poll};
 pub use poll_data::PollData;
 
 use poller::Poller;
