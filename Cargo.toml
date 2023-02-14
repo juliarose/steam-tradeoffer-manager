@@ -43,6 +43,7 @@ another-steam-totp = { version = "0.2.0", features = ["reqwest"] }
 tokio = { version = "1", features = ["full"] }
 dotenv = "0.15.0"
 criterion = "0.3"
+owo-colors = "3.5.0"
 
 [[bench]]
 name = "trade_offer_mapping"

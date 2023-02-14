@@ -6,6 +6,7 @@ use steam_tradeoffer_manager::{
     polling::PollOptions,
     chrono::Duration,
 };
+use owo_colors::OwoColorize;
 
 async fn accept_offer(
     manager: &TradeOfferManager,
@@ -28,7 +29,7 @@ async fn accept_free_items(
         assets.iter().map(|item| item.classinfo.market_name.as_ref()).collect()
     }
     
-    println!("{offer} Active");
+    println!("{} Active", offer.bright_magenta().bold());
     println!("Receiving: {:?}", assets_item_names(&offer.items_to_receive));
     println!("Giving: {:?}", assets_item_names(&offer.items_to_give));
     
@@ -41,7 +42,7 @@ async fn accept_free_items(
     if let Err(error) = accept_offer(manager, offer).await {
         println!("Error accepting offer {offer}: {error}");
     } else {
-        println!("{offer} Accepted");
+        println!("{} Accepted", offer.bright_magenta().bold());
     }
 }
 
@@ -72,10 +73,9 @@ async fn main() -> Result<(), Error> {
                 for (mut offer, old_state) in offers {
                     if let Some(state) = old_state {
                         println!(
-                            "Offer {} changed state: {} -> {}",
-                            offer,
-                            state,
-                            offer.trade_offer_state
+                            "{} Offer changed state: {state} -> {}",
+                            offer.bright_magenta().bold(),
+                            offer.trade_offer_state,
                         );
                     }
                     
