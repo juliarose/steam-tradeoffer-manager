@@ -20,7 +20,7 @@ pub struct PollOptions {
     pub cancel_duration: Option<Duration>,
     /// The duration after the last poll becomes stale and a new one must be obtained when 
     /// polling using [`crate::polling::PollType::Auto`]. Default is 4 minutes.
-    pub full_poll_update_duration: Duration,
+    pub poll_full_update_duration: Duration,
     /// Interval to poll at. Default is 30 seconds.
     pub poll_interval: Duration,
 }
@@ -29,7 +29,7 @@ impl Default for PollOptions {
     fn default() -> Self {
         Self {
             cancel_duration: None,
-            full_poll_update_duration: Duration::minutes(5),
+            poll_full_update_duration: Duration::minutes(5),
             poll_interval: Duration::seconds(30),
         }
     }
@@ -40,7 +40,7 @@ impl PollOptions {
     pub fn default_with_cancel_duration(duration: Duration) -> Self {
         Self {
             cancel_duration: Some(duration),
-            full_poll_update_duration: Duration::minutes(5),
+            poll_full_update_duration: Duration::minutes(5),
             poll_interval: Duration::seconds(30),
         }
     }
@@ -82,7 +82,7 @@ pub fn create_poller(
             data_directory,
             poll_data,
             cancel_duration: options.cancel_duration,
-            full_poll_update_duration: options.full_poll_update_duration,
+            poll_full_update_duration: options.poll_full_update_duration,
         }));
         let receiver_poller = Arc::clone(&poller);
         let receiver_polling_tx = polling_tx.clone();

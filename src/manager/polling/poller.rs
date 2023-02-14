@@ -51,7 +51,7 @@ pub struct Poller {
     pub api: SteamTradeOfferAPI,
     pub data_directory: PathBuf,
     pub cancel_duration: Option<Duration>,
-    pub full_poll_update_duration: Duration,
+    pub poll_full_update_duration: Duration,
     pub poll_data: PollData,
 }
 
@@ -71,7 +71,7 @@ impl Poller {
         let mut full_update = {
             poll_type.is_full_update() || 
             // The date of the last full poll is outdated.
-            self.poll_data.last_full_poll_is_stale(&self.full_poll_update_duration)
+            self.poll_data.last_full_poll_is_stale(&self.poll_full_update_duration)
         };
         
         if poll_type == PollType::NewOffers {
