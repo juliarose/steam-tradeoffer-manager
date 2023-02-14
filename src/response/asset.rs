@@ -21,6 +21,9 @@ pub struct Asset {
     /// The amount. If this item is not stackable the amount will be `1`.
     #[serde(with = "string")]
     pub amount: Amount,
+    /// `true` if the item no longer exists in the inventory.
+    #[serde(default)]
+    pub missing: bool,
     /// The [`ClassInfo`] containing names, descriptions, and other details about the item.
     pub classinfo: Arc<ClassInfo>,
 }
@@ -44,6 +47,7 @@ impl From<TradeAsset> for Asset {
             contextid: trade_asset.contextid,
             assetid: trade_asset.assetid,
             amount: trade_asset.amount,
+            missing: false,
             classinfo: trade_asset.classinfo,
         }
     }
@@ -61,6 +65,7 @@ impl From<&TradeAsset> for Asset {
             contextid: trade_asset.contextid,
             assetid: trade_asset.assetid,
             amount: trade_asset.amount,
+            missing: false,
             classinfo: Arc::clone(&trade_asset.classinfo),
         }
     }

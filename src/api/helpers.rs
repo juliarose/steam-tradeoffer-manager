@@ -15,11 +15,12 @@ pub fn from_raw_receipt_asset(
 ) -> Result<response::Asset, MissingClassInfoError> {
     map.get(&(asset.appid, asset.classid, asset.instanceid))
         .map(|classinfo| response::Asset {
-            classinfo: Arc::clone(classinfo),
             appid: asset.appid,
             contextid: asset.contextid,
             assetid: asset.assetid,
             amount: asset.amount,
+            missing: false,
+            classinfo: Arc::clone(classinfo),
         })
         .ok_or(MissingClassInfoError {
             appid: asset.appid,

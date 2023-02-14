@@ -81,11 +81,12 @@ impl RawTradeOffer {
                 .map(|asset| {
                     if let Some(classinfo) = map.get(&(asset.appid, asset.classid, asset.instanceid)) {
                         Ok(Asset {
-                            classinfo: Arc::clone(classinfo),
                             appid: asset.appid,
                             contextid: asset.contextid,
                             assetid: asset.assetid,
                             amount: asset.amount,
+                            missing: asset.missing,
+                            classinfo: Arc::clone(classinfo),
                         })
                     } else {
                         // todo use a less broad error for this
@@ -148,6 +149,9 @@ pub struct RawAsset {
     #[serde(with = "string")]
     /// The amount. If this item is not stackable the amount will be `1`.
     pub amount: Amount,
+    /// `true` if the item no longer exists in the inventory.
+    #[serde(default)]
+    pub missing: bool,
 }
 
 /// Converts a [`RawTradeAsset`] into a[`RawAsset`]. The `contextid` and `assetid` are taken from 
@@ -164,6 +168,7 @@ impl From<RawTradeAsset> for RawAsset {
             amount: raw_trade_asset.amount,
             classid: raw_trade_asset.classid,
             instanceid: raw_trade_asset.instanceid,
+            missing: false,
         }
     }
 }
@@ -182,6 +187,7 @@ impl From<&RawTradeAsset> for RawAsset {
             amount: raw_trade_asset.amount,
             classid: raw_trade_asset.classid,
             instanceid: raw_trade_asset.instanceid,
+            missing: false,
         }
     }
 }
@@ -317,6 +323,7 @@ impl RawTradeAsset {
             amount: self.amount,
             classid: self.classid,
             instanceid: self.instanceid,
+            missing: false,
         })
     }
 }

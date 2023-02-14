@@ -868,11 +868,12 @@ impl SteamTradeOfferAPI {
                     }))?;
                 
                 inventory.push(Asset {
-                    classinfo: Arc::clone(classinfo),
                     appid,
                     contextid,
                     assetid: item.assetid,
                     amount: item.amount,
+                    missing: false,
+                    classinfo: Arc::clone(classinfo),
                 });
             }
         }
@@ -977,6 +978,7 @@ impl SteamTradeOfferAPI {
                 contextid,
                 assetid: item.assetid,
                 amount: item.amount,
+                missing: false,
                 classinfo: Arc::clone(classinfo),
             });
         }

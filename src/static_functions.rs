@@ -193,6 +193,7 @@ pub async fn get_inventory<'a>(
                         contextid,
                         assetid: item.assetid,
                         amount: item.amount,
+                        missing: false,
                         classinfo: Arc::clone(classinfo),
                     })),
                     Err(error) => Some(Err(error)),

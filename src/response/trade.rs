@@ -110,6 +110,7 @@ impl TradeAsset {
             contextid,
             assetid,
             amount: self.amount,
+            missing: false,
             classinfo: Arc::clone(&self.classinfo),
         })
     }
