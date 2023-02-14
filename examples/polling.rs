@@ -48,7 +48,13 @@ async fn accept_free_items(
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let (api_key, cookies) = get_session();
+    dotenv::dotenv().ok();
+    
+    let api_key = std::env::var("API_KEY").expect("API_KEY missing");
+    let cookies = std::env::var("COOKIES").expect("COOKIES missing")
+        .split("; ")
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
     let manager = TradeOfferManager::builder(api_key, "./assets")
         .identity_secret(String::from("secret"))
         .build();
@@ -97,17 +103,4 @@ async fn main() -> Result<(), Error> {
     }
     
     Ok(())
-}
-
-/// Gets session from environment variable.
-fn get_session() -> (String, Vec<String>) {
-    dotenv::dotenv().ok();
-    
-    let api_key = std::env::var("API_KEY").expect("API_KEY missing");
-    let cookies = std::env::var("COOKIES").expect("COOKIES missing")
-        .split("; ")
-        .map(|s| s.to_string())
-        .collect::<Vec<_>>();
-    
-    (api_key, cookies)
 }

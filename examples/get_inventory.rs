@@ -2,7 +2,11 @@ use steam_tradeoffer_manager::{SteamID, request::GetInventoryOptions, get_invent
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let steamid = get_steamid("STEAMID_OTHER");
+    dotenv::dotenv().ok();
+    
+    let steamid = SteamID::from(u64::from(
+        std::env::var("STEAMID_OTHER").unwrap().parse::<u64>().unwrap()
+    ));
     let options = GetInventoryOptions::new(steamid, 440, 2);
     // Getting a user's inventory can be done using the manager but it is also provided as a 
     // stand-alone method.
@@ -15,13 +19,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
-}
-
-fn get_steamid(key: &str) -> SteamID {
-    dotenv::dotenv().ok();
-    
-    let sid_str = std::env::var(key)
-        .unwrap_or_else(|_| panic!("{key} missing"));
-    
-    SteamID::from(sid_str.parse::<u64>().unwrap())
 }
