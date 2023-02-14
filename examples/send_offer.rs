@@ -4,12 +4,12 @@ use steam_tradeoffer_manager::{TradeOfferManager, request::NewTradeOffer, SteamI
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
     
-    let api_key = std::env::var("API_KEY").expect("API_KEY missing");
-    let cookies = std::env::var("COOKIES").expect("COOKIES missing")
+    let api_key = std::env::var("API_KEY")?;
+    let cookies = std::env::var("COOKIES")?
         .split("; ")
-        .map(|s| s.to_string())
+        .map(|s| s.to_owned())
         .collect::<Vec<_>>();
-    let steamid: SteamID = std::env::var("STEAMID_OTHER").unwrap().parse::<u64>().unwrap().into();
+    let steamid: SteamID = std::env::var("STEAMID_OTHER")?.parse::<u64>()?.into();
     let manager = TradeOfferManager::new(api_key, "./assets");
     
     manager.set_cookies(&cookies);
@@ -32,5 +32,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         manager.confirm_offer_id(sent_offer.tradeofferid).await?;
     }
     
+    println!("Offer sent: {sent_offer:?}");
     Ok(())
 }

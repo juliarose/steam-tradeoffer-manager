@@ -52,10 +52,10 @@ async fn accept_free_items(
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
     
-    let cookies = std::env::var("COOKIES").expect("COOKIES missing")
+    let cookies = std::env::var("COOKIES")?
         .split("; ")
         .map(|s| s.to_string())
         .collect::<Vec<_>>();

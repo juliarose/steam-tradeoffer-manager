@@ -16,7 +16,7 @@ fn assets_item_names(assets: &[TradeAsset]) -> String {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
     
-    let api_key = std::env::var("API_KEY").expect("API_KEY missing");
+    let api_key = std::env::var("API_KEY")?;
     // A data directory is required for maintaining state.
     let manager = TradeOfferManager::new(api_key, "./assets");
     let options = GetTradeHistoryOptions {
