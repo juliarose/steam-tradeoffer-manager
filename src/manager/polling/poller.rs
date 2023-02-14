@@ -45,7 +45,7 @@ impl Poller {
             // a very high date
             offers_since = u32::MAX as i64;
             full_update = false;
-        } if let PollType::OffersSince(date) = poll_type {
+        } else if let PollType::OffersSince(date) = poll_type {
             offers_since = date.timestamp();
             active_only = false;
             full_update = false;
