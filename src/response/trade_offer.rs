@@ -87,4 +87,15 @@ impl TradeOffer {
     pub fn is_glitched(&self) -> bool {
         self.items_to_receive.is_empty() && self.items_to_give.is_empty()
     }
+    
+    /// Checks whether this is an active offer with missing items. These offers cannot be 
+    /// cancelled.
+    pub fn is_ghost_offer(&self) -> bool {
+        if self.trade_offer_state != TradeOfferState::Active {
+            return false;
+        }
+        
+        self.items_to_give.iter().any(|item| item.missing) || 
+        self.items_to_receive.iter().any(|item| item.missing)
+    }
 }

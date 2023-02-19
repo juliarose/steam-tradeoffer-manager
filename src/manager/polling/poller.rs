@@ -90,7 +90,8 @@ impl Poller {
                     
                     is_active_state &&
                     offer.is_our_offer &&
-                    offer.time_created < cancel_time
+                    offer.time_updated < cancel_time &&
+                    !offer.is_ghost_offer()
                 })
                 .map(|offer| self.api.cancel_offer(offer.tradeofferid))
                 .collect::<Vec<_>>();

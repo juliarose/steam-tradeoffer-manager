@@ -126,8 +126,8 @@ impl SteamTradeOfferAPI {
             token: &'b Option<String>,
         }
         
-        let num_items: usize = offer.items_to_give.len() + offer.items_to_receive.len();
-
+        let num_items = offer.items_to_give.len() + offer.items_to_receive.len();
+        
         if num_items == 0 {
             return Err(Error::Parameter(
                 ParameterError::EmptyOffer
@@ -378,7 +378,9 @@ impl SteamTradeOfferAPI {
         Ok(map)
     }
     
-    /// Gets trade offer data before any descriptions are added.
+    /// Gets trade offer data before any descriptions are added. The 2nd part of the tuple are the 
+    /// descriptions from the response if `get_descriptions` was set. These can be combined with 
+    /// the offers using the `map_raw_trade_offers_with_descriptions` method.
     pub async fn get_raw_trade_offers(
         &self,
         active_only: bool,
@@ -662,9 +664,8 @@ impl SteamTradeOfferAPI {
             .send()
             .await?;
         let body: GetTradeHistoryResponse = parses_response(response).await?;
-        let body = body.response;
         
-        Ok(body)
+        Ok(body.response)
     }
     
     /// Gets escrow details for a user. The `method` for obtaining details can be a `tradeofferid` 
