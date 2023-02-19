@@ -91,7 +91,8 @@ impl Poller {
                     is_active_state &&
                     offer.is_our_offer &&
                     offer.time_updated < cancel_time &&
-                    !offer.is_ghost_offer()
+                    // offers with a tradeid are in progress and cannot be cancelled
+                    offer.tradeid.is_none()
                 })
                 .map(|offer| self.api.cancel_offer(offer.tradeofferid))
                 .collect::<Vec<_>>();
