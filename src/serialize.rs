@@ -24,18 +24,6 @@ where
     }
 }
 
-// You can use this deserializer for any type that implements FromStr
-// and the FromStr::Err implements Display
-pub fn deserialize_datetime_from_option_str<'de, S, D>(deserializer: D) -> Result<S, D::Error>
-where
-    S: FromStr,      // Required for S::from_str...
-    S::Err: Display, // Required for .map_err(de::Error::custom)
-    D: Deserializer<'de>,
-{
-    let s: String = Deserialize::deserialize(deserializer)?;
-    S::from_str(&s).map_err(de::Error::custom)
-}
-
 pub mod ts_seconds_option_none_when_zero {
     use core::fmt;
     use serde::{de, ser};
