@@ -1,5 +1,4 @@
 use crate::types::{AppId, ClassId, InstanceId};
-use crate::ServerTime;
 use crate::serialize;
 use serde::{Serialize, Deserialize};
 
@@ -80,10 +79,13 @@ pub struct ClassInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub app_data: AppData,
     
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "serialize::string")]
-    pub cache_expiration: Option<ServerTime>,
-    pub item_expiration: Option<ServerTime>,
+    // todo add these in
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // #[serde(with = "serialize::string")]
+    // pub cache_expiration: Option<ServerTime>,
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // #[serde(with = "serialize::string")]
+    // pub item_expiration: Option<ServerTime>,
 }
 
 impl ClassInfo {
