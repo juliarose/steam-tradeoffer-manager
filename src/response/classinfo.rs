@@ -79,7 +79,9 @@ pub struct ClassInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub app_data: AppData,
     
-    // todo add these in
+    // todo add these in    
+    // "cache_expiration": "2023-03-01T12:00:00Z",
+    // "item_expiration": "2023-03-01T12:00:00Z",
     // #[serde(skip_serializing_if = "Option::is_none")]
     // #[serde(with = "serialize::string")]
     // pub cache_expiration: Option<ServerTime>,
