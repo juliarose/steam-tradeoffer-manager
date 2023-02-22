@@ -1,5 +1,6 @@
 use crate::types::{AppId, ClassId, InstanceId};
 use crate::serialize;
+use crate::ServerTime;
 use serde::{Serialize, Deserialize};
 
 /// Contains details about an item including names and descriptions.
@@ -78,16 +79,16 @@ pub struct ClassInfo {
     /// `GetAssetClassInfo` and `inventory/json` responses.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub app_data: AppData,
-    
-    // todo add these in    
-    // "cache_expiration": "2023-03-01T12:00:00Z",
-    // "item_expiration": "2023-03-01T12:00:00Z",
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // #[serde(with = "serialize::string")]
-    // pub cache_expiration: Option<ServerTime>,
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // #[serde(with = "serialize::string")]
-    // pub item_expiration: Option<ServerTime>,
+    /// Cache expiration.
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(with = "serialize::option_string")]
+    pub cache_expiration: Option<ServerTime>,
+    /// Item expiration.
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(with = "serialize::option_string")]
+    pub item_expiration: Option<ServerTime>,
 }
 
 impl ClassInfo {
@@ -196,7 +197,14 @@ mod tests {
     #[test]
     fn parses_csgo_item() {
         let classinfo: super::ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_csgo.json")).unwrap();
-
+        
         assert!(classinfo.tradable);
+    }
+    
+    #[test]
+    fn parses_coupon() {
+        let classinfo: super::ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_item_expiration.json")).unwrap();
+        
+        assert!(classinfo.item_expiration.is_some());
     }
 }

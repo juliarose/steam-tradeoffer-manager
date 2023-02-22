@@ -1,0 +1,68 @@
+{
+    "icon_url": "IzMF03bk9WpSBq-S-ekoE33L-iLqGFHVaU25ZzQNQcXdB3Yhlc0A8FYDBb3UE7VYBJ5w8l3DWY7ChoZKmjcBmz0QPjvo2Ck9I_ZlIs6bkUP3_OeDG3j-ez-COXyIBxXObWI",
+    "icon_url_large": "IzMF03bk9WpSBq-S-ekoE33L-iLqGFHVaU25ZzQNQcXdB3Yhlc0A8FYDBb3UE7VYBJ5w8l3DWY7ChoZKmjcBmz0QPjvo2Ck9I_ZlIs6bkEP3_OeDG3j-ez-COXyIb4GTINs",
+    "icon_drag_url": "",
+    "name": "33% OFF Zup! X",
+    "market_name": "",
+    "name_color": "",
+    "background_color": "",
+    "type": "Coupon",
+    "tradable": "1",
+    "marketable": "0",
+    "commodity": "0",
+    "cache_expiration": "2023-03-01T12:00:00Z",
+    "item_expiration": "2023-03-01T12:00:00Z",
+    "descriptions": {
+        "0": {
+            "type": "text",
+            "value": "33% off on the title Zup! X.",
+            "color": "7A9FC5"
+        },
+        "1": {
+            "type": "text",
+            "value": "Can't be applied with other discounts.",
+            "color": "9C9C9C"
+        },
+        "2": {
+            "type": "text",
+            "value": "\n"
+        },
+        "3": {
+            "type": "text",
+            "value": "(Valid until [date]1677672000[/date])",
+            "color": "A75124"
+        },
+        "4": {
+            "type": "text",
+            "value": "\n"
+        },
+        "5": {
+            "type": "text",
+            "value": "Crafting Reward",
+            "color": "9C9C9C"
+        },
+        "6": {
+            "type": "text",
+            "value": "\n"
+        },
+        "7": {
+            "type": "html",
+            "value": "<a style=\"color:#CCCCCC\" href=\"https://support.steampowered.com/kb_article.php?ref=4210-YIPC-0275\">Learn more</a> about Steam Coupons",
+            "color": "9C9C9C"
+        }
+    },
+    "owner_descriptions": {
+        "0": {
+            "type": "text",
+            "value": ""
+        }
+    },
+    "actions": {
+        "0": {
+            "link": "http://store.steampowered.com/search/?list_of_subs=117714",
+            "name": "View applicable games"
+        }
+    },
+    "classid": "4977272756",
+    "instanceid": "5207247593"
+}
