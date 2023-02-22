@@ -13,10 +13,10 @@ pub enum Error {
     #[error("Unexpected response: {}", .0)]
     UnexpectedResponse(String),
     /// An error was encountered making a request.
-    #[error("Request error: {}", .0)]
+    #[error("reqwest error: {}", .0)]
     Reqwest(#[from] reqwest::Error),
     /// An error was encountered within the request middleware.
-    #[error("Request middleware error: {}", .0)]
+    #[error("reqwest middleware error: {}", .0)]
     ReqwestMiddleware(anyhow::Error),
     /// An error was encountered parsing a JSON response body.
     #[error("Error parsing response: {}", .0)]

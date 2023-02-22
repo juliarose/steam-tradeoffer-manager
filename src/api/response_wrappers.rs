@@ -96,6 +96,7 @@ pub struct GetInventoryOldResponse {
     #[serde(default)]
     #[serde(deserialize_with = "deserialize_rg_inventory", rename = "rgInventory")]
     pub assets: RgInventory,
+    #[serde(default)]
     #[serde(deserialize_with = "serialize::deserialize_classinfo_map", rename = "rgDescriptions")]
     pub descriptions: HashMap<ClassInfoAppClass, Arc<response::ClassInfo>>,
 }

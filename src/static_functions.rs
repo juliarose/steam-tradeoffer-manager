@@ -218,6 +218,7 @@ struct GetInventoryResponse {
     more_items: bool,
     #[serde(default)]
     assets: Vec<api_response::RawAsset>,
+    #[serde(default)]
     #[serde(deserialize_with = "serialize::to_classinfo_map")]
     descriptions: HashMap<ClassInfoAppClass, Arc<ClassInfo>>,
     #[serde(default)]
