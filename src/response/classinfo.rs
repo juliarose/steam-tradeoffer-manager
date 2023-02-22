@@ -1,4 +1,5 @@
 use crate::types::{AppId, ClassId, InstanceId};
+use crate::ServerTime;
 use crate::serialize;
 use serde::{Serialize, Deserialize};
 
@@ -21,7 +22,9 @@ pub struct ClassInfo {
     pub name: String,
     /// The name of the item on the Steam Community Market.
     pub market_name: String,
-    /// The market hash name. This is used to link to the item on the Steam Community Market.
+    /// The market hash name. This is used to link to the item on the Steam Community Market. This 
+    /// is an empty string in events where there is no market hash name.
+    #[serde(default)]
     pub market_hash_name: String,
     /// The color of the item's name.
     #[serde(default)]
@@ -76,6 +79,11 @@ pub struct ClassInfo {
     /// `GetAssetClassInfo` and `inventory/json` responses.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub app_data: AppData,
+    
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(with = "serialize::string")]
+    pub cache_expiration: Option<ServerTime>,
+    pub item_expiration: Option<ServerTime>,
 }
 
 impl ClassInfo {
