@@ -132,7 +132,7 @@ mod tests {
         let classinfo_string = response.result.get(&(101785959, Some(11040578))).unwrap();
         let parsed = serde_json::from_str::<response::ClassInfo>(classinfo_string).unwrap();
         
-        assert_eq!(parsed.market_hash_name, String::from("Mann Co. Supply Crate Key"));
+        assert_eq!(parsed.market_hash_name, Some(String::from("Mann Co. Supply Crate Key")));
     }
     
     #[test]

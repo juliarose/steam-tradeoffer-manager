@@ -23,9 +23,10 @@ pub struct ClassInfo {
     /// The name of the item on the Steam Community Market.
     pub market_name: String,
     /// The market hash name. This is used to link to the item on the Steam Community Market. This 
-    /// is an empty string in events where there is no market hash name.
+    /// is an empty string in some cases. For example, Steam coupons cannot be sold on the market, 
+    /// they have no market hash name.
     #[serde(default)]
-    pub market_hash_name: String,
+    pub market_hash_name: Option<String>,
     /// The color of the item's name.
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
