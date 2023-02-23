@@ -1,5 +1,5 @@
-//! This is the underlying API for the manager. If you need more direct control over API calls
-//! they are here.
+//! This is the underlying API for the manager. More direct control over API calls are contained
+//! within this modoule.
 
 pub mod response;
 
@@ -163,9 +163,7 @@ impl SteamTradeOfferAPI {
         let num_items = offer.items_to_give.len() + offer.items_to_receive.len();
         
         if num_items == 0 {
-            return Err(Error::Parameter(
-                ParameterError::EmptyOffer
-            ));
+            return Err(Error::Parameter(ParameterError::EmptyOffer));
         }
         
         let sessionid = self.sessionid.read().unwrap().clone()
