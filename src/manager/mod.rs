@@ -58,7 +58,7 @@ impl TradeOfferManager {
         ).build()
     }
     
-    /// Builder for constructing a [`TradeOfferManager`].  Requires an `api_key` for making API 
+    /// Builder for constructing a [`TradeOfferManager`]. Requires an `api_key` for making API 
     /// calls and a `data_directory` for storing poll data and classinfo caches.
     pub fn builder<T>(
         api_key: String,
@@ -488,26 +488,28 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
                 builder.user_agent,
             ));
         let steamid = Arc::new(AtomicU64::new(0));
+        let api = SteamTradeOfferAPI::builder(
+            builder.api_key,
+            builder.data_directory.clone()
+        )
+            .language(builder.language)
+            .classinfo_cache(builder.classinfo_cache)
+            .client(client.clone(), Arc::clone(&cookies))
+            .build();
+        let mut mobile_api_builder = MobileAPI::builder()
+            .client(client, cookies)
+            .time_offset(builder.time_offset);
+        
+        if let Some(identity_secret) = builder.identity_secret {
+            mobile_api_builder = mobile_api_builder.identity_secret(identity_secret);
+        }
+        
+        let mobile_api = mobile_api_builder.build();
         
         Self {
             steamid: Arc::clone(&steamid),
-            api: SteamTradeOfferAPI {
-                client: client.clone(),
-                cookies: Arc::clone(&cookies),
-                api_key: builder.api_key,
-                language: builder.language,
-                classinfo_cache: builder.classinfo_cache,
-                data_directory: builder.data_directory.clone(),
-                sessionid: Arc::new(std::sync::RwLock::new(None)),
-            },
-            mobile_api: MobileAPI {
-                client,
-                cookies,
-                steamid,
-                identity_secret: builder.identity_secret,
-                sessionid: Arc::new(std::sync::RwLock::new(None)),
-                time_offset: builder.time_offset,
-            },
+            api,
+            mobile_api,
             data_directory: builder.data_directory,
             polling: Arc::new(Mutex::new(None)),
         }

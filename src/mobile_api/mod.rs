@@ -1,15 +1,18 @@
 // Most of the code here is taken from https://github.com/dyc3/steamguard-cli with some 
 // modifications to fit with the rest of this crate.
 
+mod builder;
 mod helpers;
 mod operation;
 
 use operation::Operation;
 
+pub use builder::MobileAPIBuilder;
+
 use crate::SteamID;
 use crate::response::Confirmation;
 use crate::error::{Error, ParameterError};
-use crate::helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies};
+use crate::helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies, get_default_middleware};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{Ordering, AtomicU64};
@@ -22,23 +25,28 @@ use reqwest_middleware::ClientWithMiddleware;
 /// The API for mobile confirmations.
 #[derive(Debug, Clone)]
 pub struct MobileAPI {
-    /// The client for making requests.
-    pub client: ClientWithMiddleware,
-    /// The cookies to make requests with. Since the requests are made with the provided client, 
-    /// the cookies should be the same as what the client uses.
-    pub cookies: Arc<Jar>,
-    /// The session ID.
-    pub sessionid: Arc<RwLock<Option<String>>>,
-    /// The SteamID  of the logged in user. `0` if no login cookies were passed.
-    pub steamid: Arc<AtomicU64>,
-    /// The identity secret for mobile confirmations.
-    pub identity_secret: Option<String>,
     /// The time offset from Steam's servers.
     pub time_offset: i64,
+    /// The identity secret for mobile confirmations.
+    identity_secret: Option<String>,
+    /// The client for making requests.
+    client: ClientWithMiddleware,
+    /// The cookies to make requests with. Since the requests are made with the provided client, 
+    /// the cookies should be the same as what the client uses.
+    cookies: Arc<Jar>,
+    /// The session ID.
+    sessionid: Arc<RwLock<Option<String>>>,
+    /// The SteamID  of the logged in user. `0` if no login cookies were passed.
+    steamid: Arc<AtomicU64>,
 }
 
 impl MobileAPI {
     pub const HOSTNAME: &str = "https://steamcommunity.com";
+    
+    /// Builder for constructing a [`MobileAPI`].
+    pub fn builder() -> MobileAPIBuilder {
+        MobileAPIBuilder::new()
+    }
     
     /// Sets cookies.
     pub fn set_cookies(
@@ -160,7 +168,7 @@ impl MobileAPI {
     }
     
     /// Gets the logged-in user's SteamID.
-    fn get_steamid(
+    pub fn get_steamid(
         &self,
     ) -> Result<SteamID, Error> {
         let steamid_64 = self.steamid.load(Ordering::Relaxed);
@@ -177,5 +185,26 @@ impl MobileAPI {
         pathname: &str,
     ) -> String {
         format!("{}{pathname}", Self::HOSTNAME)
+    }
+}
+
+impl From<MobileAPIBuilder> for MobileAPI {
+    fn from(builder: MobileAPIBuilder) -> Self {
+        let cookies = builder.cookies
+            .unwrap_or_else(|| Arc::new(Jar::default()));
+        let client = builder.client
+            .unwrap_or_else(|| get_default_middleware(
+                Arc::clone(&cookies),
+                builder.user_agent,
+            ));
+        
+        Self {
+            client: client.clone(),
+            cookies: Arc::clone(&cookies),
+            sessionid: Arc::new(std::sync::RwLock::new(None)),
+            identity_secret: builder.identity_secret,
+            steamid: Arc::new(AtomicU64::new(0)),
+            time_offset: builder.time_offset,
+        }
     }
 }

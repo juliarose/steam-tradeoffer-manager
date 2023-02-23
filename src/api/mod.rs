@@ -3,13 +3,17 @@
 
 pub mod response;
 
+mod builder;
 mod response_wrappers;
 mod helpers;
 
 use response::*;
 use response_wrappers::*;
 
+pub use builder::SteamTradeOfferAPIBuilder;
+
 use crate::SteamID;
+use crate::helpers::get_default_middleware;
 use crate::time::ServerTime;
 use crate::types::*;
 use crate::internal_types::*;
@@ -35,24 +39,54 @@ use url::Url;
 pub struct SteamTradeOfferAPI {
     /// The API key.
     pub api_key: String,
-    /// The client for making requests.
-    pub client: Client,
-    /// The cookies to make requests with. Since the requests are made with the provided client, 
-    /// the cookies should be the same as what the client uses.
-    pub cookies: Arc<Jar>,
     /// The language for descriptions.
     pub language: Language,
+    /// The client for making requests.
+    client: Client,
+    /// The cookies to make requests with. Since the requests are made with the provided client, 
+    /// the cookies should be the same as what the client uses.
+    cookies: Arc<Jar>,
     /// The session ID.
-    pub sessionid: Arc<RwLock<Option<String>>>,
+    sessionid: Arc<RwLock<Option<String>>>,
     /// The cache for setting and getting [`ClassInfo`] data.
-    pub classinfo_cache: Arc<Mutex<ClassInfoCache>>,
+    classinfo_cache: Arc<Mutex<ClassInfoCache>>,
     /// The directory to store [`ClassInfo`] data.
-    pub data_directory: PathBuf,
+    data_directory: PathBuf,
 }
 
 impl SteamTradeOfferAPI {
     pub const HOSTNAME: &str = "https://steamcommunity.com";
     pub const API_HOSTNAME: &str = "https://api.steampowered.com";
+    
+    /// Creates a new [`SteamTradeOfferAPI`]. Requires an `api_key` for making API calls and a 
+    /// `data_directory` for storing poll data and classinfo caches.
+    pub fn new<T>(
+        api_key: String,
+        data_directory: T,
+    ) -> Self
+    where
+        T: Into<PathBuf>,
+    {
+        Self::builder(
+            api_key,
+            data_directory,
+        ).build()
+    }
+    
+    /// Builder for constructing a [`SteamTradeOfferAPI`]. Requires an `api_key` for making API 
+    /// calls and a `data_directory` for storing poll data and classinfo caches.
+    pub fn builder<T>(
+        api_key: String,
+        data_directory: T,
+    ) -> SteamTradeOfferAPIBuilder
+    where
+        T: Into<PathBuf>,
+    {
+        SteamTradeOfferAPIBuilder::new(
+            api_key,
+            data_directory,
+        )
+    }
     
     /// Sets cookies.
     pub fn set_cookies(
@@ -999,5 +1033,27 @@ impl SteamTradeOfferAPI {
         version: usize,
     ) -> String {
         format!("{}/{interface}/{method}/v{version}", Self::API_HOSTNAME)
+    }
+}
+
+impl From<SteamTradeOfferAPIBuilder> for SteamTradeOfferAPI {
+    fn from(builder: SteamTradeOfferAPIBuilder) -> Self {
+        let cookies = builder.cookies
+            .unwrap_or_else(|| Arc::new(Jar::default()));
+        let client = builder.client
+            .unwrap_or_else(|| get_default_middleware(
+                Arc::clone(&cookies),
+                builder.user_agent,
+            ));
+        
+        Self {
+            client: client.clone(),
+            cookies: Arc::clone(&cookies),
+            api_key: builder.api_key,
+            language: builder.language,
+            classinfo_cache: builder.classinfo_cache,
+            data_directory: builder.data_directory.clone(),
+            sessionid: Arc::new(std::sync::RwLock::new(None)),
+        }
     }
 }
