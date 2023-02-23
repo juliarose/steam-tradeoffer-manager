@@ -199,7 +199,7 @@ impl From<MobileAPIBuilder> for MobileAPI {
             ));
         
         Self {
-            client: client.clone(),
+            client,
             cookies: Arc::clone(&cookies),
             sessionid: Arc::new(std::sync::RwLock::new(None)),
             identity_secret: builder.identity_secret,

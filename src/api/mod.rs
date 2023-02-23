@@ -1047,12 +1047,12 @@ impl From<SteamTradeOfferAPIBuilder> for SteamTradeOfferAPI {
             ));
         
         Self {
-            client: client.clone(),
+            client,
             cookies: Arc::clone(&cookies),
             api_key: builder.api_key,
             language: builder.language,
             classinfo_cache: builder.classinfo_cache,
-            data_directory: builder.data_directory.clone(),
+            data_directory: builder.data_directory,
             sessionid: Arc::new(std::sync::RwLock::new(None)),
         }
     }
