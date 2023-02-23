@@ -36,6 +36,7 @@ impl PollData {
         }
     }
     
+    /// Checks if the last full poll is stale based on the `update_interval`.
     pub fn last_full_poll_is_stale(&self, update_interval: &Duration) -> bool {
         if let Some(last_poll_full_update) = self.last_poll_full_update {
             date_difference_from_now(&last_poll_full_update) >= *update_interval
@@ -44,6 +45,7 @@ impl PollData {
         }
     }
     
+    /// Clears offers from the state map.
     pub fn clear_offers(&mut self, tradeofferids_to_remove: &[TradeOfferId]) {
         for tradeofferid in tradeofferids_to_remove {
             self.state_map.remove(tradeofferid);
@@ -51,6 +53,7 @@ impl PollData {
         }
     }
     
+    /// Updates the `offers_since` value.
     pub fn set_offers_since(&mut self, date: ServerTime) {
         if self.offers_since != Some(date) {
             self.offers_since = Some(date);
@@ -58,10 +61,12 @@ impl PollData {
         }
     }
     
+    /// Updates the `last_poll` value.
     pub fn set_last_poll(&mut self, date: ServerTime) {
         self.last_poll = Some(date);
     }
     
+    /// Updates the `last_poll_full_update` value.
     pub fn set_last_poll_full_update(&mut self, date: ServerTime) {
         if self.last_poll_full_update != Some(date) {
             self.last_poll_full_update = Some(date);

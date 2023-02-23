@@ -270,6 +270,9 @@ pub enum ParseHtmlError {
     /// An error occurred parsing an integer in the response.
     #[error("{}", .0)]
     ParseInt(#[from] std::num::ParseIntError),
+    /// An error occurred parsing JSON in the response.
+    #[error("{}", .0)]
+    ParseJSON(#[from] serde_json::Error),
     /// A selector could not be parsed.
     #[error("Invalid selector")]
     ParseSelector,

@@ -80,7 +80,6 @@ pub struct GetInventoryResponseIgnoreDescriptions {
     #[serde(default)]
     #[serde(deserialize_with = "serialize::option_str_to_number")]
     pub last_assetid: Option<u64>,
-    
 }
 
 #[derive(Deserialize, Debug)]

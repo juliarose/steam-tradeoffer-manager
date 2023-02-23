@@ -1,7 +1,7 @@
 mod builder;
 mod polling;
 
-pub use polling::{PollAction, Poll, PollResult, PollType, PollOptions, PollData};
+pub use polling::{PollingMpsc, PollAction, Poll, PollResult, PollType, PollOptions, PollData};
 pub use builder::TradeOfferManagerBuilder;
 
 use crate::time;
@@ -137,20 +137,20 @@ impl TradeOfferManager {
             handle.abort();
         }
         
-        let (
-            tx,
-            rx,
+        let PollingMpsc {
+            sender,
+            receiver,
             handle,
-        ) = polling::create_poller(
+        } = polling::create_poller(
             steamid,
             self.api.clone(),
             self.data_directory.clone(),
             options,
         );
         
-        *polling = Some((tx, handle));
+        *polling = Some((sender, handle));
         
-        Ok(rx)
+        Ok(receiver)
     }
     
     /// Sends a message to the poller to do a poll now. Returns an error if polling is not setup.

@@ -83,13 +83,10 @@ pub fn parse_receipt_script(
         .captures_iter(script)
         // filter out the matches that can't be parsed (e.g. if there are too many digits to store in an i64).
         .map(|capture| if let Some(m) = capture.get(1) {
-            if let Ok(asset) = serde_json::from_str::<api_response::RawReceiptAsset>(m.as_str()) {
-                Ok(asset)
-            } else {
-                Err(ParseHtmlError::Malformed("Failed to deserialize item"))
-            }
+            let asset = serde_json::from_str::<api_response::RawReceiptAsset>(m.as_str())?;
+            
+            Ok(asset)
         } else {
-            // shouldn't happen...
             Err(ParseHtmlError::Malformed("Missing capture group in match"))
         })
         .collect()
@@ -100,7 +97,7 @@ mod tests {
     use super::*;
     
     #[test]
-    fn parse_receipt_script_correctly() {
+    fn parses_receipt_script_correctly() {
         let script = r#"
             oItem = {"id":"11292488054","owner":"0","amount":"1","classid":"101785959","instanceid":"11040578","icon_url":"fWFc82js0fmoRAP-qOIPu5THSWqfSmTELLqcUywGkijVjZULUrsm1j-9xgEAaR4uURrwvz0N252yVaDVWrRTno9m4ccG2GNqxlQoZrC2aG9hcVGUWflbX_drrVu5UGki5sAij6tOtQ","icon_url_large":"fWFc82js0fmoRAP-qOIPu5THSWqfSmTELLqcUywGkijVjZULUrsm1j-9xgEAaR4uURrwvz0N252yVaDVWrRTno9m4ccG2GNqxlQoZrC2aG9hcVGUWflbX_drrVu5UGki5sAij6tOtQ","icon_drag_url":"","name":"Mann Co. Supply Crate Key","market_hash_name":"Mann Co. Supply Crate Key","market_name":"Mann Co. Supply Crate Key","name_color":"7D6D00","background_color":"3C352E","type":"Level 5 Tool","tradable":1,"marketable":1,"commodity":1,"market_tradable_restriction":"7","market_marketable_restriction":"0","descriptions":[{"value":"Used to open locked supply crates."},{"value":" "},{"value":"This is a limited use item. Uses: 1","color":"00a000","app_data":{"limited":1}}],"tags":[{"internal_name":"Unique","name":"Unique","category":"Quality","color":"7D6D00","category_name":"Quality"},{"internal_name":"TF_T","name":"Tool","category":"Type","category_name":"Type"}],"app_data":{"limited":1,"quantity":"1","def_index":"5021","quality":"6","filter_data":{"1662615936":{"element_ids":["991457757"]},"931505789":{"element_ids":["991457757","4294967295"]}},"player_class_ids":"","highlight_color":"7a6e65"},"pos":1,"appid":440,"contextid":2};
             oItem.appid = 440;

@@ -61,16 +61,19 @@ pub enum PollAction {
     DoPoll(PollType),
 }
 
+/// Packs the sender, receiver, and `JoinHandle` for the poller.
+pub struct PollingMpsc {
+    pub sender: mpsc::Sender<PollAction>,
+    pub receiver: mpsc::Receiver<PollResult>,
+    pub handle: JoinHandle<()>,
+}
+
 pub fn create_poller(
     steamid: SteamID,
     api: SteamTradeOfferAPI,
     data_directory: PathBuf,
     options: PollOptions,
-) -> (
-    mpsc::Sender<PollAction>,
-    mpsc::Receiver<PollResult>,
-    JoinHandle<()>,
-) {
+) -> PollingMpsc {
     let poll_data = file::load_poll_data(
         steamid,
         &data_directory,
@@ -148,5 +151,9 @@ pub fn create_poller(
         handle.abort();
     });
     
-    (tx, polling_rx, handle)
+    PollingMpsc {
+        sender: tx,
+        receiver: polling_rx,
+        handle,
+    }
 }
