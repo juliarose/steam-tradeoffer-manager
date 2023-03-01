@@ -88,6 +88,22 @@ impl SteamTradeOfferAPI {
         )
     }
     
+    fn get_uri(
+        &self,
+        pathname: &str,
+    ) -> String {
+        format!("{}{pathname}", Self::HOSTNAME)
+    }
+    
+    fn get_api_url(
+        &self,
+        interface: &str,
+        method: &str,
+        version: usize,
+    ) -> String {
+        format!("{}/{interface}/{method}/v{version}", Self::API_HOSTNAME)
+    }
+    
     /// Sets cookies.
     pub fn set_cookies(
         &self,
@@ -1015,22 +1031,6 @@ impl SteamTradeOfferAPI {
         }
         
         Ok(inventory)
-    }
-    
-    fn get_uri(
-        &self,
-        pathname: &str,
-    ) -> String {
-        format!("{}{pathname}", Self::HOSTNAME)
-    }
-    
-    fn get_api_url(
-        &self,
-        interface: &str,
-        method: &str,
-        version: usize,
-    ) -> String {
-        format!("{}/{interface}/{method}/v{version}", Self::API_HOSTNAME)
     }
 }
 

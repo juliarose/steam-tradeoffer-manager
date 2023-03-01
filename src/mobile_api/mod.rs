@@ -25,10 +25,10 @@ use reqwest_middleware::ClientWithMiddleware;
 /// The API for mobile confirmations.
 #[derive(Debug, Clone)]
 pub struct MobileAPI {
+    /// The identity secret for mobile confirmations.
+    pub identity_secret: Option<String>,
     /// The time offset from Steam's servers.
     pub time_offset: i64,
-    /// The identity secret for mobile confirmations.
-    identity_secret: Option<String>,
     /// The client for making requests.
     client: ClientWithMiddleware,
     /// The cookies to make requests with. Since the requests are made with the provided client, 

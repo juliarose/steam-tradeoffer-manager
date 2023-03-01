@@ -1,4 +1,5 @@
 use crate::enums::ConfirmationType;
+use std::fmt;
 
 /// A mobile confirmation. Used primarily for confirming trade offers or listing 
 /// items on the market.
@@ -16,9 +17,8 @@ pub struct Confirmation {
     pub description: String,
 }
 
-impl Confirmation {
-    /// Human readable representation of this confirmation.
-    pub fn description(&self) -> String {
-        format!("{:?} - {}", self.conf_type, self.description)
+impl fmt::Display for Confirmation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?} - {}", self.conf_type, self.description)
     }
 }

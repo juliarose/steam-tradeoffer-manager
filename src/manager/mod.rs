@@ -87,7 +87,10 @@ impl TradeOfferManager {
         &self,
         cookies: &[String],
     ) {
-        let (sessionid, steamid) = get_sessionid_and_steamid_from_cookies(cookies);
+        let (
+            sessionid,
+            steamid,
+        ) = get_sessionid_and_steamid_from_cookies(cookies);
         let mut cookies = cookies.to_owned();
         
         if sessionid.is_none() {

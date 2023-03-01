@@ -199,7 +199,7 @@ where
             while let Some(item) = seq.next_element::<String>()? {
                 items.push(item);
             }
-
+            
             Ok(Some(items))
         }
         
@@ -216,7 +216,7 @@ where
             Ok(Some(items))
         }
     }
-
+    
     deserializer.deserialize_any(FraudWarningsVisitor)
 }
 
@@ -225,7 +225,7 @@ where
     D: Deserializer<'de>,
 {
     struct DeserializeBoolVisitor;
-
+    
     impl<'de> de::Visitor<'de> for DeserializeBoolVisitor {
         type Value = bool;
         
@@ -268,7 +268,7 @@ where
             Ok(v)
         }
     }
-
+    
     deserializer.deserialize_any(DeserializeBoolVisitor)
 }
 
@@ -320,13 +320,13 @@ where
             V: SeqAccess<'de>,
         {
             let mut map: ClassInfoMap = HashMap::with_capacity(seq.size_hint().unwrap_or(0));
-
+            
             while let Some(classinfo) = seq.next_element::<ClassInfo>()? {
                 if let Some(appid) = classinfo.appid {
                     map.insert((appid, classinfo.classid, classinfo.instanceid), Arc::new(classinfo));
                 }
             }
-
+            
             Ok(Some(map))
         }
         
@@ -338,7 +338,7 @@ where
             Ok(None)
         }
     }
-
+    
     deserializer.deserialize_seq(ClassInfoVisitor)
 }
 
@@ -388,7 +388,7 @@ where
         {
             Ok(Vec::new())
         }
-
+        
         fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
         where
             E: de::Error,
@@ -431,14 +431,14 @@ where
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("a map")
         }
-    
+        
         fn visit_seq<M>(self, mut _seq: M) -> Result<Self::Value, M::Error>
         where
             M: SeqAccess<'de>,
         {
             Ok(Self::Value::new())
         }
-    
+        
         fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
         where
             M: MapAccess<'de>,
@@ -521,7 +521,7 @@ where
             }
         }
     }
-
+    
     impl<'de, T> Visitor<'de> for OptionVisitor<T>
     where
         T: FromStr + TryFrom<u64> + Deserialize<'de>,

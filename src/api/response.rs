@@ -277,10 +277,12 @@ pub struct RawTradeAsset {
     pub instanceid: InstanceId,
     /// The context ID of the item received. `None` if this item has not yet finished 
     /// transferring.
+    #[serde(default)]
     #[serde(with = "serialize::option_string")]
     pub new_contextid: Option<ContextId>,
     /// The unique asset ID of the item received. `None` if this item has not yet finished t
     /// ransferring.
+    #[serde(default)]
     #[serde(with = "serialize::option_string")]
     pub new_assetid: Option<AssetId>,
 }

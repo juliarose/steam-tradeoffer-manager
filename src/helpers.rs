@@ -132,9 +132,9 @@ where
         _ => Ok(response.bytes().await?),
     }?;
     // let html = String::from_utf8_lossy(&body);
-
+    
     // println!("{}", html);
-
+    
     match serde_json::from_slice::<D>(&body) {
         Ok(body) => Ok(body),
         Err(parse_error) => {
