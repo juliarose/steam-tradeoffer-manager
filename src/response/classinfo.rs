@@ -199,25 +199,23 @@ pub struct Action {
 pub type AppData = Option<serde_json::Map<String, serde_json::value::Value>>;
 
 mod tests {
-    use super::ClassInfo;
-    
     #[test]
     fn parses_csgo_item() {
-        let classinfo: ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_csgo.json")).unwrap();
+        let classinfo: super::ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_csgo.json")).unwrap();
         
         assert!(classinfo.tradable);
     }
     
     #[test]
     fn parses_coupon() {
-        let classinfo: ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_item_expiration.json")).unwrap();
+        let classinfo: super::ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_item_expiration.json")).unwrap();
         
         assert!(classinfo.item_expiration.is_some());
     }
     
     #[test]
     fn is_color_works() {
-        let classinfo: ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_item_expiration.json")).unwrap();
+        let classinfo: super::ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_item_expiration.json")).unwrap();
         let descriptipn = classinfo.descriptions.first().unwrap();
         
         assert!(descriptipn.is_color("7a9fc5"));
