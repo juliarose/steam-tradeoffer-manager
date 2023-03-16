@@ -133,8 +133,11 @@ impl ClassInfo {
 pub type Color = String;
 
 /// A description.
-#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Default)]
 pub struct Description {
+    // Description type. Usually `"text"`or `"html"`. Not always present.
+    #[serde(default)]
+    pub r#type: Option<String>,
     /// The description message.
     pub value: String,
     /// A string representing the color e.g. `"FFFFFF"`
@@ -144,6 +147,22 @@ pub struct Description {
 
 impl Description {
     /// Checks if description color matches string.
+    /// 
+    /// Examples
+    /// ```
+    /// use steam_tradeoffer_manager::response::Description;
+    /// 
+    /// let description = Description {
+    ///     r#type: Some(String::from("text")),
+    ///     value: String::from("Can't be applied with other discounts."),
+    ///     color: Some(String::from("ffffff")),
+    /// };
+    /// 
+    /// // case-insensitive
+    /// assert!(description.is_color("FFFFFF"));
+    /// // prefixed with # is ok too
+    /// assert!(description.is_color("#ffffff"));
+    /// ```
     pub fn is_color(&self, color: &str) -> bool {
         if let Some(description_color) = &self.color {
             if color.starts_with('#') {
@@ -220,5 +239,6 @@ mod tests {
         
         assert!(descriptipn.is_color("7a9fc5"));
         assert!(descriptipn.is_color("#7a9fc5"));
+        assert!(!descriptipn.is_color(""));
     }
 }
