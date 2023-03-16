@@ -135,7 +135,7 @@ pub type Color = String;
 /// A description.
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Default)]
 pub struct Description {
-    // Description type. Usually `"text"`or `"html"`. Not always present.
+    /// Description type. Usually `"text"`or `"html"`. Not always present.
     #[serde(default)]
     pub r#type: Option<String>,
     /// The description message.
