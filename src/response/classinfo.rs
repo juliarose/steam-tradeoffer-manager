@@ -146,7 +146,11 @@ impl Description {
     /// Checks if description color matches string.
     pub fn is_color(&self, color: &str) -> bool {
         if let Some(description_color) = &self.color {
-            description_color.eq_ignore_ascii_case(color)
+            if color.starts_with('#') {
+                description_color.eq_ignore_ascii_case(&color[1..color.len()])
+            } else {
+                description_color.eq_ignore_ascii_case(color)
+            }
         } else {
             false
         }
@@ -195,17 +199,28 @@ pub struct Action {
 pub type AppData = Option<serde_json::Map<String, serde_json::value::Value>>;
 
 mod tests {
+    use super::ClassInfo;
+    
     #[test]
     fn parses_csgo_item() {
-        let classinfo: super::ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_csgo.json")).unwrap();
+        let classinfo: ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_csgo.json")).unwrap();
         
         assert!(classinfo.tradable);
     }
     
     #[test]
     fn parses_coupon() {
-        let classinfo: super::ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_item_expiration.json")).unwrap();
+        let classinfo: ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_item_expiration.json")).unwrap();
         
         assert!(classinfo.item_expiration.is_some());
+    }
+    
+    #[test]
+    fn is_color_works() {
+        let classinfo: ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_item_expiration.json")).unwrap();
+        let descriptipn = classinfo.descriptions.first().unwrap();
+        
+        assert!(descriptipn.is_color("7a9fc5"));
+        assert!(descriptipn.is_color("#7a9fc5"));
     }
 }
