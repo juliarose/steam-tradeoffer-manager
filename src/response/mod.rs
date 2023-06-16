@@ -1,4 +1,4 @@
-/// Contains response models.
+//! Contains response models.
 
 mod trade_offer;
 mod accepted_offer;

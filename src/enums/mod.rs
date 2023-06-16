@@ -1,3 +1,5 @@
+//! Contains enumerated types.
+
 mod confirmation_method;
 mod confirmation_type;
 mod trade_offer_state;

@@ -78,7 +78,7 @@ impl fmt::Display for TradeOffer {
 }
 
 impl TradeOffer {
-    /// Creates a new [~TradeOffer`].
+    /// Creates a new [`TradeOffer`].
     pub fn new() -> Self {
         Self::default()
     }
