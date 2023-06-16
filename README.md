@@ -23,4 +23,4 @@ See [examples](https://github.com/juliarose/steam-tradeoffers/tree/main/examples
 
 ## License
 
-MIT
+[MIT](https://github.com/juliarose/steam-tradeoffers/tree/main/LICENSE.md)

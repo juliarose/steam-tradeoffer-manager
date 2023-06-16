@@ -38,7 +38,7 @@ pub struct TradeOffer {
     /// The time before the offer expires if it has not been acted on.
     #[serde(with = "ts_seconds")]
     pub expiration_time: ServerTime,
-    /// The time this offer last was last acted on e.g. accepting or declining the offer.
+    /// The time this offer was last acted on, e.g. accepting or declining the offer.
     #[serde(with = "ts_seconds")]
     pub time_updated: ServerTime,
     /// The state of this offer.
