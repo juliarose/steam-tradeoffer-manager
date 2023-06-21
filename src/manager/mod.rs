@@ -336,7 +336,7 @@ impl TradeOfferManager {
         let confirmations = self.get_trade_confirmations().await?;
         let confirmation = confirmations
             .into_iter()
-            .find(|confirmation| confirmation.creator == tradeofferid);
+            .find(|confirmation| confirmation.creator_id == tradeofferid);
         
         if let Some(confirmation) = confirmation {
             self.accept_confirmation(&confirmation).await

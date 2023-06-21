@@ -2,7 +2,6 @@
 // modifications to fit with the rest of this crate.
 
 mod builder;
-mod helpers;
 mod operation;
 
 use operation::Operation;
@@ -98,15 +97,23 @@ impl MobileAPI {
     pub async fn get_trade_confirmations(
         &self,
     ) -> Result<Vec<Confirmation>, Error> {
-        let uri = self.get_uri("/mobileconf/conf");
+        #[derive(Deserialize, Debug)]
+        pub struct GetTradeConfirmationsResponse {
+            #[serde(default)]
+            pub success: bool,
+            #[serde(default)]
+            pub conf: Vec<Confirmation>,
+        }
+        
+        let uri = self.get_uri("/mobileconf/getlist");
         let query = self.get_confirmation_query_params(Tag::Conf)?;
         let response = self.client.get(&uri)
             .header("X-Requested-With", "com.valvesoftware.android.steam.community")
             .query(&query)
             .send()
             .await?;
-        let body = response.text().await?;
-        let confirmations = helpers::parse_confirmations(body)?;
+        let response: GetTradeConfirmationsResponse = crate::helpers::parses_response(response).await?;
+        let confirmations = response.conf;
         
         Ok(confirmations)
     }
@@ -150,7 +157,7 @@ impl MobileAPI {
         
         query.insert("op", operation.to_string());
         query.insert("cid", confirmation.id.to_string());
-        query.insert("ck", confirmation.key.to_string());
+        query.insert("ck", confirmation.nonce.to_string());
         
         let uri = self.get_uri("/mobileconf/ajaxop");
         let response = self.client.get(&uri)

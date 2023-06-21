@@ -1,0 +1,18 @@
+{
+    "type": 2,
+    "type_name": "Trade Offer",
+    "id": "13799599785",
+    "creator_id": "6149531996",
+    "nonce": "9141945700999917347",
+    "creation_time": 1687313872,
+    "cancel": "Cancel",
+    "accept": "Accept",
+    "icon": "https://avatars.akamai.steamstatic.com/ae3b475531d3d31151b5b0c6484cbf6af466e874_full.jpg",
+    "multi": false,
+    "headline": "gaming",
+    "summary": [
+        "You will give up your Mann Co. Supply Crate Key",
+        "You will receive nothing"
+    ],
+    "warn": null
+}

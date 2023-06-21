@@ -1,5 +1,10 @@
+use num_enum::{TryFromPrimitive, IntoPrimitive};
+use serde_repr::{Serialize_repr, Deserialize_repr};
+use strum_macros::Display;
+
 /// The type of confirmation.
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, Display, PartialEq, TryFromPrimitive, IntoPrimitive, Clone, Copy)]
+#[repr(u8)]
 pub enum ConfirmationType {
     /// Generic.
     Generic = 1,
