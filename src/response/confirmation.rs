@@ -1,9 +1,8 @@
 use crate::enums::ConfirmationType;
-use std::fmt;
-use crate::serialize;
 use crate::ServerTime;
+use crate::serialize;
+use std::fmt;
 use chrono::serde::ts_seconds;
-
 use serde::{Serialize, Deserialize};
 
 /// A mobile confirmation. Used primarily for confirming trade offers or listing 
@@ -26,10 +25,11 @@ pub struct Confirmation {
     pub cancel: String,
     /// The accept text e.g. "Accept" or "Send Offer".
     pub accept: String,
-    ///' Multi.
+    /// `true` if can be confirmed with multiple other confirmations.
     #[serde(default)]
     pub multi: bool,
     /// The confirmation type.
+    #[serde(default)]
     pub r#type: ConfirmationType,
     /// The type name.
     pub type_name: String,
@@ -48,7 +48,25 @@ pub struct Confirmation {
 
 impl fmt::Display for Confirmation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?} - {}", self.r#type, self.headline)
+        write!(f, "{} - {}", self.r#type, self.headline)
+    }
+}
+
+impl Confirmation {
+    /// Description for items we are giving.
+    pub fn giving(&self) -> Option<&str> {
+        self.summary
+            .iter()
+            .next()
+            .map(|s| s.as_str())
+    }
+    
+    /// Description for items we are receiving.
+    pub fn receiving(&self) -> Option<&str> {
+        let mut iter = self.summary.iter();
+        let _ = iter.next();
+        
+        iter.next().map(|s| s.as_str())
     }
 }
 

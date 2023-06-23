@@ -1,13 +1,13 @@
+use steam_tradeoffer_manager::types::{AppId, ClassId, InstanceId};
+use steam_tradeoffer_manager::ClassInfoCache;
+use steam_tradeoffer_manager::response::ClassInfo;
+use steam_tradeoffer_manager::api::response::RawTradeOffer;
+use steam_tradeoffer_manager::error::FileError;
+use std::path::{PathBuf, Path};
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex};
 use criterion::{criterion_group, criterion_main, Criterion};
 use serde::Deserialize;
-use steam_tradeoffer_manager::{
-    types::{AppId, ClassId, InstanceId},
-    ClassInfoCache,
-    response::ClassInfo,
-    api::response::RawTradeOffer,
-    error::FileError,
-};
-use std::{path::{PathBuf, Path}, collections::{HashMap, HashSet}, sync::{Arc, Mutex}};
 
 type ClassInfoClass = (AppId, ClassId, InstanceId);
 type ClassInfoMap = HashMap<ClassInfoClass, Arc<ClassInfo>>;

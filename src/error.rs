@@ -47,21 +47,26 @@ pub enum Error {
     /// This trade offer has no confirmations.
     #[error("No confirmation for offer {}", .0)]
     NoConfirmationForOffer(TradeOfferId),
-    /// A confirmation could not be confirmed.
-    #[error("Confirmation unsuccessful. The confirmation may have succeeded, the confirmation no longer exists, or another trade may be going through. Check confirmations again to verify.")]
-    ConfirmationUnsuccessful,
+    /// A confirmation could not be confirmed. If a message was contained in the response body it will be included.
+    #[error("Confirmation unsuccessful. {}", .0.as_ref().map(|s| s.as_str()).unwrap_or("The confirmation may have succeeded, the confirmation no longer exists, or another trade may be going through. Check confirmations again to verify."))]
+    ConfirmationUnsuccessful(Option<String>),
     /// The response is not expected. The containing string provides a message with more details.
     #[error("Malformed response")]
     MalformedResponse,
+}
+
+/// An error occurred with polling.
+#[derive(thiserror::Error, Debug)]
+pub enum PollingError {
     /// A poll was called within 1 second from the last poll.
     #[error("Poll called too soon after last poll")]
-    PollCalledTooSoon,
+    CalledTooSoon,
     /// An action was taken that depended on polling be setup.
     #[error("No action was taken because polling is not setup.")]
-    PollingNotSetup,
+    NotSetup,
     /// An action resulted in the buffer going over its limit.
     #[error("Failed to enqueue action. The polling buffer is full. A maximum of 10 messages can be queued at a time.")]
-    PollingBufferFull,
+    BufferFull,
 }
 
 /// Any number of issues with a provided parameter.

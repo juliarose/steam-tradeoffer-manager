@@ -10,7 +10,7 @@ use crate::api::SteamTradeOfferAPI;
 use crate::mobile_api::MobileAPI;
 use crate::static_functions::get_api_key;
 use crate::helpers::{generate_sessionid, get_default_middleware, get_sessionid_and_steamid_from_cookies};
-use crate::error::{ParameterError, Error};
+use crate::error::{ParameterError, PollingError, Error};
 use crate::request::{NewTradeOffer, GetTradeHistoryOptions};
 use crate::enums::{TradeOfferState, OfferFilter, GetUserDetailsMethod};
 use crate::types::{AppId, ContextId, TradeOfferId};
@@ -163,20 +163,19 @@ impl TradeOfferManager {
     pub fn do_poll(
         &self,
         poll_type: PollType,
-    ) -> Result<(), Error> {
+    ) -> Result<(), PollingError> {
         use tokio::sync::mpsc::error::TrySendError;
         
         if let Some((sender, _)) = &*self.polling.lock().unwrap() {
             sender.try_send(PollAction::DoPoll(poll_type))
                 .map_err(|error| match error {
-                    TrySendError::Full(_) => Error::PollingBufferFull,
-                    // Probably should happen, but if it does the handle was closed.
-                    TrySendError::Closed(_) => Error::PollingNotSetup,
+                    TrySendError::Full(_) => PollingError::BufferFull,
+                    TrySendError::Closed(_) => PollingError::NotSetup,
                 })?;
             
             Ok(())
         } else {
-            Err(Error::PollingNotSetup)
+            Err(PollingError::NotSetup)
         }
     }
     

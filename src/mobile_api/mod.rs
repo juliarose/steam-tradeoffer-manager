@@ -137,7 +137,7 @@ impl MobileAPI {
         params.insert("a", u64::from(steamid).to_string());
         params.insert("k", key);
         params.insert("t", time.to_string());
-        params.insert("m", "android".into());
+        params.insert("m", "react".into());
         params.insert("tag", tag.to_string());
         
         Ok(params)
@@ -148,9 +148,11 @@ impl MobileAPI {
         confirmation: &Confirmation,
         operation: Operation,
     ) -> Result<(), Error>  {
-        #[derive(Debug, Clone, Copy, Deserialize)]
+        #[derive(Debug, Deserialize)]
         struct SendConfirmationResponse {
             pub success: bool,
+            #[serde(default)]
+            pub message: Option<String>,
         }
         
         let mut query = self.get_confirmation_query_params(Tag::Conf)?;
@@ -168,7 +170,7 @@ impl MobileAPI {
         let body: SendConfirmationResponse = parses_response(response).await?;
         
         if !body.success {
-            return Err(Error::ConfirmationUnsuccessful);
+            return Err(Error::ConfirmationUnsuccessful(body.message));
         }
         
         Ok(())
