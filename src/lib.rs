@@ -54,7 +54,7 @@ pub use time::ServerTime;
 pub use manager::{TradeOfferManager, TradeOfferManagerBuilder};
 
 pub mod polling {
-    pub use super::manager::{Poll, PollResult, PollType, PollOptions};
+    pub use super::manager::{Poll, PollResult, PollAction, PollType, PollOptions};
 }
 
 pub use reqwest;

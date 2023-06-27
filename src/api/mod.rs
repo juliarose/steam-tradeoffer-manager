@@ -34,7 +34,7 @@ use reqwest::header::REFERER;
 use lazy_regex::{regex_captures, regex_is_match};
 use url::Url;
 
-/// The underlying API.for interacting with Steam trade offers.
+/// The underlying API for interacting with Steam trade offers.
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPI {
     /// The API key.

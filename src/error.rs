@@ -55,20 +55,6 @@ pub enum Error {
     MalformedResponse,
 }
 
-/// An error occurred with polling.
-#[derive(thiserror::Error, Debug)]
-pub enum PollingError {
-    /// A poll was called within 1 second from the last poll.
-    #[error("Poll called too soon after last poll")]
-    CalledTooSoon,
-    /// An action was taken that depended on polling be setup.
-    #[error("No action was taken because polling is not setup.")]
-    NotSetup,
-    /// An action resulted in the buffer going over its limit.
-    #[error("Failed to enqueue action. The polling buffer is full. A maximum of 10 messages can be queued at a time.")]
-    BufferFull,
-}
-
 /// Any number of issues with a provided parameter.
 #[derive(thiserror::Error, Debug)]
 pub enum ParameterError {

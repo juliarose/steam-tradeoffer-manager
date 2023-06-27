@@ -122,3 +122,16 @@ impl Language {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+        
+    #[test]
+    fn gets_correct_codes_for_english() {
+        let language = Language::English;
+        
+        assert_eq!(language.web_api_language_code(), "en");
+        assert_eq!(language.api_language_code(), "english");
+    }
+}

@@ -20,7 +20,7 @@ pub enum ConfirmationType {
 
 impl Default for ConfirmationType {
     fn default() -> Self {
-        Self::Unknown(0)
+        Self::Generic
     }
 }
 
@@ -40,13 +40,21 @@ impl From<u32> for ConfirmationType {
 mod tests {
     use super::*;
     
+    #[derive(Debug, Deserialize)]
+    struct Confirmation {
+        conf_type: ConfirmationType,
+    }
+    
     #[test]
-    fn deserializes_unknown_conf_type() {
-        #[derive(Debug, Deserialize)]
-        struct Confirmation {
-            conf_type: ConfirmationType,
-        }
+    fn deserializes_trade_confirmation() {
+        let json: &str = r#"{"conf_type":2}"#;
+        let confirmation: Confirmation = serde_json::from_str(json).unwrap();
         
+        assert_eq!(confirmation.conf_type, ConfirmationType::Trade);
+    }
+    
+    #[test]
+    fn deserializes_unknown_confirmation_type() {
         let json: &str = r#"{"conf_type":10}"#;
         let confirmation: Confirmation = serde_json::from_str(json).unwrap();
         

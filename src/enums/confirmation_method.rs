@@ -13,3 +13,22 @@ pub enum ConfirmationMethod {
     /// The trade offer may be confirmed via the mobile app.
     MobileApp = 2,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Deserialize;
+    
+    #[derive(Debug, Deserialize)]
+    struct TradeOffer {
+        confirmation_method: ConfirmationMethod,
+    }
+    
+    #[test]
+    fn deserializes_confirmation_method() {
+        let json: &str = r#"{"confirmation_method":2}"#;
+        let offer: TradeOffer = serde_json::from_str(json).unwrap();
+        
+        assert_eq!(offer.confirmation_method, ConfirmationMethod::MobileApp);
+    }
+}

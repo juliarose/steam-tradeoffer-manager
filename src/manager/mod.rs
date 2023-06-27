@@ -10,7 +10,7 @@ use crate::api::SteamTradeOfferAPI;
 use crate::mobile_api::MobileAPI;
 use crate::static_functions::get_api_key;
 use crate::helpers::{generate_sessionid, get_default_middleware, get_sessionid_and_steamid_from_cookies};
-use crate::error::{ParameterError, PollingError, Error};
+use crate::error::{ParameterError, Error};
 use crate::request::{NewTradeOffer, GetTradeHistoryOptions};
 use crate::enums::{TradeOfferState, OfferFilter, GetUserDetailsMethod};
 use crate::types::{AppId, ContextId, TradeOfferId};
@@ -22,8 +22,6 @@ use std::sync::atomic::{Ordering, AtomicU64};
 use steamid_ng::SteamID;
 use tokio::{sync::mpsc, task::JoinHandle};
 use reqwest::cookie::Jar;
-
-type Polling = (mpsc::Sender<PollAction>, JoinHandle<()>);
 
 /// Manager which includes functionality for interacting with trade offers, confirmations and 
 /// inventories.
@@ -38,8 +36,8 @@ pub struct TradeOfferManager {
     steamid: Arc<AtomicU64>,
     /// The directory to store poll data and classinfo data.
     data_directory: PathBuf,
-    /// The sender for sending messages to polling
-    polling: Arc<Mutex<Option<Polling>>>,
+    /// The sender for sending messages to polling, along with the task handle.
+    polling: Arc<Mutex<Option<JoinHandle<()>>>>,
 }
 
 impl TradeOfferManager {
@@ -123,19 +121,22 @@ impl TradeOfferManager {
         Ok(SteamID::from(steamid_64))
     }
     
-    /// Starts polling offers. Listen to the returned receiver for events. To stop polling simply 
-    /// drop the receiver. If this method is called again the previous polling task will be 
-    /// aborted.
+    /// Starts polling offers. Listen to the returned receiver for events. To stop polling, call 
+    /// `stop_polling` or drop the [`TradeOfferManager`]. If this method is called again, the 
+    /// previous polling task will be aborted.
+    /// 
+    /// Use the returned sender to send a special poll action using [`PollType`] to perform an 
+    /// on-demand poll.
     /// 
     /// Fails if you are not logged in. Make sure to set your cookies before using this method.
     pub fn start_polling(
         &self,
         options: PollOptions,
-    ) -> Result<mpsc::Receiver<PollResult>, Error> {
+    ) -> Result<(mpsc::Sender<PollAction>, mpsc::Receiver<PollResult>), Error> {
         let steamid = self.get_steamid()?;
         let mut polling = self.polling.lock().unwrap();
         
-        if let Some((_, handle)) = &*polling {
+        if let Some(handle) = &*polling {
             // Abort the previous polling.
             handle.abort();
         }
@@ -151,31 +152,19 @@ impl TradeOfferManager {
             options,
         );
         
-        *polling = Some((sender, handle));
+        *polling = Some(handle);
         
-        Ok(receiver)
+        Ok((sender, receiver))
     }
     
-    /// Sends a message to the poller to do a poll now. Returns an error if polling is not setup.
-    /// Remember to start polling using the `start_polling` method before calling this method.
-    /// The message will be ignored if a message with the same [`PollType`] was sent within the 
-    /// last half a second.
-    pub fn do_poll(
+    pub fn stop_polling(
         &self,
-        poll_type: PollType,
-    ) -> Result<(), PollingError> {
-        use tokio::sync::mpsc::error::TrySendError;
-        
-        if let Some((sender, _)) = &*self.polling.lock().unwrap() {
-            sender.try_send(PollAction::DoPoll(poll_type))
-                .map_err(|error| match error {
-                    TrySendError::Full(_) => PollingError::BufferFull,
-                    TrySendError::Closed(_) => PollingError::NotSetup,
-                })?;
-            
-            Ok(())
-        } else {
-            Err(PollingError::NotSetup)
+    ) {
+        if let Ok(polling) = self.polling.lock() {
+            if let Some(handle) = &*polling {
+                // Abort polling before dropping.
+                handle.abort();
+            }
         }
     }
     
@@ -472,7 +461,7 @@ impl TradeOfferManager {
 impl std::ops::Drop for TradeOfferManager {
     fn drop(&mut self) {
         if let Ok(polling) = self.polling.lock() {
-            if let Some((_sender, handle)) = &*polling {
+            if let Some(handle) = &*polling {
                 // Abort polling before dropping.
                 handle.abort();
             }

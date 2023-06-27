@@ -3,7 +3,7 @@ use steam_tradeoffer_manager::{
     response::{TradeOffer, Asset},
     enums::TradeOfferState,
     error::Error,
-    polling::PollOptions,
+    polling::{PollOptions, PollAction, PollType},
     chrono::Duration,
 };
 use owo_colors::OwoColorize;
@@ -75,7 +75,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     manager.set_cookies(&cookies);
     
     // Fails if you did not set your cookies.
-    let mut rx = manager.start_polling(options)?;
+    let (tx, mut rx) = manager.start_polling(options)?;
+    
+    // Send a request to perform a poll when new offers have been obtained.
+    tx.send(PollAction::DoPoll(PollType::NewOffers)).await.unwrap();
     
     // Listen to the receiver for events.
     while let Some(message) = rx.recv().await {

@@ -1,3 +1,5 @@
+//! Includes wrappers for API responses.
+
 use super::response as api_response;
 use super::RawTrade;
 use crate::internal_types::{ClassInfoAppClass, ClassInfoMap};

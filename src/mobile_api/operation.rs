@@ -1,8 +1,11 @@
 use std::fmt;
 
+/// Operation to act on confirmations.
 #[derive(Debug, Clone, Copy)]
 pub enum Operation {
+    /// Allow confirmation.
     Allow,
+    /// Decline or cancel confirmation.
     Cancel,
 }
 

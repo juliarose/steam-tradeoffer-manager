@@ -1,11 +1,13 @@
 //! Contains models related to offer polling.
 
 mod file;
-mod poll_data;
-mod poller;
 mod poll_type;
+mod poll_action;
+mod poller;
+mod poll_data;
 
 pub use poll_type::PollType;
+pub use poll_action::PollAction;
 pub use poller::{PollResult, Poll};
 pub use poll_data::PollData;
 
@@ -57,10 +59,6 @@ impl PollOptions {
             poll_interval: Duration::seconds(DEFAULT_POLL_INTERVAL_SECONDS),
         }
     }
-}
-
-pub enum PollAction {
-    DoPoll(PollType),
 }
 
 /// Packs the sender, receiver, and `JoinHandle` for the poller.

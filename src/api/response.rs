@@ -1,3 +1,6 @@
+//! Includes raw response models for API responses. These are transformed into more convenient 
+//! models in [`crate::responses`].
+
 use crate::ServerTime;
 use crate::types::*;
 use crate::internal_types::*;
