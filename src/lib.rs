@@ -54,10 +54,13 @@ pub use time::ServerTime;
 pub use manager::{TradeOfferManager, TradeOfferManagerBuilder};
 
 pub mod polling {
+    //! Contains models related to polling trade offers.
     pub use super::manager::{Poll, PollResult, PollAction, PollType, PollOptions};
 }
 
 pub use reqwest;
 pub use reqwest_middleware;
 pub use chrono;
-pub use steamid_ng::{self, SteamID};
+pub use steamid_ng;
+/// Re-export from [`steamid_ng`]. A Steam ID.
+pub use steamid_ng::SteamID;

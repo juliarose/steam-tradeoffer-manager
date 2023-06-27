@@ -113,9 +113,8 @@ impl MobileAPI {
             .send()
             .await?;
         let response: GetTradeConfirmationsResponse = crate::helpers::parses_response(response).await?;
-        let confirmations = response.conf;
         
-        Ok(confirmations)
+        Ok(response.conf)
     }
     
     fn get_confirmation_query_params<'a>(
@@ -126,7 +125,7 @@ impl MobileAPI {
         let identity_secret = self.identity_secret.as_ref()
             .ok_or(ParameterError::NoIdentitySecret)?;
         let (key, time) = generate_confirmation_key(
-            identity_secret.to_owned(),
+            identity_secret,
             tag,
             Some(self.time_offset),
         )?;

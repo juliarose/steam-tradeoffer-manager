@@ -1,3 +1,5 @@
+//! Contains multiple error types.
+
 use crate::enums::TradeOfferState;
 use crate::types::*;
 use std::fmt;

@@ -57,7 +57,7 @@ impl Default for Trade {
 /// An asset belonging to a trade.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TradeAsset {
-    /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
+    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global offensive.
     #[serde(with = "serialize::string")]
     pub appid: AppId,
     /// The context ID.

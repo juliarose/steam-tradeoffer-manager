@@ -128,7 +128,7 @@ impl RawTradeOffer {
 /// An asset belonging to a [`RawTrade`].
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RawAsset {
-    /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
+    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global offensive.
     pub appid: AppId,
     /// The context ID.
     #[serde(with = "serialize::string")]
@@ -191,7 +191,7 @@ impl From<&RawTradeAsset> for RawAsset {
 /// An asset belonging to a receipt.
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RawReceiptAsset {
-    /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
+    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global offensive.
     pub appid: AppId,
     /// The context ID.
     pub contextid: ContextId,
@@ -261,7 +261,7 @@ pub struct RawTrade {
 /// An asset belonging to a [`RawTrade`].
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTradeAsset {
-    /// The app ID e.g. 440 for Team Fortress 2 or 730 for Counter-Strike Global offensive.
+    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global offensive.
     pub appid: AppId,
     /// The context ID.
     #[serde(with = "serialize::string")]

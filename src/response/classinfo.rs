@@ -148,7 +148,7 @@ pub struct Description {
 impl Description {
     /// Checks if description color matches string.
     /// 
-    /// Examples
+    /// # Examples
     /// ```
     /// use steam_tradeoffer_manager::response::Description;
     /// 

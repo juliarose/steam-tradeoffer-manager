@@ -1,4 +1,4 @@
-//! Contains models for making certain requests.
+//! Contains models for making requests.
 
 mod trade_offer;
 mod trade_history;

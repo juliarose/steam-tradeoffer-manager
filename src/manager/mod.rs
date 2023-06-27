@@ -121,14 +121,16 @@ impl TradeOfferManager {
         Ok(SteamID::from(steamid_64))
     }
     
-    /// Starts polling offers. Listen to the returned receiver for events. To stop polling, call 
-    /// `stop_polling` or drop the [`TradeOfferManager`]. If this method is called again, the 
-    /// previous polling task will be aborted.
+    /// Starts polling offers. Listen to the returned receiver for events. Use the returned sender 
+    /// to send an action to the poller using [`PollAction`].
     /// 
-    /// Use the returned sender to send a special poll action using [`PollType`] to perform an 
-    /// on-demand poll.
+    /// Call `stop_polling` to stop polling offers. Polling will also stop if either the receiver 
+    /// or this [`TradeOfferManager`] are dropped. If this method is called again, the previous 
+    /// polling task will be aborted.
     /// 
     /// Fails if you are not logged in. Make sure to set your cookies before using this method.
+    /// 
+    /// # Examples
     pub fn start_polling(
         &self,
         options: PollOptions,

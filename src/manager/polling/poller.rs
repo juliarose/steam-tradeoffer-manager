@@ -11,7 +11,12 @@ use std::collections::HashMap;
 use chrono::Duration;
 use steamid_ng::SteamID;
 
+/// A poll containing new offers. For each item in the vector, the first element is the 
+/// [`TradeOffer`]. The second part is the previous [`TradeOfferState`] if this is not a newly
+/// encountered offer.
 pub type Poll = Vec<(TradeOffer, Option<TradeOfferState>)>;
+/// The result of a poll. Either containing a [`Poll`] or an [`Error`] if an error was encountered
+/// during a poll.
 pub type PollResult = Result<Poll, Error>;
 
 const OFFERS_SINCE_BUFFER_SECONDS: i64 = 60 * 30;
