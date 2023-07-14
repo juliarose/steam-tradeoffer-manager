@@ -1,4 +1,4 @@
-// Contains exported functions in lib.rs
+//! Contains exported functions in lib.rs
 
 use crate::api::SteamTradeOfferAPI;
 use crate::api::response as api_response;

@@ -24,11 +24,12 @@
 //! ## Conventions
 //! 
 //! For the most part everything is straight-forward. You can find response structs in `response`, 
-//! enums in `enums`, request parameter structs in `request`, errors in `errors`, and types used
+//! enums in `enums`, request parameter structs in `request`, errors in `error`, and types used
 //! throughout are found in `types`.
 //! 
-//! An underlying API for [`TradeOfferManager`] is used for making requests which has more direct 
-//! control over API calls as well as its own set of response structs. Find them in [`api`].
+//! For the most part all tasks relating to trade offers can be interfaced through 
+//! [`TradeOfferManager`]. If more direct control is needed, the underlying API can be found in 
+//! [`api`] and is also accessible as `api` on [`TradeOfferManager`] instances.
 
 extern crate lazy_static;
 
