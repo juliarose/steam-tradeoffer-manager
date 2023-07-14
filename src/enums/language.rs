@@ -4,8 +4,7 @@ use serde::{Deserialize, Serialize};
 /// Languages used in API calls.
 /// 
 /// See <https://partner.steamgames.com/doc/store/localization/languages> for more information.
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
-#[derive(Default)]
+#[derive(Default, Debug, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
 pub enum Language {
     Arabic,
     Bulgarian,

@@ -55,13 +55,13 @@ impl fmt::Display for Confirmation {
 impl Confirmation {
     /// Description for items we are giving.
     pub fn giving(&self) -> Option<&str> {
-        self.summary.first()
-            .map(|s| s.as_str())
+        self.summary.first().map(|s| s.as_str())
     }
     
     /// Description for items we are receiving.
     pub fn receiving(&self) -> Option<&str> {
         let mut iter = self.summary.iter();
+        // consume first element
         let _ = iter.next();
         
         iter.next().map(|s| s.as_str())
