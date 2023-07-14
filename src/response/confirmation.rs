@@ -55,9 +55,7 @@ impl fmt::Display for Confirmation {
 impl Confirmation {
     /// Description for items we are giving.
     pub fn giving(&self) -> Option<&str> {
-        self.summary
-            .iter()
-            .next()
+        self.summary.first()
             .map(|s| s.as_str())
     }
     
