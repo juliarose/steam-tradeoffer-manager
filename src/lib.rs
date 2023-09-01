@@ -18,24 +18,17 @@
 //! - Trade items <em>blazingly fast!</em>
 //! 
 //! ## Usage
+//! 
+//! All tasks relating to trade offers can be interfaced through [`TradeOfferManager`]. If more 
+//! direct control is needed, the underlying API can be found in [`api`] and is also accessible 
+//! as `api` on [`TradeOfferManager`] instances.
 //!
 //! See [examples](https://github.com/juliarose/steam-tradeoffers/tree/main/examples).
-//! 
-//! ## Conventions
-//! 
-//! For the most part everything is straight-forward. You can find response structs in `response`, 
-//! enums in `enums`, request parameter structs in `request`, errors in `error`, and types used
-//! throughout are found in `types`.
-//! 
-//! For the most part all tasks relating to trade offers can be interfaced through 
-//! [`TradeOfferManager`]. If more direct control is needed, the underlying API can be found in 
-//! [`api`] and is also accessible as `api` on [`TradeOfferManager`] instances.
 
 extern crate lazy_static;
 
 mod manager;
 mod serialize;
-mod mobile_api;
 mod helpers;
 mod classinfo_cache;
 mod time;
@@ -43,6 +36,7 @@ mod internal_types;
 mod static_functions;
 
 pub mod api;
+pub mod mobile_api;
 pub mod enums;
 pub mod types;
 pub mod request;
@@ -63,5 +57,5 @@ pub use reqwest;
 pub use reqwest_middleware;
 pub use chrono;
 pub use steamid_ng;
-/// Re-export from [`steamid_ng`]. A Steam ID.
+/// A Steam ID. Re-export from [`steamid_ng`].
 pub use steamid_ng::SteamID;

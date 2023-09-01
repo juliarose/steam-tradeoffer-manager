@@ -1,11 +1,12 @@
 /// Method for obtaining a user's escrow details.
 #[derive(Debug, Clone)]
 pub enum GetUserDetailsMethod {
-    /// This will only work if you are friends with the user.
+    /// Obtain details without using an identifier. This will only work if you are friends with 
+    /// the user.
     None,
-    /// Obtain details using an `access_token`.
+    /// Obtain details using an access token.
     Token(String),
-    /// Obtain details using a `tradeofferid`.
+    /// Obtain details using a tradeofferid.
     TradeOfferId(u64),
 }
 

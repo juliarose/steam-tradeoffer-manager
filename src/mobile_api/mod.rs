@@ -82,7 +82,7 @@ impl MobileAPI {
         &self,
         confirmation: &Confirmation,
     ) -> Result<(), Error> {
-        self.send_confirmation_ajax(confirmation, Operation::Allow).await
+        self.send_confirmation_ajax(&confirmation.id, &confirmation.nonce, Operation::Allow).await
     }
 
     /// Cancels a confirmation.
@@ -90,7 +90,23 @@ impl MobileAPI {
         &self,
         confirmation: &Confirmation,
     ) -> Result<(), Error> {
-        self.send_confirmation_ajax(confirmation, Operation::Cancel).await
+        self.send_confirmation_ajax(&confirmation.id, &confirmation.nonce, Operation::Cancel).await
+    }
+    
+    pub async fn accept_confirmation_by_id(
+        &self,
+        id: u64,
+        nonce: u64,
+    ) -> Result<(), Error> {
+        self.send_confirmation_ajax(&id, &nonce, Operation::Allow).await
+    }
+    
+    pub async fn cancel_confirmation_by_id(
+        &self,
+        id: u64,
+        nonce: u64,
+    ) -> Result<(), Error> {
+        self.send_confirmation_ajax(&id, &nonce, Operation::Cancel).await
     }
     
     /// Gets the trade confirmations.
@@ -144,7 +160,8 @@ impl MobileAPI {
     
     async fn send_confirmation_ajax(
         &self,
-        confirmation: &Confirmation,
+        id: &u64,
+        nonce: &u64,
         operation: Operation,
     ) -> Result<(), Error>  {
         #[derive(Debug, Deserialize)]
@@ -157,8 +174,8 @@ impl MobileAPI {
         let mut query = self.get_confirmation_query_params(Tag::Conf)?;
         
         query.insert("op", operation.to_string());
-        query.insert("cid", confirmation.id.to_string());
-        query.insert("ck", confirmation.nonce.to_string());
+        query.insert("cid", id.to_string());
+        query.insert("ck", nonce.to_string());
         
         let uri = self.get_uri("/mobileconf/ajaxop");
         let response = self.client.get(&uri)

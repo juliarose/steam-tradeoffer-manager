@@ -11,7 +11,7 @@ pub fn timestamp_to_server_time(timestamp: i64) -> ServerTime {
         timestamp,
         0,
     ).unwrap_or_default();
-    let time: ServerTime = DateTime::from_utc(naive_data_time, Utc);
+    let time: ServerTime = DateTime::from_naive_utc_and_offset(naive_data_time, Utc);
 
     time
 }

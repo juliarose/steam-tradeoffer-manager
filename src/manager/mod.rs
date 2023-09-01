@@ -92,7 +92,7 @@ impl TradeOfferManager {
         let mut cookies = cookies.to_owned();
         
         if sessionid.is_none() {
-            // the cookies don't contain a sessionid
+            // the cookies don't contain a sessionid, so generate one
             let sessionid = generate_sessionid();
             
             cookies.push(format!("sessionid={sessionid}"));
