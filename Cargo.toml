@@ -21,7 +21,7 @@ serde_qs = "0.8"
 tokio = { version = "1", features = ["rt"] }
 strum = { version = "0.23.0", features = ["derive"] }
 strum_macros = "0.23.0"
-chrono = { version = "^0.4", features = ["serde"] }
+chrono = { version = "^0.4.27", features = ["serde"] }
 steamid-ng = "1.0"
 num_enum = "0.5.0"
 anyhow = "1.0"
