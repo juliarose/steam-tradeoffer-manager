@@ -1,4 +1,4 @@
-//! Contains enumerated types.
+//! Enumerated types.
 
 mod confirmation_method;
 mod confirmation_type;

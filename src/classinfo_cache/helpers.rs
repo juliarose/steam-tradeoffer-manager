@@ -1,7 +1,7 @@
 use crate::response::ClassInfo;
 use crate::error::FileError;
 use crate::types::AppId;
-use crate::internal_types::{ClassInfoClass, ClassInfoAppClass};
+use crate::types::{ClassInfoClass, ClassInfoAppClass};
 use crate::helpers::write_file_atomic;
 use std::path::{Path, PathBuf};
 use std::collections::{HashMap, HashSet};

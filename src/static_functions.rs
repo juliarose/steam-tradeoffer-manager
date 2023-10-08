@@ -1,10 +1,10 @@
-//! Contains exported functions in lib.rs
+//! Exported functions in lib.rs
 
 use crate::api::SteamTradeOfferAPI;
 use crate::api::response as api_response;
 use crate::response::{Asset, ClassInfo};
 use crate::request::GetInventoryOptions;
-use crate::internal_types::*;
+use crate::types::*;
 use crate::helpers::{parses_response, get_sessionid_and_steamid_from_cookies};
 use crate::error::{Error, ParseHtmlError, MissingClassInfoError};
 use crate::serialize;

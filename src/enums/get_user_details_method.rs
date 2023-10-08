@@ -29,6 +29,18 @@ impl GetUserDetailsMethod {
     }
 }
 
+impl From<String> for GetUserDetailsMethod {
+    fn from(value: String) -> Self {
+        Self::Token(value)
+    }
+}
+
+impl From<&str> for GetUserDetailsMethod {
+    fn from(value: &str) -> Self {
+        Self::Token(value.to_owned())
+    }
+}
+
 impl From<Option<String>> for GetUserDetailsMethod {
     fn from(value: Option<String>) -> Self {
         if let Some(value) = value {
@@ -49,6 +61,26 @@ impl From<&Option<String>> for GetUserDetailsMethod {
     }
 }
 
+impl From<Option<&str>> for GetUserDetailsMethod {
+    fn from(value: Option<&str>) -> Self {
+        if let Some(value) = value {
+            Self::Token(value.into())
+        } else {
+            Self::None
+        }
+    }
+}
+
+impl From<&Option<&str>> for GetUserDetailsMethod {
+    fn from(value: &Option<&str>) -> Self {
+        if let Some(value) = value {
+            Self::Token((*value).into())
+        } else {
+            Self::None
+        }
+    }
+}
+
 impl From<u64> for GetUserDetailsMethod {
     fn from(value: u64) -> Self {
         Self::TradeOfferId(value)
@@ -58,17 +90,5 @@ impl From<u64> for GetUserDetailsMethod {
 impl From<&u64> for GetUserDetailsMethod {
     fn from(value: &u64) -> Self {
         Self::TradeOfferId(*value)
-    }
-}
-
-impl From<String> for GetUserDetailsMethod {
-    fn from(value: String) -> Self {
-        Self::Token(value)
-    }
-}
-
-impl From<&str> for GetUserDetailsMethod {
-    fn from(value: &str) -> Self {
-        Self::Token(value.to_owned())
     }
 }

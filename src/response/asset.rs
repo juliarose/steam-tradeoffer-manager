@@ -1,7 +1,7 @@
 use super::{TradeAsset, ClassInfo};
 use crate::serialize;
 use crate::types::{AppId, ContextId, AssetId, Amount};
-use crate::internal_types::ClassInfoClass;
+use crate::types::ClassInfoClass;
 use std::sync::Arc;
 use serde::{Serialize, Deserialize};
 

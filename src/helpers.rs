@@ -1,4 +1,4 @@
-use crate::internal_types::Client;
+use crate::types::Client;
 use crate::error::{TradeOfferError, Error};
 use std::path::PathBuf;
 use std::sync::Arc;

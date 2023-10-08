@@ -3,7 +3,6 @@
 
 use crate::ServerTime;
 use crate::types::*;
-use crate::internal_types::*;
 use crate::error::{MissingClassInfoError, TryIntoNewAssetError};
 use crate::response::{TradeOffer, Asset, Trade, TradeAsset};
 use crate::enums::{TradeStatus, ConfirmationMethod, TradeOfferState};
@@ -13,7 +12,7 @@ use serde::{Serialize, Deserialize};
 use steamid_ng::SteamID;
 use chrono::serde::ts_seconds;
 
-/// A trade offer.
+/// Trade offer.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTradeOffer {
     /// The ID for this offer.
@@ -237,7 +236,7 @@ pub struct RawTrades {
     pub total_trades: u32,
 }
 
-/// A trade.
+/// Trade.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTrade {
     /// The trade ID.

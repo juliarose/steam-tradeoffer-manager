@@ -20,8 +20,7 @@
 //! ## Usage
 //! 
 //! All tasks relating to trade offers can be interfaced through [`TradeOfferManager`]. If more 
-//! direct control is needed, the underlying API can be found in [`api`] and is also accessible 
-//! as `api` on [`TradeOfferManager`] instances.
+//! direct control is needed, the underlying API's can be found in [`api`] and [`mobile_api`].
 //!
 //! See [examples](https://github.com/juliarose/steam-tradeoffers/tree/main/examples).
 
@@ -32,7 +31,6 @@ mod serialize;
 mod helpers;
 mod classinfo_cache;
 mod time;
-mod internal_types;
 mod static_functions;
 
 pub mod api;
@@ -49,7 +47,7 @@ pub use time::ServerTime;
 pub use manager::{TradeOfferManager, TradeOfferManagerBuilder};
 
 pub mod polling {
-    //! Contains models related to polling trade offers.
+    //! Models related to polling trade offers.
     pub use super::manager::{Poll, PollResult, PollAction, PollType, PollOptions};
 }
 
@@ -57,5 +55,5 @@ pub use reqwest;
 pub use reqwest_middleware;
 pub use chrono;
 pub use steamid_ng;
-/// A Steam ID. Re-export from [`steamid_ng`].
+/// Steam ID. Re-export from [`steamid_ng`].
 pub use steamid_ng::SteamID;

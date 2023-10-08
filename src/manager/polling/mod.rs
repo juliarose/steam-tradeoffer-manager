@@ -1,4 +1,4 @@
-//! Contains models related to offer polling.
+//! Models related to offer polling.
 
 mod file;
 mod poll_type;

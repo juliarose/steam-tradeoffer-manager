@@ -1,5 +1,5 @@
 use crate::response::ClassInfo;
-use crate::internal_types::{ClassInfoAppClass, ClassInfoAppMap, ClassInfoMap};
+use crate::types::{ClassInfoAppClass, ClassInfoAppMap, ClassInfoMap};
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;

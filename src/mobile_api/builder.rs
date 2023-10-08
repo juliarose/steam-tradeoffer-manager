@@ -18,6 +18,12 @@ pub struct MobileAPIBuilder {
     pub time_offset: i64,
 }
 
+impl Default for MobileAPIBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MobileAPIBuilder {
     /// Creates a new [`MobileAPIBuilder`].
     pub fn new() -> Self {

@@ -129,10 +129,10 @@ impl ClassInfo {
     }
 }
 
-/// A color.
+/// Color.
 pub type Color = String;
 
-/// A description.
+/// Description.
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Default)]
 pub struct Description {
     /// Description type. Usually `"text"`or `"html"`. Not always present.
@@ -181,7 +181,7 @@ impl Description {
     }
 }
 
-/// A tag.
+/// Tag.
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Tag {
     /// The game's internal name of this tag e.g. for Team Fortress 2 items: "Unique" for items 

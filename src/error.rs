@@ -1,4 +1,4 @@
-//! Contains multiple error types.
+//! Error types.
 
 use crate::enums::TradeOfferState;
 use crate::types::*;

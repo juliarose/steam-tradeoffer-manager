@@ -16,7 +16,6 @@ use crate::SteamID;
 use crate::helpers::get_default_middleware;
 use crate::time::ServerTime;
 use crate::types::*;
-use crate::internal_types::*;
 use crate::response::*;
 use crate::enums::{Language, GetUserDetailsMethod};
 use crate::static_functions::get_inventory;

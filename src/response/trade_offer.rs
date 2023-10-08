@@ -8,7 +8,7 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use chrono::serde::ts_seconds;
 
-/// A trade offer.
+/// Trade offer.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TradeOffer {
     /// The ID for this offer.

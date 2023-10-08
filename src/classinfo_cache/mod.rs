@@ -1,7 +1,7 @@
 pub mod helpers;
 
 use crate::response::ClassInfo;
-use crate::internal_types::ClassInfoClass;
+use crate::types::ClassInfoClass;
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 use lfu_cache::LfuCache;
@@ -22,7 +22,7 @@ impl Default for ClassInfoCache {
 }
 
 impl ClassInfoCache {
-    /// Creates a new [`ClassInfoCache`] with the given capacity.
+    /// Creates a new [`ClassInfoCache`] with the given `capacity`.
     pub fn new(
         capacity: usize,
     ) -> Self {
@@ -33,7 +33,9 @@ impl ClassInfoCache {
         }
     }
     
-    /// Creates a new sharable [`ClassInfoCache`] with the given capacity.
+    /// Creates a new sharable [`ClassInfoCache`] with the given `capacity`.
+    /// 
+    /// This simply wraps the cache in an [`Arc`] and [`Mutex`] for sharing.
     pub fn new_shared(
         capacity: usize,
     ) -> Arc<Mutex<Self>> {
@@ -46,6 +48,14 @@ impl ClassInfoCache {
         class: &ClassInfoClass,
     ) -> Option<Arc<ClassInfo>> {
         self.map.get(class).map(Arc::clone)
+    }
+    
+    /// Gets a [`ClassInfo`] from the cache.
+    pub fn get_borrowed(
+        &mut self,
+        class: &ClassInfoClass,
+    ) -> Option<&Arc<ClassInfo>> {
+        self.map.get(class)
     }
     
     /// Inserts a [`ClassInfo`] into the cache.

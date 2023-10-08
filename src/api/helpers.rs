@@ -1,6 +1,6 @@
 use super::response as api_response;
 use crate::error::{MissingClassInfoError, ParseHtmlError};
-use crate::internal_types::ClassInfoMap;
+use crate::types::ClassInfoMap;
 use crate::response::{self, User, UserDetails};
 use std::sync::Arc;
 use lazy_regex::Regex;

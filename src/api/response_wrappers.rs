@@ -2,7 +2,7 @@
 
 use super::response as api_response;
 use super::RawTrade;
-use crate::internal_types::{ClassInfoAppClass, ClassInfoMap};
+use crate::types::{ClassInfoAppClass, ClassInfoMap};
 use crate::{response, serialize};
 use std::collections::HashMap;
 use std::sync::Arc;

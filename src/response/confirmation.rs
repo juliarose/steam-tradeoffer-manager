@@ -5,8 +5,7 @@ use std::fmt;
 use chrono::serde::ts_seconds;
 use serde::{Serialize, Deserialize};
 
-/// A mobile confirmation. Used primarily for confirming trade offers or listing 
-/// items on the market.
+/// Mobile confirmation. Used primarily for confirming trade offers or listing items on the market.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Confirmation {
     /// The ID of the confirmation.

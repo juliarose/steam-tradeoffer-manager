@@ -21,7 +21,7 @@ pub struct Trades {
     pub total_trades: u32,
 }
 
-/// A trade.
+/// Trade.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Trade {
     /// The trade ID.
