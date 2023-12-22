@@ -129,8 +129,6 @@ impl TradeOfferManager {
     /// polling task will be aborted.
     /// 
     /// Fails if you are not logged in. Make sure to set your cookies before using this method.
-    /// 
-    /// # Examples
     pub fn start_polling(
         &self,
         options: PollOptions,
