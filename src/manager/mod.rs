@@ -471,7 +471,7 @@ impl std::ops::Drop for TradeOfferManager {
 
 impl From<TradeOfferManagerBuilder> for TradeOfferManager {
     fn from(builder: TradeOfferManagerBuilder) -> Self {
-        let cookies = builder.cookies
+        let cookies = builder.cookie_jar
             .unwrap_or_else(|| Arc::new(Jar::default()));
         let client = builder.client
             .unwrap_or_else(|| get_default_middleware(
@@ -496,13 +496,18 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
         }
         
         let mobile_api = mobile_api_builder.build();
-        
-        Self {
+        let manager = Self {
             steamid: Arc::clone(&steamid),
             api,
             mobile_api,
             data_directory: builder.data_directory,
             polling: Arc::new(Mutex::new(None)),
+        };
+        
+        if let Some(cookies) = builder.cookies {
+            manager.set_cookies(&cookies);
         }
+        
+        manager
     }
 }

@@ -3,7 +3,7 @@ use steam_tradeoffer_manager::{
     response::{TradeOffer, Asset},
     enums::TradeOfferState,
     error::Error,
-    polling::{PollOptions, PollAction, PollType},
+    polling::PollOptions,
     chrono::Duration,
 };
 use owo_colors::OwoColorize;
@@ -62,23 +62,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
     let api_key = TradeOfferManager::get_api_key(&cookies).await?;
-    let manager = TradeOfferManager::builder(api_key, "./assets")
+    let data_directory = "./assets";
+    let manager = TradeOfferManager::builder(api_key, data_directory)
         .identity_secret(String::from("secret"))
+        .cookies(cookies) // Cookies can also be set using the `set_cookies` method on the manager
         .build();
-    let options = PollOptions {
+    
+    // Fails if you did not set your cookies.
+    let (_tx, mut rx) = manager.start_polling(PollOptions {
         // By default PollOptions does not have a cancel duration.
         cancel_duration: Some(Duration::minutes(30)),
         ..PollOptions::default()
-    };
-    
-    // Cookies are required before starting polling.
-    manager.set_cookies(&cookies);
-    
-    // Fails if you did not set your cookies.
-    let (tx, mut rx) = manager.start_polling(options)?;
-    
-    // Send a request to perform a poll when new offers have been obtained.
-    tx.send(PollAction::DoPoll(PollType::NewOffers)).await.unwrap();
+    })?;
     
     // Listen to the receiver for events.
     while let Some(message) = rx.recv().await {

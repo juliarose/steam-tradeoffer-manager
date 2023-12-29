@@ -19,12 +19,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = std::env::var("API_KEY")?;
     // A data directory is required for maintaining state.
     let manager = TradeOfferManager::new(api_key, "./assets");
-    let options = GetTradeHistoryOptions {
+    // Gets your last trade.
+    let trades = manager.get_trade_history(&GetTradeHistoryOptions {
         max_trades: 1,
         ..GetTradeHistoryOptions::default()
-    };
-    // Gets your last trade.
-    let trades = manager.get_trade_history(&options).await?.trades;
+    }).await?.trades;
     let trade = trades.into_iter().next().unwrap();
     
     println!("Trade #{}", trade.tradeid);

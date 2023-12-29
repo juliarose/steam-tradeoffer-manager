@@ -10,21 +10,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .split("; ")
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
-    // A blank key can be passed, it isn't needed in this example.
+    // A blank key API key can be passed, it isn't needed in this example.
     let manager = TradeOfferManager::builder(String::from(""), "./assets")
         .identity_secret(String::from("secret"))
+        .cookies(cookies) // Cookies can also be set using the `set_cookies` method on the manager
         .build();
-    
-    manager.set_cookies(&cookies);
     
     // Passing in GetUserDetailsMethod::None assumes we are friends with the user.
     let user_details = manager.get_user_details(steamid, GetUserDetailsMethod::None).await?;
-    
-    // Passing a tradeofferid will convert it into GetUserDetailsMethod::TradeOfferId(tradeofferid)
-    // let user_details = manager.get_user_details(&steamid, 5746598837).await?;
-    
-    // Passing an access token will convert it into GetUserDetailsMethod::Token(token)
-    // let user_details = manager.get_user_details(&steamid, "itfRpc6r").await?;
     
     println!("Trade will result in escrow? {}", user_details.has_escrow().nope().bold());
     Ok(())

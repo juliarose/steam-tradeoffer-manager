@@ -21,13 +21,15 @@ pub struct TradeOfferManagerBuilder {
     /// The location to save data to.
     pub data_directory: PathBuf,
     /// Request cookies.
-    pub cookies: Option<Arc<Jar>>,
+    pub cookie_jar: Option<Arc<Jar>>,
     /// Client to use for requests. Remember to also include the cookies connected to this client.
     pub client: Option<ClientWithMiddleware>,
     /// User agent for requests.
     pub user_agent: &'static str,
     /// How many seconds your computer is behind Steam's servers. Used in mobile confirmations.
     pub time_offset: i64,
+    /// Cookies to set on initialization.
+    pub cookies: Option<Vec<String>>,
 }
 
 impl TradeOfferManagerBuilder {
@@ -46,10 +48,11 @@ impl TradeOfferManagerBuilder {
             language: Language::English,
             classinfo_cache: Arc::new(Mutex::new(ClassInfoCache::default())),
             data_directory: data_directory.into(),
-            cookies: None,
+            cookie_jar: None,
             client: None,
             user_agent: USER_AGENT_STRING,
             time_offset: 0,
+            cookies: None,
         }
     }
     
@@ -74,9 +77,9 @@ impl TradeOfferManagerBuilder {
     
     /// Client to use for requests. It is also required to include the associated cookies with this
     /// client so that the `set_cookies` method works as expected.
-    pub fn client(mut self, client: ClientWithMiddleware, cookies: Arc<Jar>) -> Self {
+    pub fn client(mut self, client: ClientWithMiddleware, cookie_jar: Arc<Jar>) -> Self {
         self.client = Some(client);
-        self.cookies = Some(cookies);
+        self.cookie_jar = Some(cookie_jar);
         self
     }
     
@@ -89,6 +92,11 @@ impl TradeOfferManagerBuilder {
     /// The API key.
     pub fn api_key(mut self, api_key: String) -> Self {
         self.api_key = api_key;
+        self
+    }
+    
+    pub fn cookies(mut self, cookies: Vec<String>) -> Self {
+        self.cookies = Some(cookies);
         self
     }
     
