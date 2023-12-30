@@ -23,7 +23,7 @@
 //! direct control is needed, the underlying API's can be found in [`api`] and [`mobile_api`].
 //!
 //! See [examples](https://github.com/juliarose/steam-tradeoffers/tree/main/examples).
-
+#![warn(missing_docs)]
 extern crate lazy_static;
 
 mod manager;

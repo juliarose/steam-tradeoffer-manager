@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Passing in GetUserDetailsMethod::None assumes we are friends with the user.
     let user_details = manager.get_user_details(steamid, GetUserDetailsMethod::None).await?;
     
-    println!("Trade will result in escrow? {}", user_details.has_escrow().nope().bold());
+    println!("Trade will result in escrow? {}", user_details.has_escrow().bold());
     Ok(())
 }
 

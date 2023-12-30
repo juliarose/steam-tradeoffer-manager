@@ -6,35 +6,64 @@ use serde::{Deserialize, Serialize};
 /// See <https://partner.steamgames.com/doc/store/localization/languages> for more information.
 #[derive(Default, Debug, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
 pub enum Language {
+    /// Arabic language.
     Arabic,
+    /// Bulgarian language.
     Bulgarian,
+    /// Chinese (Simplified) language.
     ChineseSimplified,
+    /// Chinese (Traditional) language.
     ChineseTraditional,
+    /// Czech language.
     Czech,
+    /// Danish language.
     Danish,
+    /// Dutch language.
     Dutch,
+    /// English language. This is the default language.
     #[default]
     English,
+    /// Finnish language.
     Finnish,
+    /// French language.
     French,
+    /// German language.
     German,
+    /// Greek language.
     Greek,
+    /// Hungarian language.
     Hungarian,
+    /// Italian language.
     Italian,
+    /// Japanese language.
     Japanese,
+    /// Korean language.
     Korean,
+    /// Norwegian language.
     Norwegian,
+    /// Polish language.
     Polish,
+    /// Portuguese language.
     Portuguese,
+    /// Portuguese (Brazil) language.
     PortugueseBrazil,
+    /// Romanian language.
     Romanian,
+    /// Russian language.
     Russian,
+    /// Spanish (Spain) language.
     SpanishSpain,
+    /// Spanish (Latin America) language.
     SpanishLatinAmerica,
+    /// Swedish language.
     Swedish,
+    /// Thai language.
     Thai,
+    /// Turkish language.
     Turkish,
+    /// Ukrainian language.
     Ukrainian,
+    /// Vietnamese language.
     Vietnamese,
 }
 
@@ -43,8 +72,6 @@ impl fmt::Display for Language {
         write!(f, "{}", self.web_api_language_code())
     }
 }
-
-
 
 impl Language {
     /// API language codes are used with the clientside APIs in the 

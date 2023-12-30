@@ -54,8 +54,10 @@ pub struct SteamTradeOfferAPI {
 }
 
 impl SteamTradeOfferAPI {
-    pub const HOSTNAME: &str = "https://steamcommunity.com";
-    pub const API_HOSTNAME: &str = "https://api.steampowered.com";
+    /// Hostname for requests.
+    pub const HOSTNAME: &str = "steamcommunity.com";
+    /// Hostname for API requests.
+    pub const API_HOSTNAME: &str = "api.steampowered.com";
     
     /// Creates a new [`SteamTradeOfferAPI`]. Requires an `api_key` for making API calls and a 
     /// `data_directory` for storing poll data and classinfo caches.
@@ -91,7 +93,7 @@ impl SteamTradeOfferAPI {
         &self,
         pathname: &str,
     ) -> String {
-        format!("{}{pathname}", Self::HOSTNAME)
+        format!("https://{}{pathname}", Self::HOSTNAME)
     }
     
     fn get_api_url(
@@ -100,7 +102,7 @@ impl SteamTradeOfferAPI {
         method: &str,
         version: usize,
     ) -> String {
-        format!("{}/{interface}/{method}/v{version}", Self::API_HOSTNAME)
+        format!("https://{}/{interface}/{method}/v{version}", Self::API_HOSTNAME)
     }
     
     /// Sets cookies.

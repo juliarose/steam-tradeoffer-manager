@@ -157,12 +157,12 @@ impl TradeOfferManager {
         Ok((sender, receiver))
     }
     
+    /// Stops polling.
     pub fn stop_polling(
         &self,
     ) {
         if let Ok(polling) = self.polling.lock() {
             if let Some(handle) = &*polling {
-                // Abort polling before dropping.
                 handle.abort();
             }
         }

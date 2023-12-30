@@ -42,7 +42,8 @@ pub struct MobileAPI {
 }
 
 impl MobileAPI {
-    pub const HOSTNAME: &str = "https://steamcommunity.com";
+    /// Hostname for requests.
+    pub const HOSTNAME: &str = "steamcommunity.com";
     
     /// Builder for constructing a [`MobileAPI`].
     pub fn builder() -> MobileAPIBuilder {
@@ -65,7 +66,7 @@ impl MobileAPI {
             cookies.push(format!("sessionid={sessionid}"));
             sessionid
         };
-        let url = Self::HOSTNAME.parse::<Url>()
+        let url = format!("https://{}", Self::HOSTNAME).parse::<Url>()
             .unwrap_or_else(|_| panic!("URL could not be parsed from {}", Self::HOSTNAME));
         
         *self.sessionid.write().unwrap() = Some(sessionid);
@@ -95,6 +96,7 @@ impl MobileAPI {
         self.send_confirmation_ajax(&confirmation.id, &confirmation.nonce, Operation::Cancel).await
     }
     
+    /// Accepts a confirmation by ID.
     pub async fn accept_confirmation_by_id(
         &self,
         id: u64,
@@ -103,6 +105,7 @@ impl MobileAPI {
         self.send_confirmation_ajax(&id, &nonce, Operation::Allow).await
     }
     
+    /// Cancels a confirmation by ID.
     pub async fn cancel_confirmation_by_id(
         &self,
         id: u64,

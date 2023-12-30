@@ -95,6 +95,7 @@ impl TradeOfferManagerBuilder {
         self
     }
     
+    /// The web cookies.
     pub fn cookies(mut self, cookies: Vec<String>) -> Self {
         self.cookies = Some(cookies);
         self

@@ -63,6 +63,7 @@ pub enum ParameterError {
     /// Offer is missing trade ID.
     #[error("Offer is missing trade ID.")]
     MissingTradeId,
+    /// Offer is not in accepted state.
     #[error("Offer is not in accepted state. Offer state: {}", .0)]
     NotInAcceptedState(TradeOfferState),
     /// Offer is empty.
@@ -97,7 +98,7 @@ pub enum FileError {
     /// File contents could not be parsed as JSON.
     #[error("Error parsing file contents: {}", .0)]
     Parse(#[from] serde_json::Error),
-    // A path could not be converted to a string.
+    /// A path could not be converted to a string.
     #[error("Path conversion to string failed")]
     PathError,
     /// Error with system time.
@@ -275,9 +276,13 @@ pub enum ParseHtmlError {
 #[derive(thiserror::Error, Debug)]
 #[error("Failed to convert item {}:{}:{} into acquired item as it is missing either the new_contextid or new_assetid property. This usually means the trade it belongs to has not yet been completed.", .appid, .contextid, .assetid)]
 pub struct TryIntoNewAssetError {
+    /// App ID.
     pub appid: AppId,
+    /// Context ID.
     pub contextid: ContextId,
+    /// Asset ID.
     pub assetid: AssetId,
+    /// Amount.
     pub amount: Amount,
 }
 

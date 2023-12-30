@@ -8,19 +8,6 @@ use steam_tradeoffer_manager::{
 };
 use owo_colors::OwoColorize;
 
-async fn accept_offer(
-    manager: &TradeOfferManager,
-    offer: &mut TradeOffer,
-) -> Result<(), Error> {
-    let accepted_offer = manager.accept_offer(offer).await?;
-    
-    if accepted_offer.needs_mobile_confirmation {
-        manager.confirm_offer(offer).await
-    } else {
-        Ok(())
-    }
-}
-
 async fn accept_free_items(
     manager: &TradeOfferManager,
     offer: &mut TradeOffer,
@@ -31,6 +18,19 @@ async fn accept_free_items(
             .map(|item| item.classinfo.market_name.as_str())
             .collect::<Vec<_>>()
             .join(", ")
+    }
+    
+    async fn accept_offer(
+        manager: &TradeOfferManager,
+        offer: &mut TradeOffer,
+    ) -> Result<(), Error> {
+        let accepted_offer = manager.accept_offer(offer).await?;
+        
+        if accepted_offer.needs_mobile_confirmation {
+            manager.confirm_offer(offer).await
+        } else {
+            Ok(())
+        }
     }
     
     println!("{} Active", offer.bright_magenta().bold());
