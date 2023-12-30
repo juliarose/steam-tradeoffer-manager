@@ -22,6 +22,7 @@ lazy_static! {
     };
 }
 
+/// A browser user agent string.
 pub const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
 
 /// Generates a random sessionid.
@@ -36,6 +37,7 @@ pub fn generate_sessionid() -> String {
         .collect()
 }
 
+/// Extracts the session ID and Steam ID from cookie values.
 pub fn get_sessionid_and_steamid_from_cookies(
     cookies: &[String],
 ) -> (Option<String>, Option<u64>) {
@@ -58,6 +60,7 @@ pub fn get_sessionid_and_steamid_from_cookies(
     (sessionid, steamid)
 }
 
+/// Writes a file atomically.
 pub async fn write_file_atomic(
     filepath: PathBuf,
     bytes: &[u8],
@@ -82,6 +85,7 @@ pub async fn write_file_atomic(
     }
 }
 
+/// Creates a client middleware which includes a cookie store and user agent string.
 pub fn get_default_middleware<T>(
     cookie_store: Arc<T>,
     user_agent_string: &'static str,
@@ -103,19 +107,20 @@ where
         .build()
 }
 
+/// Checks if location is login.
 fn is_login(location_option: Option<&header::HeaderValue>) -> bool {
-    match location_option {
-        Some(location) => {
-            if let Ok(location_str) = location.to_str() {
-                regex_is_match!("/login", location_str)
-            } else {
-                false
-            }
-        },
-        None => false,
+    if let Some(location) = location_option {
+        if let Ok(location_str) = location.to_str() {
+            regex_is_match!("/login", location_str)
+        } else {
+            false
+        }
+    } else {
+        false
     }
 }
 
+/// Deserializes and checks response for errors.
 pub async fn parses_response<D>(
     response: reqwest::Response,
 ) -> Result<D, Error>
@@ -131,9 +136,6 @@ where
         500..=599 => Err(Error::Http(response)),
         _ => Ok(response.bytes().await?),
     }?;
-    // let html = String::from_utf8_lossy(&body);
-    
-    // println!("{}", html);
     
     match serde_json::from_slice::<D>(&body) {
         Ok(body) => Ok(body),
