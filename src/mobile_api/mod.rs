@@ -214,7 +214,7 @@ impl MobileAPI {
         &self,
         pathname: &str,
     ) -> String {
-        format!("{}{pathname}", Self::HOSTNAME)
+        format!("https://{}{pathname}", Self::HOSTNAME)
     }
 }
 
