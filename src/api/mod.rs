@@ -121,7 +121,7 @@ impl SteamTradeOfferAPI {
             cookies.push(format!("sessionid={sessionid}"));
             sessionid
         };
-        let url = Self::HOSTNAME.parse::<Url>()
+        let url = format!("https://{}", Self::HOSTNAME).parse::<Url>()
             .unwrap_or_else(|_| panic!("URL could not be parsed from {}", Self::HOSTNAME));
         
         *self.sessionid.write().unwrap() = Some(sessionid);

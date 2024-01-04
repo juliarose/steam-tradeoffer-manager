@@ -24,7 +24,7 @@ pub async fn get_api_key(
 ) -> Result<String, Error> {
     async fn try_get_key(client: &reqwest::Client) -> Result<String, Error> {
         let hostname = SteamTradeOfferAPI::HOSTNAME;
-        let uri = format!("{hostname}/dev/apikey");
+        let uri = format!("https://{hostname}/dev/apikey");
         let response = client.get(uri)
             .send()
             .await?;
@@ -91,7 +91,7 @@ pub async fn get_api_key(
         .ok_or(Error::NotLoggedIn)?;
     let hostname = SteamTradeOfferAPI::HOSTNAME;
     let cookie_store = Arc::new(Jar::default());
-    let url = hostname.parse::<Url>()
+    let url = format!("https://{}", hostname).parse::<Url>()
         .unwrap_or_else(|_| panic!("URL could not be parsed from {hostname}"));
     
     for cookie in cookies {
@@ -140,8 +140,8 @@ pub async fn get_inventory<'a>(
     let appid = options.appid;
     let contextid = options.contextid;
     let hostname = SteamTradeOfferAPI::HOSTNAME;
-    let uri = format!("{hostname}/inventory/{sid}/{appid}/{contextid}");
-    let referer = format!("{hostname}/profiles/{sid}/inventory");
+    let uri = format!("https://{hostname}/inventory/{sid}/{appid}/{contextid}");
+    let referer = format!("https://{hostname}/profiles/{sid}/inventory");
     
     loop {
         let response = options.client.get(&uri)
