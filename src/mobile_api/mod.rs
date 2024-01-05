@@ -43,7 +43,7 @@ pub struct MobileAPI {
 
 impl MobileAPI {
     /// Hostname for requests.
-    const HOSTNAME: &str = "steamcommunity.com";
+    const HOSTNAME: &'static str = "steamcommunity.com";
     
     /// Builder for constructing a [`MobileAPI`].
     pub fn builder() -> MobileAPIBuilder {

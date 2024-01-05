@@ -55,9 +55,9 @@ pub struct SteamTradeOfferAPI {
 
 impl SteamTradeOfferAPI {
     /// Hostname for requests.
-    const HOSTNAME: &str = "steamcommunity.com";
+    const HOSTNAME: &'static str = "steamcommunity.com";
     /// Hostname for API requests.
-    const API_HOSTNAME: &str = "api.steampowered.com";
+    const API_HOSTNAME: &'static str = "api.steampowered.com";
     
     /// Creates a new [`SteamTradeOfferAPI`]. Requires an `api_key` for making API calls and a 
     /// `data_directory` for storing poll data and classinfo caches.

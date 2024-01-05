@@ -1,7 +1,7 @@
 mod builder;
 mod polling;
 
-pub use polling::{PollingMpsc, PollAction, Poll, PollResult, PollType, PollOptions, PollData};
+pub use polling::{PollingMpsc, PollAction, Poll, PollResult, PollType, PollOptions};
 pub use builder::TradeOfferManagerBuilder;
 
 use crate::time;
@@ -20,7 +20,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{Ordering, AtomicU64};
 use steamid_ng::SteamID;
-use tokio::{sync::mpsc, task::JoinHandle};
+use tokio::sync::mpsc;
+use tokio::task::JoinHandle;
 use reqwest::cookie::Jar;
 
 /// Manager which includes functionality for interacting with trade offers, confirmations and 

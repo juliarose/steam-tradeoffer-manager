@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.1.0 (2023-05-16)
+## 0.4.0 (2024-01-05)
+
+### Changed
+- `Error::Http` to `Error::StatusCode`.
+- `HOSTNAME` constants to private.
+
+## 0.3.0 (2023-10-08)
+
+### Changed
+- `chrono` version to `^0.4.27` to avoid a potential error when compiling with older versions.
+- Exposed `mobile_api`.
 
 ## 0.2.0 (2023-06-26)
 
@@ -13,8 +23,4 @@
 ### Removed
 - `TradeOfferManager#do_poll` in favor of utilizing senders.
 
-## 0.3.0 (2023-10-08)
-
-### Changed
-- `chrono` version to `^0.4.27` to avoid a potential error when compiling with older versions.
-- Exposed `mobile_api`.
+## 0.1.0 (2023-05-16)

@@ -13,5 +13,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let api_key = TradeOfferManager::get_api_key(&cookies).await?;
     
     println!("Your Steam Web API key is {}", api_key.bold());
+    
     Ok(())
 }

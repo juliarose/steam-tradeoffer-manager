@@ -1,4 +1,6 @@
-use steam_tradeoffer_manager::{SteamID, request::GetInventoryOptions, get_inventory};
+use steam_tradeoffer_manager::SteamID;
+use steam_tradeoffer_manager::request::GetInventoryOptions;
+use steam_tradeoffer_manager::get_inventory;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
