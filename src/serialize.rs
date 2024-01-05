@@ -62,7 +62,7 @@ pub mod ts_seconds_option_none_when_zero {
         {
             match d.deserialize_i64(SecondsTimestampVisitor) {
                 Ok(date) if date.timestamp() == 0 => Ok(None),
-                Ok(date) => Ok(date).map(Some),
+                Ok(date) => Ok(Some(date)),
                 Err(error) => Err(error),
             }
         }

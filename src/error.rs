@@ -201,7 +201,7 @@ impl TradeOfferError {
 
 impl From<&str> for TradeOfferError {
     fn from(message: &str) -> Self {
-        if let Some(code) = message.trim().split(' ').rev().next() {
+        if let Some(code) = message.trim().split(' ').next_back() {
             let mut chars = code.chars();
             
             if chars.next() != Some('(') {
