@@ -2,6 +2,7 @@ use crate::types::Client;
 use crate::error::{TradeOfferError, Error};
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::fmt::Write;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest::header;
 use reqwest::cookie::{Jar, CookieStore};
@@ -28,13 +29,12 @@ pub const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit
 /// Generates a random sessionid.
 pub fn generate_sessionid() -> String {
     // Should look like "37bf523a24034ec06c60ec61"
-    (0..12)
-        .map(|_| { 
-            let b = rand::random::<u8>();
-            
-            format!("{b:02x?}")
-        })
-        .collect()
+    (0..12).fold(String::new(), |mut output, _| { 
+        let b = rand::random::<u8>();
+        let _ = write!(output, "{b:02x?}");
+        
+        output
+    })
 }
 
 /// Extracts the session ID and Steam ID from cookie values.
