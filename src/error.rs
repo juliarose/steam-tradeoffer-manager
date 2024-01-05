@@ -23,10 +23,9 @@ pub enum Error {
     /// An error was encountered parsing a JSON response body.
     #[error("Error parsing response: {}", .0)]
     Parse(#[from] serde_json::Error),
-    /// An error was encountered on response. This is usually a response with an HTTP code other 
-    /// than 200. Check the status code of the response for more information.
-    #[error("Error {}", .0.status())]
-    Http(reqwest::Response),
+    /// An error was encountered on response. This is a response with an HTTP code other than 200.
+    #[error("Error {}", .0)]
+    StatusCode(reqwest::StatusCode),
     /// You are not logged in.
     #[error("Not logged in")]
     NotLoggedIn,

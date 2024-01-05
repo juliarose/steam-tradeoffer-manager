@@ -132,8 +132,8 @@ where
         300..=399 if is_login(response.headers().get("location")) => {
             Err(Error::NotLoggedIn)
         },
-        400..=499 => Err(Error::Http(response)),
-        500..=599 => Err(Error::Http(response)),
+        400..=499 => Err(Error::StatusCode(response.status())),
+        500..=599 => Err(Error::StatusCode(response.status())),
         _ => Ok(response.bytes().await?),
     }?;
     

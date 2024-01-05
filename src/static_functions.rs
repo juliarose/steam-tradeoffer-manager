@@ -1,6 +1,5 @@
 //! Exported functions in lib.rs
 
-use crate::api::SteamTradeOfferAPI;
 use crate::api::response as api_response;
 use crate::response::{Asset, ClassInfo};
 use crate::request::GetInventoryOptions;
@@ -16,6 +15,8 @@ use reqwest::header::REFERER;
 use scraper::{Html, Selector};
 use url::Url;
 
+const COMMUNITY_HOSTNAME: &str = "steamcommunity.com";
+
 /// Gets your Steam Web API key. This method requires your cookies. If your account does not have
 /// an API key set, one will be created using `localhost` as the domain. By calling this method you
 /// are agreeing to the [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms).
@@ -23,8 +24,7 @@ pub async fn get_api_key(
     cookies: &[String],
 ) -> Result<String, Error> {
     async fn try_get_key(client: &reqwest::Client) -> Result<String, Error> {
-        let hostname = SteamTradeOfferAPI::HOSTNAME;
-        let uri = format!("https://{hostname}/dev/apikey");
+        let uri = format!("https://{COMMUNITY_HOSTNAME}/dev/apikey");
         let response = client.get(uri)
             .send()
             .await?;
@@ -89,10 +89,9 @@ pub async fn get_api_key(
     ) = get_sessionid_and_steamid_from_cookies(cookies);
     let sessionid = sessionid
         .ok_or(Error::NotLoggedIn)?;
-    let hostname = SteamTradeOfferAPI::HOSTNAME;
     let cookie_store = Arc::new(Jar::default());
-    let url = format!("https://{}", hostname).parse::<Url>()
-        .unwrap_or_else(|_| panic!("URL could not be parsed from {hostname}"));
+    let url = format!("https://{COMMUNITY_HOSTNAME}").parse::<Url>()
+        .unwrap_or_else(|_| panic!("URL could not be parsed from {COMMUNITY_HOSTNAME}"));
     
     for cookie in cookies {
         cookie_store.add_cookie_str(cookie, &url);
@@ -105,7 +104,7 @@ pub async fn get_api_key(
     match try_get_key(&client).await {
         Ok(api_key) => Ok(api_key),
         Err(Error::ParseHtml(ParseHtmlError::Malformed(message))) if message == NO_API_KEY => {
-            let uri = format!("{hostname}/dev/registerkey");
+            let uri = format!("https://{COMMUNITY_HOSTNAME}/dev/registerkey");
             let _response = client.post(uri)
                 .form(&CreateAPIKey {
                     domain: "localhost".into(),
@@ -139,9 +138,8 @@ pub async fn get_inventory<'a>(
     let sid = u64::from(options.steamid);
     let appid = options.appid;
     let contextid = options.contextid;
-    let hostname = SteamTradeOfferAPI::HOSTNAME;
-    let uri = format!("https://{hostname}/inventory/{sid}/{appid}/{contextid}");
-    let referer = format!("https://{hostname}/profiles/{sid}/inventory");
+    let uri = format!("https://{COMMUNITY_HOSTNAME}/inventory/{sid}/{appid}/{contextid}");
+    let referer = format!("https://{COMMUNITY_HOSTNAME}/profiles/{sid}/inventory");
     
     loop {
         let response = options.client.get(&uri)
