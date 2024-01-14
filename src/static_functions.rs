@@ -17,9 +17,11 @@ use url::Url;
 
 const COMMUNITY_HOSTNAME: &str = "steamcommunity.com";
 
-/// Gets your Steam Web API key. This method requires your cookies. If your account does not have
-/// an API key set, one will be created using `localhost` as the domain. By calling this method you
-/// are agreeing to the [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms).
+/// Gets your Steam Web API key.
+/// 
+/// This method requires your cookies. If your account does not have an API key set, one will be 
+/// created using `localhost` as the domain. By calling this method you are agreeing to the 
+/// [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms). 
 pub async fn get_api_key(
     cookies: &[String],
 ) -> Result<String, Error> {

@@ -51,6 +51,9 @@ impl MobileAPI {
     }
     
     /// Sets cookies.
+    /// 
+    /// All requests require your cookies to be set. Make sure your cookies are set before using 
+    /// this API.
     pub fn set_cookies(
         &self,
         cookies: &[String],

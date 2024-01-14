@@ -81,6 +81,9 @@ impl SteamTradeOfferAPI {
     }
     
     /// Sets cookies.
+    /// 
+    /// Some features will only work if cookies are set, such as sending or responding to trade 
+    /// offers. Make sure your cookies are set before calling these methods.
     pub fn set_cookies(
         &self,
         cookies: &[String],

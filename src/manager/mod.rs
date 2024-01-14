@@ -46,9 +46,11 @@ impl TradeOfferManager {
         TradeOfferManagerBuilder::new()
     }
     
-    /// Gets your Steam Web API key. This method requires your cookies. If your account does not have
-    /// an API key set, one will be created using `localhost` as the domain. By calling this method you
-    /// are agreeing to the [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms). 
+    /// Gets your Steam Web API key.
+    /// 
+    /// This method requires your cookies. If your account does not have an API key set, one will 
+    /// be created using `localhost` as the domain. By calling this method you are agreeing to the 
+    /// [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms). 
     pub async fn get_api_key(
         cookies: &[String],
     ) -> Result<String, Error> {
@@ -56,6 +58,9 @@ impl TradeOfferManager {
     }
     
     /// Sets cookies.
+    /// 
+    /// Some features will only work if cookies are set, such as sending or responding to trade 
+    /// offers. Make sure your cookies are set before calling these methods.
     pub fn set_cookies(
         &self,
         cookies: &[String],
@@ -103,11 +108,21 @@ impl TradeOfferManager {
     /// or this [`TradeOfferManager`] are dropped. If this method is called again, the previous 
     /// polling task will be aborted.
     /// 
-    /// Fails if you are not logged in. Make sure to set your cookies before using this method.
+    /// Fails if:
+    /// - The API key is not set. (See [`TradeOfferManagerBuilder::api_key`])
+    /// - The cookies are not set. (See [`TradeOfferManager::set_cookies`])
+    /// 
+    /// Make sure these are set before calling.
     pub fn start_polling(
         &self,
         options: PollOptions,
     ) -> Result<(mpsc::Sender<PollAction>, mpsc::Receiver<PollResult>), Error> {
+        if self.api.api_key.is_none() {
+            return Err(Error::Parameter(
+                ParameterError::MissingApiKey
+            ));
+        }
+        
         let steamid = self.get_steamid()?;
         let mut polling = self.polling.lock().unwrap();
         
