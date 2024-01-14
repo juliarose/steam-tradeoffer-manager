@@ -55,13 +55,7 @@ impl TradeOfferManagerBuilder {
     /// information.
     pub fn new(api_key: String) -> Self {
         let data_directory = if let Some(base_dirs) = BaseDirs::new() {
-            let config_dir = base_dirs.config_dir().join("rust-steam-tradeoffer-manager");
-            
-            if !config_dir.exists() {
-                std::fs::create_dir_all(&config_dir).ok();
-            }
-            
-            config_dir
+            base_dirs.config_dir().join("rust-steam-tradeoffer-manager")
         } else {
             "./rust-steam-tradeoffer-manager".into()
         };

@@ -457,6 +457,10 @@ impl std::ops::Drop for TradeOfferManager {
 
 impl From<TradeOfferManagerBuilder> for TradeOfferManager {
     fn from(builder: TradeOfferManagerBuilder) -> Self {
+        if !builder.data_directory.exists() {
+            std::fs::create_dir_all(&builder.data_directory).ok();
+        }
+        
         let cookies = builder.cookie_jar
             .unwrap_or_else(|| Arc::new(Jar::default()));
         let client = builder.client
