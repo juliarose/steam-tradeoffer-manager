@@ -163,7 +163,7 @@ impl TradeOfferManager {
         offer: &mut TradeOffer,
     ) -> Result<AcceptedOffer, Error> {
         if offer.is_our_offer {
-            return Err(ParameterError::CannotAcceptOfferThatWeCreated.into());
+            return Err(ParameterError::CannotAcceptOfferWeCreated.into());
         } else if offer.trade_offer_state != TradeOfferState::Active {
             return Err(ParameterError::CannotAcceptOfferThatIsNotActive(offer.trade_offer_state).into());
         }

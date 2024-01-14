@@ -79,7 +79,7 @@ pub enum ParameterError {
     CannotAcceptOfferThatIsNotActive(TradeOfferState),
     /// Cannot accept an offer that we created.
     #[error("Cannot accept an offer that we created.")]
-    CannotAcceptOfferThatWeCreated,
+    CannotAcceptOfferWeCreated,
     /// Cannot cancel an offer we did not create.
     #[error("Cannot cancel an offer we did not create.")]
     CannotCancelOfferWeDidNotCreate,
