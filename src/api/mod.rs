@@ -59,34 +59,18 @@ impl SteamTradeOfferAPI {
     /// Hostname for API requests.
     const API_HOSTNAME: &'static str = "api.steampowered.com";
     
-    /// Creates a new [`SteamTradeOfferAPI`]. Requires an `api_key` for making API calls and a 
-    /// `data_directory` for storing poll data and classinfo caches.
-    pub fn new<T>(
+    /// Creates a new [`SteamTradeOfferAPI`].
+    pub fn new(
         api_key: String,
-        data_directory: T,
-    ) -> Self
-    where
-        T: Into<PathBuf>,
-    {
-        Self::builder(
-            api_key,
-            data_directory,
-        ).build()
+    ) -> Self {
+        Self::builder(api_key).build()
     }
     
-    /// Builder for constructing a [`SteamTradeOfferAPI`]. Requires an `api_key` for making API 
-    /// calls and a `data_directory` for storing poll data and classinfo caches.
-    pub fn builder<T>(
+    /// Builder for constructing a [`SteamTradeOfferAPI`].
+    pub fn builder(
         api_key: String,
-        data_directory: T,
-    ) -> SteamTradeOfferAPIBuilder
-    where
-        T: Into<PathBuf>,
-    {
-        SteamTradeOfferAPIBuilder::new(
-            api_key,
-            data_directory,
-        )
+    ) -> SteamTradeOfferAPIBuilder {
+        SteamTradeOfferAPIBuilder::new(api_key)
     }
     
     fn get_uri(

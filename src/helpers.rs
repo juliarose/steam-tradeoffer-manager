@@ -11,6 +11,7 @@ use lazy_regex::{regex_is_match, regex_captures};
 use async_fs::File;
 use futures::io::AsyncWriteExt;
 use lazy_static::lazy_static;
+use directories::BaseDirs;
 
 lazy_static! {
     pub static ref DEFAULT_CLIENT: Client = {
@@ -21,6 +22,14 @@ lazy_static! {
             USER_AGENT_STRING,
         )
     };
+}
+
+pub fn default_data_directory() -> PathBuf {
+    if let Some(base_dirs) = BaseDirs::new() {
+        base_dirs.config_dir().join("rust-steam-tradeoffer-manager")
+    } else {
+        "./rust-steam-tradeoffer-manager".into()
+    }
 }
 
 /// A browser user agent string.

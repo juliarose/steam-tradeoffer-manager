@@ -49,8 +49,7 @@ impl TradeOfferManager {
         Self::builder(api_key).build()
     }
     
-    /// Builder for constructing a [`TradeOfferManager`]. Requires an `api_key` for making API 
-    /// calls and a `data_directory` for storing poll data and classinfo caches.
+    /// Builder for constructing a [`TradeOfferManager`].
     pub fn builder(
         api_key: String,
     ) -> TradeOfferManagerBuilder {
@@ -471,8 +470,8 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
         let steamid = Arc::new(AtomicU64::new(0));
         let api = SteamTradeOfferAPI::builder(
             builder.api_key,
-            builder.data_directory.clone()
         )
+            .data_directory(builder.data_directory.clone())
             .language(builder.language)
             .classinfo_cache(builder.classinfo_cache)
             .client(client.clone(), Arc::clone(&cookies))

@@ -1,5 +1,6 @@
 use super::SteamTradeOfferAPI;
 use crate::helpers::USER_AGENT_STRING;
+use crate::helpers::default_data_directory;
 use crate::ClassInfoCache;
 use crate::enums::Language;
 use std::path::PathBuf;
@@ -28,24 +29,28 @@ pub struct SteamTradeOfferAPIBuilder {
 }
 
 impl SteamTradeOfferAPIBuilder {
-    /// Creates a new [`SteamTradeOfferAPIBuilder`]. The `data_directory` is the directory used to 
-    /// store poll data and classinfo data.
-    pub fn new<T>(
+    /// Creates a new [`SteamTradeOfferAPIBuilder`].
+    pub fn new(
         api_key: String,
-        data_directory: T,
-    ) -> Self
-    where
-        T: Into<PathBuf>,
-    {
+    ) -> Self {
         Self {
             api_key,
             language: Language::English,
             classinfo_cache: ClassInfoCache::default(),
-            data_directory: data_directory.into(),
+            data_directory: default_data_directory(),
             cookies: None,
             client: None,
             user_agent: USER_AGENT_STRING,
         }
+    }
+    
+    /// The `data_directory` is the directory used to store poll data and classinfo data.
+    pub fn data_directory<T>(mut self, data_directory: T) -> Self
+    where
+        T: Into<PathBuf>,
+    {
+        self.data_directory = data_directory.into();
+        self
     }
     
     /// The language for API responses.

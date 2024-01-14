@@ -1,12 +1,12 @@
 use super::TradeOfferManager;
 use crate::helpers::USER_AGENT_STRING;
+use crate::helpers::default_data_directory;
 use crate::ClassInfoCache;
 use crate::enums::Language;
 use std::path::PathBuf;
 use std::sync::Arc;
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
-use directories::BaseDirs;
 
 /// Builder for constructing a [`TradeOfferManager`].
 #[derive(Debug, Clone)]
@@ -54,18 +54,12 @@ impl TradeOfferManagerBuilder {
     /// Refer to the [directories](https://docs.rs/directories/5.0.1/directories/struct.BaseDirs.html) crate for more 
     /// information.
     pub fn new(api_key: String) -> Self {
-        let data_directory = if let Some(base_dirs) = BaseDirs::new() {
-            base_dirs.config_dir().join("rust-steam-tradeoffer-manager")
-        } else {
-            "./rust-steam-tradeoffer-manager".into()
-        };
-        
         Self {
             api_key,
             identity_secret: None,
             language: Language::English,
             classinfo_cache: ClassInfoCache::default(),
-            data_directory,
+            data_directory: default_data_directory(),
             cookie_jar: None,
             client: None,
             user_agent: USER_AGENT_STRING,
