@@ -3,11 +3,12 @@ use crate::helpers::USER_AGENT_STRING;
 use crate::ClassInfoCache;
 use crate::enums::Language;
 use std::path::PathBuf;
-use std::sync::{Mutex, Arc};
+use std::sync::Arc;
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
 
 /// Builder for constructing a [`TradeOfferManager`].
+#[derive(Debug, Clone)]
 pub struct TradeOfferManagerBuilder {
     /// Your account's API key from <https://steamcommunity.com/dev/apikey>.
     pub api_key: String,
@@ -17,7 +18,7 @@ pub struct TradeOfferManagerBuilder {
     pub language: Language,
     /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
     /// to share state.
-    pub classinfo_cache: Arc<Mutex<ClassInfoCache>>,
+    pub classinfo_cache: ClassInfoCache,
     /// The location to save data to.
     pub data_directory: PathBuf,
     /// Request cookies.
@@ -46,7 +47,7 @@ impl TradeOfferManagerBuilder {
             api_key,
             identity_secret: None,
             language: Language::English,
-            classinfo_cache: Arc::new(Mutex::new(ClassInfoCache::default())),
+            classinfo_cache: ClassInfoCache::default(),
             data_directory: data_directory.into(),
             cookie_jar: None,
             client: None,
@@ -68,9 +69,9 @@ impl TradeOfferManagerBuilder {
         self
     }
     
-    /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers.
+    /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers
     /// to share state.
-    pub fn classinfo_cache(mut self, classinfo_cache: Arc<Mutex<ClassInfoCache>>) -> Self {
+    pub fn classinfo_cache(mut self, classinfo_cache: ClassInfoCache) -> Self {
         self.classinfo_cache = classinfo_cache;
         self
     }

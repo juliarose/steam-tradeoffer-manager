@@ -26,7 +26,7 @@ use crate::classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers}
 use crate::request::{GetInventoryOptions, NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions};
 use std::path::PathBuf;
 use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, RwLock, Mutex};
+use std::sync::{Arc, RwLock};
 use serde::{Deserialize, Serialize};
 use reqwest::cookie::Jar;
 use reqwest::header::REFERER;
@@ -48,7 +48,7 @@ pub struct SteamTradeOfferAPI {
     /// The session ID.
     sessionid: Arc<RwLock<Option<String>>>,
     /// The cache for setting and getting [`ClassInfo`] data.
-    classinfo_cache: Arc<Mutex<ClassInfoCache>>,
+    classinfo_cache: ClassInfoCache,
     /// The directory to store [`ClassInfo`] data.
     data_directory: PathBuf,
 }
@@ -327,7 +327,7 @@ impl SteamTradeOfferAPI {
             })
             .collect::<HashMap<_, _>>();
         
-        self.classinfo_cache.lock().unwrap().insert_map(&classinfos);
+        self.classinfo_cache.insert_map(&classinfos);
 
         Ok(classinfos)
     }
@@ -356,31 +356,17 @@ impl SteamTradeOfferAPI {
     ) -> Result<ClassInfoMap, Error> {
         let mut apps: HashMap<AppId, Vec<ClassInfoAppClass>> = HashMap::new();
         let mut map: HashMap<ClassInfoClass, Arc<ClassInfo>> = HashMap::new();
-        let mut needed: HashSet<&ClassInfoClass> = HashSet::from_iter(classes.iter());
         
         if classes.is_empty() {
             return Ok(map);
         }
         
-        {
-            // check memory for caches
-            let mut classinfo_cache = self.classinfo_cache.lock().unwrap();
-            
-            needed = needed
-                .into_iter()
-                .filter(|class| {
-                    if let Some(classinfo) = classinfo_cache.get(class) {
-                        map.insert(**class, classinfo);
-                        // we don't need it
-                        false
-                    } else {
-                        true
-                    }
-                })
-                .collect::<HashSet<_>>();
-            
-            // drop the lock
-        }
+        // check memory for caches
+        let (cached, misses) = self.classinfo_cache.get_map(&classes);
+        
+        map.extend(cached);
+        
+        let mut needed = HashSet::from_iter(misses.into_iter());
         
         if !needed.is_empty() {
             // check filesystem for caches
@@ -393,17 +379,17 @@ impl SteamTradeOfferAPI {
                 .collect::<Vec<_>>();
             
             if !results.is_empty() {
-                let mut classinfo_cache = self.classinfo_cache.lock().unwrap();
+                let mut inserts = HashMap::new();
                 
                 for (class, classinfo) in results {
                     let classinfo = Arc::new(classinfo);
                     
                     needed.remove(&class);
-                    classinfo_cache.insert(class, Arc::clone(&classinfo));
-                    map.insert(class, classinfo);
+                    inserts.insert(class, Arc::clone(&classinfo));
                 }
-        
-                // drop the lock
+                
+                self.classinfo_cache.insert_map(&inserts);
+                map.extend(inserts);
             }
         }
         

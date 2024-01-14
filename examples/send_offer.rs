@@ -1,4 +1,5 @@
-use steam_tradeoffer_manager::{TradeOfferManager, request::NewTradeOffer, SteamID};
+use steam_tradeoffer_manager::{TradeOfferManager, SteamID};
+use steam_tradeoffer_manager::request::NewTradeOffer;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

@@ -1,4 +1,5 @@
-use steam_tradeoffer_manager::{TradeOfferManager, SteamID, enums::GetUserDetailsMethod};
+use steam_tradeoffer_manager::{TradeOfferManager, SteamID};
+use steam_tradeoffer_manager::enums::GetUserDetailsMethod;
 use owo_colors::OwoColorize;
 
 #[tokio::main]

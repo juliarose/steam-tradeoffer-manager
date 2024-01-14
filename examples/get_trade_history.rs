@@ -1,8 +1,6 @@
-use steam_tradeoffer_manager::{
-    TradeOfferManager,
-    response::TradeAsset,
-    request::GetTradeHistoryOptions,
-};
+use steam_tradeoffer_manager::TradeOfferManager;
+use steam_tradeoffer_manager::response::TradeAsset;
+use steam_tradeoffer_manager::request::GetTradeHistoryOptions;
 
 fn assets_item_names(assets: &[TradeAsset]) -> String {
     assets

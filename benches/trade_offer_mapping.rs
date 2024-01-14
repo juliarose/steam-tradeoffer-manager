@@ -5,7 +5,7 @@ use steam_tradeoffer_manager::api::response::RawTradeOffer;
 use steam_tradeoffer_manager::error::FileError;
 use std::path::{PathBuf, Path};
 use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use criterion::{criterion_group, criterion_main, Criterion};
 use serde::Deserialize;
 
@@ -71,7 +71,7 @@ fn get_offers() -> Vec<RawTradeOffer> {
 
 fn get_classinfo_cache(
     offers: &[RawTradeOffer],
-) -> Arc<Mutex<ClassInfoCache>> {
+) -> ClassInfoCache {
     let classinfos_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("benches/fixtures/classinfos");
     let classes = offers
         .iter()
@@ -83,34 +83,26 @@ fn get_classinfo_cache(
         })
         .collect::<HashSet<_>>()
         .into_iter()
-        .map(|class| load_classinfo_sync(
-            class,
-            &classinfos_path,
-        ).unwrap())
-        .collect::<Vec<_>>();
-    let mut classinfo_cache = ClassInfoCache::new(500);
+        .map(|class| {
+            let (class, classinfo) = load_classinfo_sync(
+                class,
+                &classinfos_path,
+            ).unwrap();
+            
+            (class, Arc::new(classinfo))
+        })
+        .collect::<HashMap<_, _>>();
+    let classinfo_cache = ClassInfoCache::with_capacity(500);
     
-    for (class, classinfo) in classes {
-        classinfo_cache.insert(class, Arc::new(classinfo));
-    }
-    
-    Arc::new(Mutex::new(classinfo_cache))
+    classinfo_cache.insert_map(&classes);
+    classinfo_cache
 }
 
 fn get_map(
-    classes: Vec<ClassInfoClass>,
-    classinfo_cache: &Arc<Mutex<ClassInfoCache>>,
+    classes: &[ClassInfoClass],
+    classinfo_cache: &ClassInfoCache,
 ) -> ClassInfoMap {
-    let mut classinfo_cache = classinfo_cache.lock().unwrap();
-    
-    classes
-        .into_iter()
-        .map(|class| {
-            let classinfo = classinfo_cache.get(&class).unwrap();
-            
-            (class, classinfo)
-        })
-        .collect::<_>()
+    classinfo_cache.get_map(&classes).0
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -128,9 +120,9 @@ fn criterion_benchmark(c: &mut Criterion) {
             })
             .collect::<HashSet<_>>()
             .into_iter()
-            .collect();
+            .collect::<Vec<_>>();
         let map = get_map(
-            classes,
+            &classes,
             &classinfo_cache,
         );
         let _ = offers

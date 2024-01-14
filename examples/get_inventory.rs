@@ -17,6 +17,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(item) = inventory.first() {
         println!("First item: {}", item.classinfo.market_name);
     }
-
+    
     Ok(())
 }
