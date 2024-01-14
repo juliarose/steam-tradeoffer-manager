@@ -37,7 +37,7 @@ use url::Url;
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPI {
     /// The API key.
-    pub api_key: String,
+    pub api_key: Option<String>,
     /// The language for descriptions.
     pub language: Language,
     /// The client for making requests.
@@ -59,18 +59,9 @@ impl SteamTradeOfferAPI {
     /// Hostname for API requests.
     const API_HOSTNAME: &'static str = "api.steampowered.com";
     
-    /// Creates a new [`SteamTradeOfferAPI`].
-    pub fn new(
-        api_key: String,
-    ) -> Self {
-        Self::builder(api_key).build()
-    }
-    
     /// Builder for constructing a [`SteamTradeOfferAPI`].
-    pub fn builder(
-        api_key: String,
-    ) -> SteamTradeOfferAPIBuilder {
-        SteamTradeOfferAPIBuilder::new(api_key)
+    pub fn builder() -> SteamTradeOfferAPIBuilder {
+        SteamTradeOfferAPIBuilder::new()
     }
     
     fn get_uri(
@@ -265,11 +256,13 @@ impl SteamTradeOfferAPI {
         classes: &[ClassInfoAppClass],
     ) -> Result<ClassInfoMap, Error> {
         let query = {
+            let key = self.api_key.as_ref()
+                .ok_or(ParameterError::MissingApiKey)?;
             let mut query = vec![
-                ("key".to_string(), self.api_key.to_string()),
-                ("appid".to_string(), appid.to_string()),
-                ("language".to_string(), self.language.web_api_language_code().to_string()),
-                ("class_count".to_string(), classes.len().to_string()),
+                ("key".into(), key.into()),
+                ("appid".into(), appid.to_string()),
+                ("language".into(), self.language.web_api_language_code().to_string()),
+                ("class_count".into(), classes.len().to_string()),
             ];
             
             for (i, (classid, instanceid)) in classes.iter().enumerate() {
@@ -420,17 +413,19 @@ impl SteamTradeOfferAPI {
             cursor: Option<u32>,
         }
         
+        let uri = self.get_api_url("IEconService", "GetTradeOffers", 1);
+        let key = self.api_key.as_ref()
+            .ok_or(ParameterError::MissingApiKey)?;
         let mut cursor = None;
         let time_historical_cutoff = historical_cutoff
             .map(|cutoff| cutoff.timestamp() as u64);
-        let uri = self.get_api_url("IEconService", "GetTradeOffers", 1);
         let mut offers = Vec::new();
         let mut descriptions = Vec::new();
         
         loop {
             let response = self.client.get(&uri)
                 .query(&Form {
-                    key: &self.api_key,
+                    key,
                     language: self.language.web_api_language_code(),
                     active_only,
                     historical_only,
@@ -574,9 +569,11 @@ impl SteamTradeOfferAPI {
         }
         
         let uri = self.get_api_url("IEconService", "GetTradeOffer", 1);
+        let key = self.api_key.as_ref()
+            .ok_or(ParameterError::MissingApiKey)?;
         let response = self.client.get(&uri)
             .query(&Form {
-                key: &self.api_key,
+                key,
                 tradeofferid,
             })
             .send()
@@ -667,9 +664,11 @@ impl SteamTradeOfferAPI {
         }
         
         let uri = self.get_api_url("IEconService", "GetTradeHistory", 1);
+        let key = self.api_key.as_ref()
+            .ok_or(ParameterError::MissingApiKey)?;
         let response = self.client.get(&uri)
             .query(&Form {
-                key: &self.api_key,
+                key,
                 max_trades,
                 start_after_time,
                 start_after_tradeid,
@@ -1016,13 +1015,14 @@ impl From<SteamTradeOfferAPIBuilder> for SteamTradeOfferAPI {
                 Arc::clone(&cookies),
                 builder.user_agent,
             ));
+        let classinfo_cache = builder.classinfo_cache.unwrap_or_default();
         
         Self {
             client,
             cookies: Arc::clone(&cookies),
             api_key: builder.api_key,
             language: builder.language,
-            classinfo_cache: builder.classinfo_cache,
+            classinfo_cache,
             data_directory: builder.data_directory,
             sessionid: Arc::new(std::sync::RwLock::new(None)),
         }

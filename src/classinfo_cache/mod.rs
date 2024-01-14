@@ -8,13 +8,16 @@ use lfu_cache::LfuCache;
 
 type LfuClassInfoMap = LfuCache<ClassInfoClass, Arc<ClassInfo>>;
 
+const DEFAULT_CACHE_SIZE: usize = 1000;
+
 /// Used for storing caches of [`ClassInfo`] data in memory. Data is stored using an [`LfuCache`]
-/// to limit how many elements are stored in memory. While you probably won't need to use this
-/// directly, it is used internally by [`TradeOfferManager`][crate::TradeOfferManager] for 
-/// managing [`ClassInfo`] data.
+/// to limit how many elements are stored in memory.
 /// 
-/// Internally the cache is stored in an [`Arc`] wrapped in a [`Mutex`]. This allows you to clone 
-/// the cache and share it between multiple instances of 
+/// While you probably won't need to use this directly, it is used internally by 
+/// [`TradeOfferManager`][crate::TradeOfferManager] for managing [`ClassInfo`] data.
+/// 
+/// Internally the cache is stored in wrapped in an [`Arc`] and [`Mutex`]. This allows you to 
+/// clone the [`ClassInfoCache`] and share it between multiple instances of 
 /// [`TradeOfferManager`][crate::TradeOfferManager].
 /// 
 /// # Examples
@@ -22,13 +25,13 @@ type LfuClassInfoMap = LfuCache<ClassInfoClass, Arc<ClassInfo>>;
 /// use steam_tradeoffer_manager::{TradeOfferManager, ClassInfoCache};
 /// 
 /// let classinfo_cache = ClassInfoCache::with_capacity(5000);
-/// let builder = TradeOfferManager::builder("API_KEY".into(), "./assets")
+/// let builder = TradeOfferManager::builder("API_KEY".into())
 ///    .classinfo_cache(classinfo_cache.clone());
 /// // While you could just clone the builder, this demonstrates the utility of re-using the same 
 /// // cache.
-/// let another_builder = TradeOfferManager::builder("API_KEY".into(), "./assets")
-///    .classinfo_cache(classinfo_cache.clone());
-/// ````
+/// let another_builder = TradeOfferManager::builder("API_KEY".into())
+///    .classinfo_cache(classinfo_cache);
+/// ```
 #[derive(Debug, Clone)]
 pub struct ClassInfoCache {
     inner: Arc<Mutex<LfuClassInfoMap>>,
@@ -36,7 +39,7 @@ pub struct ClassInfoCache {
 
 impl Default for ClassInfoCache {
     fn default() -> Self {
-        Self::with_capacity(2000)
+        Self::with_capacity(DEFAULT_CACHE_SIZE)
     }
 }
 

@@ -10,11 +10,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map(|s| s.to_owned())
         .collect::<Vec<_>>();
     let steamid: SteamID = std::env::var("STEAMID_OTHER")?.parse::<u64>()?.into();
-    // A blank API key can be passed, it isn't needed in this example.
-    let manager = TradeOfferManager::new(String::from(""));
-    
-    manager.set_cookies(&cookies);
-    
+    // An API key isn't needed for this example.
+    let manager = TradeOfferManager::builder()
+        // Cookies are required for sending an offer. These can be included in the builder or 
+        // using the `set_cookies` method on the manager.
+        .cookies(cookies)
+        .build();
     // This method returns only tradable items.
     let inventory = manager.get_inventory(steamid, 440, 2).await?;
     let items = inventory.into_iter().take(5);

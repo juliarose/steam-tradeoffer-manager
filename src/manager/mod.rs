@@ -28,9 +28,8 @@ use reqwest::cookie::Jar;
 /// inventories.
 #[derive(Debug, Clone)]
 pub struct TradeOfferManager {
-    /// The underlying API. The methods on [`TradeOfferManager`] only include more conventional 
-    /// ease-of-use methods. Use this API if you have a more specific use-case.
-    pub api: SteamTradeOfferAPI,
+    /// The underlying API.
+    api: SteamTradeOfferAPI,
     /// The underlying API for mobile confirmations.
     mobile_api: MobileAPI,
     /// The account's SteamID.
@@ -42,18 +41,9 @@ pub struct TradeOfferManager {
 }
 
 impl TradeOfferManager {
-    /// Creates a new [`TradeOfferManager`].
-    pub fn new(
-        api_key: String,
-    ) -> Self {
-        Self::builder(api_key).build()
-    }
-    
     /// Builder for constructing a [`TradeOfferManager`].
-    pub fn builder(
-        api_key: String,
-    ) -> TradeOfferManagerBuilder {
-        TradeOfferManagerBuilder::new(api_key)
+    pub fn builder() -> TradeOfferManagerBuilder {
+        TradeOfferManagerBuilder::new()
     }
     
     /// Gets your Steam Web API key. This method requires your cookies. If your account does not have
@@ -464,14 +454,17 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
                 builder.user_agent,
             ));
         let steamid = Arc::new(AtomicU64::new(0));
-        let api = SteamTradeOfferAPI::builder(
-            builder.api_key,
-        )
+        let classinfo_cache = builder.classinfo_cache.unwrap_or_default();
+        let mut api_builder = SteamTradeOfferAPI::builder()
             .data_directory(builder.data_directory.clone())
             .language(builder.language)
-            .classinfo_cache(builder.classinfo_cache)
-            .client(client.clone(), Arc::clone(&cookies))
-            .build();
+            .classinfo_cache(classinfo_cache)
+            .client(client.clone(), Arc::clone(&cookies));
+        
+        if let Some(api_key) = builder.api_key {
+            api_builder = api_builder.api_key(api_key);   
+        }
+        
         let mut mobile_api_builder = MobileAPI::builder()
             .client(client, cookies)
             .time_offset(builder.time_offset);
@@ -480,11 +473,10 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
             mobile_api_builder = mobile_api_builder.identity_secret(identity_secret);
         }
         
-        let mobile_api = mobile_api_builder.build();
         let manager = Self {
             steamid: Arc::clone(&steamid),
-            api,
-            mobile_api,
+            api: api_builder.build(),
+            mobile_api: mobile_api_builder.build(),
             data_directory: builder.data_directory,
             polling: Arc::new(Mutex::new(None)),
         };

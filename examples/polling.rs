@@ -60,7 +60,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
     let api_key = TradeOfferManager::get_api_key(&cookies).await?;
-    let manager = TradeOfferManager::builder(api_key)
+    let manager = TradeOfferManager::builder()
+        .api_key(api_key)
         .identity_secret(String::from("secret"))
         .cookies(cookies) // Cookies can also be set using the `set_cookies` method on the manager
         .build();

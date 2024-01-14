@@ -12,12 +12,12 @@ use reqwest_middleware::ClientWithMiddleware;
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPIBuilder {
     /// Your account's API key from <https://steamcommunity.com/dev/apikey>.
-    pub api_key: String,
+    pub api_key: Option<String>,
     /// The language for API responses.
     pub language: Language,
     /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
     /// to share state.
-    pub classinfo_cache: ClassInfoCache,
+    pub classinfo_cache: Option<ClassInfoCache>,
     /// The location to save data to.
     pub data_directory: PathBuf,
     /// Request cookies.
@@ -30,18 +30,24 @@ pub struct SteamTradeOfferAPIBuilder {
 
 impl SteamTradeOfferAPIBuilder {
     /// Creates a new [`SteamTradeOfferAPIBuilder`].
-    pub fn new(
-        api_key: String,
-    ) -> Self {
+    pub fn new() -> Self {
         Self {
-            api_key,
+            api_key: None,
             language: Language::English,
-            classinfo_cache: ClassInfoCache::default(),
+            classinfo_cache: None,
             data_directory: default_data_directory(),
             cookies: None,
             client: None,
             user_agent: USER_AGENT_STRING,
         }
+    }
+    
+    /// The API key. Some features will work without an API key and only require cookies, such as 
+    /// sending or responding to trade offers. It is required for all Steam API requests, such 
+    /// as getting trade offers or trade histories.
+    pub fn api_key(mut self, api_key: String) -> Self {
+        self.api_key = Some(api_key);
+        self
     }
     
     /// The `data_directory` is the directory used to store poll data and classinfo data.
@@ -62,7 +68,7 @@ impl SteamTradeOfferAPIBuilder {
     /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
     /// to share state.
     pub fn classinfo_cache(mut self, classinfo_cache: ClassInfoCache) -> Self {
-        self.classinfo_cache = classinfo_cache;
+        self.classinfo_cache = Some(classinfo_cache);
         self
     }
     
@@ -71,12 +77,6 @@ impl SteamTradeOfferAPIBuilder {
     pub fn client(mut self, client: ClientWithMiddleware, cookies: Arc<Jar>) -> Self {
         self.client = Some(client);
         self.cookies = Some(cookies);
-        self
-    }
-    
-    /// The API key.
-    pub fn api_key(mut self, api_key: String) -> Self {
-        self.api_key = api_key;
         self
     }
     

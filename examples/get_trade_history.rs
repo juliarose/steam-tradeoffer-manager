@@ -15,7 +15,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
     
     let api_key = std::env::var("API_KEY")?;
-    let manager = TradeOfferManager::new(api_key);
+    let manager = TradeOfferManager::builder()
+        .api_key(api_key)
+        .build();
     // Gets your last trade.
     let trades = manager.get_trade_history(&GetTradeHistoryOptions {
         max_trades: 1,

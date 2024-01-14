@@ -11,10 +11,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .split("; ")
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
-    // A blank key API key can be passed, it isn't needed in this example.
-    let manager = TradeOfferManager::builder(String::from(""))
+    // An API key isn't needed for this example.
+    let manager = TradeOfferManager::builder()
         .identity_secret(String::from("secret"))
-        .cookies(cookies) // Cookies can also be set using the `set_cookies` method on the manager
+        // Cookies are required for getting user details. These can be included in the builder or 
+        // using the `set_cookies` method on the manager.
+        .cookies(cookies)
         .build();
     // Passing in GetUserDetailsMethod::None assumes we are friends with the user.
     let user_details = manager.get_user_details(steamid, GetUserDetailsMethod::None).await?;

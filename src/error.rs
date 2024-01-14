@@ -59,6 +59,9 @@ pub enum Error {
 /// Any number of issues with a provided parameter.
 #[derive(thiserror::Error, Debug)]
 pub enum ParameterError {
+    /// An API key was expected but none was provided.
+    #[error("No API key provided.")]
+    MissingApiKey,
     /// Offer is missing trade ID.
     #[error("Offer is missing trade ID.")]
     MissingTradeId,
