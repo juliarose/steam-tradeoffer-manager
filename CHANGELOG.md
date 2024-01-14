@@ -22,7 +22,7 @@
 - Mobile confirmations to use the new Steam endpoints.
 - `TradeOfferManager#start_polling` was modified in favor of using sender/receiver-style messaging.
 - `Error::ConfirmationUnsuccessful` now holds an optional message string.
-- `ConfirmationType::Unknown` now olds a u32 value holding the code for the unknown confirmation type.
+- `ConfirmationType::Unknown` now holds a u32 value holding the code for the unknown confirmation type.
 
 ### Removed
 - `TradeOfferManager#do_poll` in favor of utilizing senders.

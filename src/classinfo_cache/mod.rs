@@ -25,11 +25,11 @@ const DEFAULT_CACHE_SIZE: usize = 1000;
 /// use steam_tradeoffer_manager::{TradeOfferManager, ClassInfoCache};
 /// 
 /// let classinfo_cache = ClassInfoCache::with_capacity(5000);
-/// let builder = TradeOfferManager::builder("API_KEY".into())
+/// let builder = TradeOfferManager::builder()
 ///    .classinfo_cache(classinfo_cache.clone());
 /// // While you could just clone the builder, this demonstrates the utility of re-using the same 
 /// // cache.
-/// let another_builder = TradeOfferManager::builder("API_KEY".into())
+/// let another_builder = TradeOfferManager::builder()
 ///    .classinfo_cache(classinfo_cache);
 /// ```
 #[derive(Debug, Clone)]
