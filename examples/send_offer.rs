@@ -11,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect::<Vec<_>>();
     let steamid: SteamID = std::env::var("STEAMID_OTHER")?.parse::<u64>()?.into();
     // A blank API key can be passed, it isn't needed in this example.
-    let manager = TradeOfferManager::new(String::from(""), "./assets");
+    let manager = TradeOfferManager::new(String::from(""));
     
     manager.set_cookies(&cookies);
     

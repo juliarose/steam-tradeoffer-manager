@@ -364,7 +364,7 @@ impl SteamTradeOfferAPI {
             mut map,
             misses,
         ) = self.classinfo_cache.get_map(&classes);
-        let mut needed = HashSet::from_iter(misses.into_iter());
+        let mut needed = HashSet::from_iter(misses);
         
         if !needed.is_empty() {
             // check filesystem for caches

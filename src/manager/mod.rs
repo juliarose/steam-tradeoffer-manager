@@ -42,34 +42,19 @@ pub struct TradeOfferManager {
 }
 
 impl TradeOfferManager {
-    /// Creates a new [`TradeOfferManager`]. Requires an `api_key` for making API calls and a 
-    /// `data_directory` for storing poll data and classinfo caches.
-    pub fn new<T>(
+    /// Creates a new [`TradeOfferManager`].
+    pub fn new(
         api_key: String,
-        data_directory: T,
-    ) -> Self
-    where
-        T: Into<PathBuf>,
-    {
-        Self::builder(
-            api_key,
-            data_directory,
-        ).build()
+    ) -> Self {
+        Self::builder(api_key).build()
     }
     
     /// Builder for constructing a [`TradeOfferManager`]. Requires an `api_key` for making API 
     /// calls and a `data_directory` for storing poll data and classinfo caches.
-    pub fn builder<T>(
+    pub fn builder(
         api_key: String,
-        data_directory: T,
-    ) -> TradeOfferManagerBuilder
-    where
-        T: Into<PathBuf>,
-    {
-        TradeOfferManagerBuilder::new(
-            api_key,
-            data_directory,
-        )
+    ) -> TradeOfferManagerBuilder {
+        TradeOfferManagerBuilder::new(api_key)
     }
     
     /// Gets your Steam Web API key. This method requires your cookies. If your account does not have

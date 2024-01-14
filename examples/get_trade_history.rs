@@ -15,8 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
     
     let api_key = std::env::var("API_KEY")?;
-    // A data directory is required for maintaining state.
-    let manager = TradeOfferManager::new(api_key, "./assets");
+    let manager = TradeOfferManager::new(api_key);
     // Gets your last trade.
     let trades = manager.get_trade_history(&GetTradeHistoryOptions {
         max_trades: 1,

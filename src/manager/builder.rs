@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
+use directories::BaseDirs;
 
 /// Builder for constructing a [`TradeOfferManager`].
 #[derive(Debug, Clone)]
@@ -34,27 +35,58 @@ pub struct TradeOfferManagerBuilder {
 }
 
 impl TradeOfferManagerBuilder {
-    /// Creates a new [`TradeOfferManagerBuilder`]. The `data_directory` is the directory used to 
-    /// store poll data and classinfo data.
-    pub fn new<T>(
-        api_key: String,
-        data_directory: T,
-    ) -> Self
-    where
-        T: Into<PathBuf>,
-    {
+    /// Creates a new [`TradeOfferManagerBuilder`].
+    /// 
+    /// An API key is required to use the Steam Web API. You can get one from the  
+    /// [Steam Community](https://steamcommunity.com/dev/apikey) or by using the 
+    /// [`TradeOfferManager::get_api_key`][`crate::TradeOfferManager`] method.
+    /// 
+    /// By default, the data directory is stored in the config directory of the current user 
+    /// determined by the OS:
+    /// - Linux: `/home/<username>/.config/rust-steam-tradeoffer-manager`
+    /// - MacOS: `/Users/<username>/Library/Application Support/rust-steam-tradeoffer-manager`
+    /// - Windows: `C:\Users\<username>\AppData\Roaming\rust-steam-tradeoffer-manager`
+    /// 
+    /// In some cases (such as when running in a Docker container), the config directory may not be 
+    /// available. In this case, the data directory will be stored in the 
+    /// `rust-steam-tradeoffer-manager` directory in the current working directory.
+    /// 
+    /// Refer to the [directories](https://docs.rs/directories/5.0.1/directories/struct.BaseDirs.html) crate for more 
+    /// information.
+    pub fn new(api_key: String) -> Self {
+        let data_directory = if let Some(base_dirs) = BaseDirs::new() {
+            let config_dir = base_dirs.config_dir().join("rust-steam-tradeoffer-manager");
+            
+            if !config_dir.exists() {
+                std::fs::create_dir_all(&config_dir).ok();
+            }
+            
+            config_dir
+        } else {
+            "./rust-steam-tradeoffer-manager".into()
+        };
+        
         Self {
             api_key,
             identity_secret: None,
             language: Language::English,
             classinfo_cache: ClassInfoCache::default(),
-            data_directory: data_directory.into(),
+            data_directory,
             cookie_jar: None,
             client: None,
             user_agent: USER_AGENT_STRING,
             time_offset: 0,
             cookies: None,
         }
+    }
+    
+    /// The `data_directory` is the directory used to store poll data and classinfo data.
+    pub fn data_directory<T>(mut self, data_directory: T) -> Self
+    where
+        T: Into<PathBuf>,
+    {
+        self.data_directory = data_directory.into();
+        self
     }
     
     /// The identity secret for the account. Required for mobile confirmations.
