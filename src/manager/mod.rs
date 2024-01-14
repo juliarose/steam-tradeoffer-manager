@@ -118,9 +118,7 @@ impl TradeOfferManager {
         options: PollOptions,
     ) -> Result<(mpsc::Sender<PollAction>, mpsc::Receiver<PollResult>), Error> {
         if self.api.api_key.is_none() {
-            return Err(Error::Parameter(
-                ParameterError::MissingApiKey
-            ));
+            return Err(ParameterError::MissingApiKey.into());
         }
         
         let steamid = self.get_steamid()?;
@@ -165,13 +163,9 @@ impl TradeOfferManager {
         offer: &mut TradeOffer,
     ) -> Result<AcceptedOffer, Error> {
         if offer.is_our_offer {
-            return Err(Error::Parameter(
-                ParameterError::CannotAcceptOfferThatIsOurs
-            ));
+            return Err(ParameterError::CannotAcceptOfferThatWeCreated.into());
         } else if offer.trade_offer_state != TradeOfferState::Active {
-            return Err(Error::Parameter(
-                ParameterError::CannotAcceptOfferThatIsNotActive(offer.trade_offer_state)
-            ));
+            return Err(ParameterError::CannotAcceptOfferThatIsNotActive(offer.trade_offer_state).into());
         }
         
         let accepted_offer = self.api.accept_offer(offer.tradeofferid, offer.partner).await?;
@@ -191,9 +185,7 @@ impl TradeOfferManager {
         offer: &mut TradeOffer,
     ) -> Result<(), Error> {
         if !offer.is_our_offer {
-            return Err(Error::Parameter(
-                ParameterError::CannotCancelOfferWeDidNotCreate
-            ));
+            return Err(ParameterError::CannotCancelOfferWeDidNotCreate.into());
         }
         
         self.api.cancel_offer(offer.tradeofferid).await?;
@@ -209,9 +201,7 @@ impl TradeOfferManager {
         offer: &mut TradeOffer,
     ) -> Result<(), Error> {
         if offer.is_our_offer {
-            return Err(Error::Parameter(
-                ParameterError::CannotDeclineOfferWeCreated
-            ));
+            return Err(ParameterError::CannotDeclineOfferWeCreated.into());
         }
         
         self.api.decline_offer(offer.tradeofferid).await?;
@@ -357,17 +347,13 @@ impl TradeOfferManager {
         offer: &TradeOffer,
     ) -> Result<Vec<Asset>, Error> {
         if offer.trade_offer_state != TradeOfferState::Accepted {
-            Err(Error::Parameter(
-                ParameterError::NotInAcceptedState(offer.trade_offer_state)
-            ))
+            Err(ParameterError::NotInAcceptedState(offer.trade_offer_state).into())
         } else if offer.items_to_receive.is_empty() {
             Ok(Vec::new())
         } else if let Some(tradeid) = offer.tradeid {
             self.api.get_receipt(&tradeid).await
         } else {
-            Err(Error::Parameter(
-                ParameterError::MissingTradeId
-            ))
+            Err(ParameterError::MissingTradeId.into())
         }
     }
     

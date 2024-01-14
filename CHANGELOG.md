@@ -8,6 +8,7 @@
 - `ClassInfoCache` to use `Arc<Mutex<T>>` internally rather than requiring it to be wrapped.
 - `TradeOfferManagerBuilder` no longer requires a data directory. The data directory now defaults to the user's config directory.
 - `TradeOfferManagerBuilder` no longer requires a API key.
+- `ParameterError::CannotAcceptOfferThatIsOurs` into `ParameterError::CannotAcceptOfferThatWeCreated` for consistency.
 
 ## 0.3.0 (2023-10-08)
 

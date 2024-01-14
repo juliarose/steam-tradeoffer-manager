@@ -60,32 +60,32 @@ pub enum Error {
 #[derive(thiserror::Error, Debug)]
 pub enum ParameterError {
     /// An API key was expected but none was provided.
-    #[error("No API key provided.")]
+    #[error("No API key provided. Make sure your API key is set before using this method.")]
     MissingApiKey,
+    /// No identity secret.
+    #[error("No identity secret.")]
+    NoIdentitySecret,
     /// Offer is missing trade ID.
-    #[error("Offer is missing trade ID.")]
+    #[error("Offer is missing trade ID. This usually means the offer it belongs to has not yet been accepted.")]
     MissingTradeId,
-    /// Offer is not in accepted state.
-    #[error("Offer is not in accepted state. Offer state: {}", .0)]
-    NotInAcceptedState(TradeOfferState),
     /// Offer is empty.
     #[error("Offer is empty.")]
     EmptyOffer,
-    /// Cannot accept an offer that is ours.
-    #[error("Cannot accept an offer that is ours.")]
-    CannotAcceptOfferThatIsOurs,
+    /// Offer is not in accepted state.
+    #[error("Offer is not in accepted state. Offer state: {}", .0)]
+    NotInAcceptedState(TradeOfferState),
     /// Cannot accept an offer that is not active.
     #[error("Cannot accept an offer that is not active. Offer state: {}", .0)]
     CannotAcceptOfferThatIsNotActive(TradeOfferState),
+    /// Cannot accept an offer that we created.
+    #[error("Cannot accept an offer that we created.")]
+    CannotAcceptOfferThatWeCreated,
     /// Cannot cancel an offer we did not create.
     #[error("Cannot cancel an offer we did not create.")]
     CannotCancelOfferWeDidNotCreate,
     /// Cannot decline an offer we created.
     #[error("Cannot decline an offer we created.")]
     CannotDeclineOfferWeCreated,
-    /// No identity secret.
-    #[error("No identity secret.")]
-    NoIdentitySecret,
     /// An error was encountered converting parameters to a valid URL string.
     #[error("Unable to convert to query parameters: {}", .0)]
     SerdeQS(#[from] serde_qs::Error)
