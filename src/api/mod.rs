@@ -354,18 +354,16 @@ impl SteamTradeOfferAPI {
         &self,
         classes: &Vec<ClassInfoClass>,
     ) -> Result<ClassInfoMap, Error> {
-        let mut apps: HashMap<AppId, Vec<ClassInfoAppClass>> = HashMap::new();
-        let mut map: HashMap<ClassInfoClass, Arc<ClassInfo>> = HashMap::new();
-        
         if classes.is_empty() {
-            return Ok(map);
+            return Ok(Default::default());
         }
         
-        // check memory for caches
-        let (cached, misses) = self.classinfo_cache.get_map(&classes);
-        
-        map.extend(cached);
-        
+        let mut apps: HashMap<AppId, Vec<ClassInfoAppClass>> = HashMap::new();
+        // Check memory for caches.
+        let (
+            mut map,
+            misses,
+        ) = self.classinfo_cache.get_map(&classes);
         let mut needed = HashSet::from_iter(misses.into_iter());
         
         if !needed.is_empty() {

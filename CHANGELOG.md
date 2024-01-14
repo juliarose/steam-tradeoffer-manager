@@ -5,6 +5,7 @@
 ### Changed
 - `Error::Http` to `Error::StatusCode`.
 - `HOSTNAME` constants to private.
+- `ClassInfoCache` to use `Arc<Mutex<T>>` internally rather than requiring it to be wrapped.
 
 ## 0.3.0 (2023-10-08)
 
