@@ -162,15 +162,21 @@ impl TradeOfferManager {
         &self,
         offer: &mut TradeOffer,
     ) -> Result<AcceptedOffer, Error> {
+        // Offer must not be created by us.
         if offer.is_our_offer {
             return Err(ParameterError::CannotAcceptOfferWeCreated.into());
-        } else if offer.trade_offer_state != TradeOfferState::Active {
+        }
+        
+        // Offer must be active to be accepted.
+        if offer.trade_offer_state != TradeOfferState::Active {
             return Err(ParameterError::CannotAcceptOfferThatIsNotActive(offer.trade_offer_state).into());
         }
         
         let accepted_offer = self.api.accept_offer(offer.tradeofferid, offer.partner).await?;
         
-        // This offer doesn't need confirmation, so we can update its state here.
+        // This offer doesn't need confirmation, so we can update its state here. If the 
+        // accepted_offer returns without error and does not need confirmation, then we can 
+        // assume it was accepted.
         if !accepted_offer.needs_confirimation() {
             offer.trade_offer_state = TradeOfferState::Accepted;
         }
@@ -234,7 +240,8 @@ impl TradeOfferManager {
         Ok(sent_offer)
     }
     
-    /// Gets our nventory. This method **does not** include untradable items.
+    /// Gets our nventory. This method **does not** include untradable items. If you did not set 
+    /// cookies, this will fail.
     pub async fn get_my_inventory(
         &self,
         appid: AppId,
