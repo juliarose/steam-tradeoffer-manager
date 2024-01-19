@@ -34,6 +34,8 @@ pub fn default_data_directory() -> PathBuf {
 
 /// A browser user agent string.
 pub const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
+pub(crate) const COMMUNITY_HOSTNAME: &str = "steamcommunity.com";
+pub(crate) const WEB_API_HOSTNAME: &str = "api.steampowered.com";
 
 /// Generates a random sessionid.
 pub fn generate_sessionid() -> String {

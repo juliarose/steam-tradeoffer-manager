@@ -21,6 +21,7 @@ use crate::enums::{Language, GetUserDetailsMethod};
 use crate::static_functions::get_inventory;
 use crate::serialize;
 use crate::helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies};
+use crate::helpers::{COMMUNITY_HOSTNAME, WEB_API_HOSTNAME};
 use crate::error::{Error, ParameterError, MissingClassInfoError};
 use crate::classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers};
 use crate::request::{GetInventoryOptions, NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions};
@@ -55,9 +56,9 @@ pub struct SteamTradeOfferAPI {
 
 impl SteamTradeOfferAPI {
     /// Hostname for requests.
-    const HOSTNAME: &'static str = "steamcommunity.com";
+    const HOSTNAME: &'static str = COMMUNITY_HOSTNAME;
     /// Hostname for API requests.
-    const API_HOSTNAME: &'static str = "api.steampowered.com";
+    const API_HOSTNAME: &'static str = WEB_API_HOSTNAME;
     
     /// Builder for constructing a [`SteamTradeOfferAPI`].
     pub fn builder() -> SteamTradeOfferAPIBuilder {
@@ -262,10 +263,10 @@ impl SteamTradeOfferAPI {
             let key = self.api_key.as_ref()
                 .ok_or(ParameterError::MissingApiKey)?;
             let mut query = vec![
-                ("key".into(), key.into()),
-                ("appid".into(), appid.to_string()),
-                ("language".into(), self.language.web_api_language_code().to_string()),
-                ("class_count".into(), classes.len().to_string()),
+                ("key".to_string(), key.into()),
+                ("appid".to_string(), appid.to_string()),
+                ("language".to_string(), self.language.web_api_language_code().to_string()),
+                ("class_count".to_string(), classes.len().to_string()),
             ];
             
             for (i, (classid, instanceid)) in classes.iter().enumerate() {
@@ -1011,8 +1012,8 @@ impl From<SteamTradeOfferAPIBuilder> for SteamTradeOfferAPI {
             std::fs::create_dir_all(&builder.data_directory).ok();
         }
         
-        let cookies = builder.cookies
-            .unwrap_or_else(|| Arc::new(Jar::default()));
+        let cookies = builder.cookie_jar
+            .unwrap_or_default();
         let client = builder.client
             .unwrap_or_else(|| get_default_middleware(
                 Arc::clone(&cookies),
@@ -1022,7 +1023,7 @@ impl From<SteamTradeOfferAPIBuilder> for SteamTradeOfferAPI {
         
         Self {
             client,
-            cookies: Arc::clone(&cookies),
+            cookies,
             api_key: builder.api_key,
             language: builder.language,
             classinfo_cache,

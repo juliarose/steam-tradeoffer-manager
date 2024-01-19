@@ -29,26 +29,26 @@ use reqwest_middleware::ClientWithMiddleware;
 #[derive(Debug, Clone)]
 pub struct TradeOfferManagerBuilder {
     /// Your account's API key from <https://steamcommunity.com/dev/apikey>.
-    pub api_key: Option<String>,
+    pub(crate) api_key: Option<String>,
     /// The identity secret for the account (optional). Required for mobile confirmations.
-    pub identity_secret: Option<String>,
+    pub(crate) identity_secret: Option<String>,
     /// The language for API responses.
-    pub language: Language,
+    pub(crate) language: Language,
     /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
     /// to share state.
-    pub classinfo_cache: Option<ClassInfoCache>,
+    pub(crate) classinfo_cache: Option<ClassInfoCache>,
     /// The location to save data to.
-    pub data_directory: PathBuf,
+    pub(crate) data_directory: PathBuf,
     /// Request cookies.
-    pub cookie_jar: Option<Arc<Jar>>,
+    pub(crate) cookie_jar: Option<Arc<Jar>>,
     /// Client to use for requests. Remember to also include the cookies connected to this client.
-    pub client: Option<ClientWithMiddleware>,
+    pub(crate) client: Option<ClientWithMiddleware>,
     /// User agent for requests.
-    pub user_agent: &'static str,
+    pub(crate) user_agent: &'static str,
     /// How many seconds your computer is behind Steam's servers. Used in mobile confirmations.
-    pub time_offset: i64,
+    pub(crate) time_offset: i64,
     /// Cookies to set on initialization.
-    pub cookies: Option<Vec<String>>,
+    pub(crate) cookies: Option<Vec<String>>,
 }
 
 impl TradeOfferManagerBuilder {

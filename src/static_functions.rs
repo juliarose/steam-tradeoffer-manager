@@ -5,6 +5,7 @@ use crate::response::{Asset, ClassInfo};
 use crate::request::GetInventoryOptions;
 use crate::types::*;
 use crate::helpers::{parses_response, get_sessionid_and_steamid_from_cookies};
+use crate::helpers::COMMUNITY_HOSTNAME;
 use crate::error::{Error, ParseHtmlError, MissingClassInfoError};
 use crate::serialize;
 use std::collections::HashMap;
@@ -14,8 +15,6 @@ use reqwest::cookie::Jar;
 use reqwest::header::REFERER;
 use scraper::{Html, Selector};
 use url::Url;
-
-const COMMUNITY_HOSTNAME: &str = "steamcommunity.com";
 
 /// Gets your Steam Web API key.
 /// 

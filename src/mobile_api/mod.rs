@@ -14,6 +14,7 @@ use crate::SteamID;
 use crate::response::Confirmation;
 use crate::error::{Error, ParameterError};
 use crate::helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies, get_default_middleware};
+use crate::helpers::COMMUNITY_HOSTNAME;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{Ordering, AtomicU64};
@@ -43,7 +44,7 @@ pub struct MobileAPI {
 
 impl MobileAPI {
     /// Hostname for requests.
-    const HOSTNAME: &'static str = "steamcommunity.com";
+    const HOSTNAME: &'static str = COMMUNITY_HOSTNAME;
     
     /// Builder for constructing a [`MobileAPI`].
     pub fn builder() -> MobileAPIBuilder {

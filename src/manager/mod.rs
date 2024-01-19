@@ -22,7 +22,6 @@ use std::sync::atomic::{Ordering, AtomicU64};
 use steamid_ng::SteamID;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
-use reqwest::cookie::Jar;
 
 /// Manager which includes functionality for interacting with trade offers, confirmations and 
 /// inventories.
@@ -455,7 +454,7 @@ impl std::ops::Drop for TradeOfferManager {
 impl From<TradeOfferManagerBuilder> for TradeOfferManager {
     fn from(builder: TradeOfferManagerBuilder) -> Self {
         let cookies = builder.cookie_jar
-            .unwrap_or_else(|| Arc::new(Jar::default()));
+            .unwrap_or_default();
         let client = builder.client
             .unwrap_or_else(|| get_default_middleware(
                 Arc::clone(&cookies),
@@ -465,9 +464,9 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
         let classinfo_cache = builder.classinfo_cache.unwrap_or_default();
         let mut api_builder = SteamTradeOfferAPI::builder()
             .data_directory(builder.data_directory.clone())
+            .client(client.clone(), Arc::clone(&cookies))
             .language(builder.language)
-            .classinfo_cache(classinfo_cache)
-            .client(client.clone(), Arc::clone(&cookies));
+            .classinfo_cache(classinfo_cache);
         
         if let Some(api_key) = builder.api_key {
             api_builder = api_builder.api_key(api_key);   

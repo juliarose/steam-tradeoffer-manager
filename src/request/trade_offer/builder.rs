@@ -1,5 +1,6 @@
 use super::{NewTradeOfferItem, NewTradeOffer};
 use crate::SteamID;
+use crate::helpers::COMMUNITY_HOSTNAME;
 
 /// Builder for constructing new trade offers.
 pub struct NewTradeOfferBuilder {
@@ -83,7 +84,7 @@ fn parse_offer_access_token(trade_offer_url: &str) -> Option<String> {
     let url = url::Url::parse(trade_offer_url).ok()?;
     let hostname = url.host_str();
     
-    if hostname != Some("steamcommunity.com") {
+    if hostname != Some(COMMUNITY_HOSTNAME) {
         return None;
     }
     

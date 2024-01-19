@@ -12,20 +12,20 @@ use reqwest_middleware::ClientWithMiddleware;
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPIBuilder {
     /// Your account's API key from <https://steamcommunity.com/dev/apikey>.
-    pub api_key: Option<String>,
+    pub(crate) api_key: Option<String>,
     /// The language for API responses.
-    pub language: Language,
+    pub(crate) language: Language,
     /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
     /// to share state.
-    pub classinfo_cache: Option<ClassInfoCache>,
+    pub(crate) classinfo_cache: Option<ClassInfoCache>,
     /// The location to save data to.
-    pub data_directory: PathBuf,
+    pub(crate) data_directory: PathBuf,
     /// Request cookies.
-    pub cookies: Option<Arc<Jar>>,
+    pub(crate) cookie_jar: Option<Arc<Jar>>,
     /// Client to use for requests. Remember to also include the cookies connected to this client.
-    pub client: Option<ClientWithMiddleware>,
+    pub(crate) client: Option<ClientWithMiddleware>,
     /// User agent for requests.
-    pub user_agent: &'static str,
+    pub(crate) user_agent: &'static str,
 }
 
 impl SteamTradeOfferAPIBuilder {
@@ -36,7 +36,7 @@ impl SteamTradeOfferAPIBuilder {
             language: Language::English,
             classinfo_cache: None,
             data_directory: default_data_directory(),
-            cookies: None,
+            cookie_jar: None,
             client: None,
             user_agent: USER_AGENT_STRING,
         }
@@ -76,7 +76,7 @@ impl SteamTradeOfferAPIBuilder {
     /// client so that the `set_cookies` method works as expected.
     pub fn client(mut self, client: ClientWithMiddleware, cookies: Arc<Jar>) -> Self {
         self.client = Some(client);
-        self.cookies = Some(cookies);
+        self.cookie_jar = Some(cookies);
         self
     }
     
