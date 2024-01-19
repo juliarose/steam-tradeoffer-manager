@@ -51,6 +51,12 @@ pub struct TradeOfferManagerBuilder {
     pub(crate) cookies: Option<Vec<String>>,
 }
 
+impl Default for TradeOfferManagerBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TradeOfferManagerBuilder {
     /// Creates a new [`TradeOfferManagerBuilder`].
     pub fn new() -> Self {

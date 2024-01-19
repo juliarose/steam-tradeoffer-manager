@@ -102,7 +102,7 @@ fn get_map(
     classes: &[ClassInfoClass],
     classinfo_cache: &ClassInfoCache,
 ) -> ClassInfoMap {
-    classinfo_cache.get_map(&classes).0
+    classinfo_cache.get_map(classes).0
 }
 
 fn criterion_benchmark(c: &mut Criterion) {

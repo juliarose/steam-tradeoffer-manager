@@ -28,6 +28,12 @@ pub struct SteamTradeOfferAPIBuilder {
     pub(crate) user_agent: &'static str,
 }
 
+impl Default for SteamTradeOfferAPIBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SteamTradeOfferAPIBuilder {
     /// Creates a new [`SteamTradeOfferAPIBuilder`].
     pub fn new() -> Self {

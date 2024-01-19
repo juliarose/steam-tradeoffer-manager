@@ -66,7 +66,7 @@ impl ClassInfoCache {
         // Iterate over the classes and insert them into the map if they exist in the cache.
         // Collect the classes that were not found in the cache.
         let misses = classes
-            .into_iter()
+            .iter()
             .filter(|class| if let Some(classinfo) = inner.get(class).map(Arc::clone) {
                 map.insert(**class, classinfo);
                 false
