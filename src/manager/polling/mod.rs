@@ -8,7 +8,7 @@ mod poll_data;
 
 pub use poll_type::PollType;
 pub use poll_action::PollAction;
-pub use poller::{PollResult, Poll};
+pub use poller::{Result, Poll};
 pub use poll_data::PollData;
 
 use poller::Poller;
@@ -64,7 +64,7 @@ impl PollOptions {
 /// Packs the sender, receiver, and `JoinHandle` for the poller.
 pub struct PollingMpsc {
     pub sender: mpsc::Sender<PollAction>,
-    pub receiver: mpsc::Receiver<PollResult>,
+    pub receiver: mpsc::Receiver<Result>,
     pub handle: JoinHandle<()>,
 }
 
@@ -87,7 +87,7 @@ pub fn create_poller(
     let (
         polling_tx,
         polling_rx,
-    ) = mpsc::channel::<PollResult>(10);
+    ) = mpsc::channel::<Result>(10);
     let handle = tokio::spawn(async move {
         // Since the mutex is concurrent only one poll can be performed at a time.
         let poller = Arc::new(Mutex::new(Poller {

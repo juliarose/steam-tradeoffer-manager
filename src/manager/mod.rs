@@ -1,8 +1,8 @@
 mod builder;
-mod polling;
+pub(crate) mod polling;
 
-pub use polling::{PollingMpsc, PollAction, Poll, PollResult, PollType, PollOptions};
 pub use builder::TradeOfferManagerBuilder;
+use polling::{PollingMpsc, PollAction, PollOptions};
 
 use crate::time;
 use crate::ServerTime;
@@ -115,7 +115,7 @@ impl TradeOfferManager {
     pub fn start_polling(
         &self,
         options: PollOptions,
-    ) -> Result<(mpsc::Sender<PollAction>, mpsc::Receiver<PollResult>), Error> {
+    ) -> Result<(mpsc::Sender<PollAction>, mpsc::Receiver<polling::Result>), Error> {
         if self.api.api_key.is_none() {
             return Err(ParameterError::MissingApiKey.into());
         }

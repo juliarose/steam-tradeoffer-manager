@@ -1,4 +1,4 @@
-//! Response models.
+//! Models for responses.
 
 mod trade_offer;
 mod accepted_offer;

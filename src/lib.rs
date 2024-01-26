@@ -34,13 +34,13 @@ mod classinfo_cache;
 mod time;
 mod static_functions;
 
-pub mod api;
-pub mod mobile_api;
-pub mod enums;
-pub mod types;
+pub mod error;
 pub mod request;
 pub mod response;
-pub mod error;
+pub mod enums;
+pub mod types;
+pub mod api;
+pub mod mobile_api;
 
 pub use static_functions::get_inventory;
 pub use classinfo_cache::ClassInfoCache;
@@ -49,7 +49,7 @@ pub use manager::{TradeOfferManager, TradeOfferManagerBuilder};
 
 pub mod polling {
     //! Models related to polling trade offers.
-    pub use super::manager::{Poll, PollResult, PollAction, PollType, PollOptions};
+    pub use super::manager::polling::{Poll, Result, PollAction, PollType, PollOptions};
 }
 
 pub use reqwest;

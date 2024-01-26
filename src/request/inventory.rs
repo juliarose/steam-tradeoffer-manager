@@ -1,7 +1,6 @@
 use crate::SteamID;
 use crate::enums::Language;
-use crate::types::{AppId, ContextId};
-use crate::types::Client;
+use crate::types::{AppId, ContextId, Client};
 use crate::helpers::DEFAULT_CLIENT;
 
 /// Options for loading a user's inventory.

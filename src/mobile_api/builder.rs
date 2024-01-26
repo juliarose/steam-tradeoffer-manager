@@ -5,17 +5,18 @@ use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
 
 /// Builder for constructing a [`MobileAPI`].
+#[derive(Debug, Clone)]
 pub struct MobileAPIBuilder {
     /// The identity secret for the account (optional). Required for mobile confirmations.
-    pub identity_secret: Option<String>,
+    pub(crate) identity_secret: Option<String>,
     /// Request cookies.
-    pub cookies: Option<Arc<Jar>>,
+    pub(crate) cookies: Option<Arc<Jar>>,
     /// Client to use for requests. Remember to also include the cookies connected to this client.
-    pub client: Option<ClientWithMiddleware>,
+    pub(crate) client: Option<ClientWithMiddleware>,
     /// User agent for requests.
-    pub user_agent: &'static str,
+    pub(crate) user_agent: &'static str,
     /// How many seconds your computer is behind Steam's servers. Used in mobile confirmations.
-    pub time_offset: i64,
+    pub(crate) time_offset: i64,
 }
 
 impl Default for MobileAPIBuilder {

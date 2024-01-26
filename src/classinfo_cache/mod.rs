@@ -11,14 +11,13 @@ type LfuClassInfoMap = LfuCache<ClassInfoClass, Arc<ClassInfo>>;
 const DEFAULT_CACHE_SIZE: usize = 1000;
 
 /// Used for storing caches of [`ClassInfo`] data in memory. Data is stored using an [`LfuCache`]
-/// to limit how many elements are stored in memory.
+/// to limit how many elements are stored in memory. While you probably won't need to use this
+/// directly, it is used internally by [`TradeOfferManager`][crate::TradeOfferManager] for 
+/// managing [`ClassInfo`] data.
 /// 
-/// While you probably won't need to use this directly, it is used internally by 
-/// [`TradeOfferManager`][crate::TradeOfferManager] for managing [`ClassInfo`] data.
-/// 
-/// Internally the cache is stored in wrapped in an [`Arc`] and [`Mutex`]. This allows you to 
-/// clone the [`ClassInfoCache`] and share it between multiple instances of 
-/// [`TradeOfferManager`][crate::TradeOfferManager].
+/// Internally the cache is wrapped in an `Arc<Mutex<T>>`. This allows you to clone the 
+/// [`ClassInfoCache`] and share it between multiple instances of 
+/// [`TradeOfferManager`][crate::TradeOfferManager] to reduce file reads and memory usage.
 /// 
 /// # Examples
 /// ```
@@ -27,10 +26,6 @@ const DEFAULT_CACHE_SIZE: usize = 1000;
 /// let classinfo_cache = ClassInfoCache::with_capacity(5000);
 /// let builder = TradeOfferManager::builder()
 ///    .classinfo_cache(classinfo_cache.clone());
-/// // While you could just clone the builder, this demonstrates the utility of re-using the same 
-/// // cache.
-/// let another_builder = TradeOfferManager::builder()
-///    .classinfo_cache(classinfo_cache);
 /// ```
 #[derive(Debug, Clone)]
 pub struct ClassInfoCache {
@@ -62,31 +57,31 @@ impl ClassInfoCache {
         classes: &'a [ClassInfoClass],
     ) -> (HashMap<ClassInfoClass, Arc<ClassInfo>>, Vec<&'a ClassInfoClass>) {
         let mut inner = self.inner.lock().unwrap();
-        let mut map = HashMap::new();
-        // Iterate over the classes and insert them into the map if they exist in the cache.
-        // Collect the classes that were not found in the cache.
-        let misses = classes
-            .iter()
-            .filter(|class| if let Some(classinfo) = inner.get(class).map(Arc::clone) {
-                map.insert(**class, classinfo);
-                false
-            } else {
-                true
-            })
-            .collect();
         
-        (map, misses)
+        classes
+            .into_iter()
+            .fold((HashMap::new(), Vec::new()), |mut output, class| {
+                if let Some(classinfo) = inner.get(class).map(Arc::clone) {
+                    // Insert into the map if a classinfo exists in the cache.
+                    output.0.insert(*class, classinfo);
+                } else {
+                    // Collect the classes that were not found in the cache.
+                    output.1.push(class);
+                }
+                
+                output
+            })
     }
     
     /// Inserts a [`HashMap`] of [`ClassInfo`] data into the cache.
     pub fn insert_map(
         &self,
-        classinfos: &HashMap<ClassInfoClass, Arc<ClassInfo>>,
+        classinfos: HashMap<ClassInfoClass, Arc<ClassInfo>>,
     ) {
         let mut inner = self.inner.lock().unwrap();
         
         for (class, classinfo) in classinfos {
-            inner.insert(*class, Arc::clone(classinfo));
+            inner.insert(class, classinfo);
         }
     }
 }

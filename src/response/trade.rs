@@ -11,7 +11,7 @@ use chrono::serde::ts_seconds;
 use serde::{self, Deserialize, Serialize};
 
 /// Details from a GetTradeHistory response.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Trades {
     /// The trades.
     pub trades: Vec<Trade>,
@@ -22,7 +22,7 @@ pub struct Trades {
 }
 
 /// Trade.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Trade {
     /// The trade ID.
     pub tradeid: TradeId,
@@ -55,7 +55,7 @@ impl Default for Trade {
 }
 
 /// An asset belonging to a trade.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct TradeAsset {
     /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global offensive.
     #[serde(with = "serialize::string")]

@@ -3,17 +3,18 @@ use crate::SteamID;
 use crate::helpers::COMMUNITY_HOSTNAME;
 
 /// Builder for constructing new trade offers.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct NewTradeOfferBuilder {
     /// The partner's [`SteamID`] for this offer.
-    pub partner: SteamID,
+    pub(crate) partner: SteamID,
     /// The items to give in this offer.
-    pub items_to_give: Vec<NewTradeOfferItem>,
+    pub(crate) items_to_give: Vec<NewTradeOfferItem>,
     /// The items to received in this offer.
-    pub items_to_receive: Vec<NewTradeOfferItem>,
+    pub(crate) items_to_receive: Vec<NewTradeOfferItem>,
     /// The message to send in this offer.
-    pub message: Option<String>,
+    pub(crate) message: Option<String>,
     /// The access token for sending an offer if you are not friends with the partner.
-    pub token: Option<String>,
+    pub(crate) token: Option<String>,
 }
 
 impl NewTradeOfferBuilder {
@@ -70,13 +71,7 @@ impl NewTradeOfferBuilder {
     
     /// Builds into [`NewTradeOffer`].
     pub fn build(self) -> NewTradeOffer {
-        NewTradeOffer {
-            partner: self.partner,
-            items_to_give: self.items_to_give,
-            items_to_receive: self.items_to_receive,
-            message: self.message,
-            token: self.token,
-        }
+        self.into()
     }
 }
         

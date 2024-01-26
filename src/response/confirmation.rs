@@ -6,7 +6,7 @@ use chrono::serde::ts_seconds;
 use serde::{Serialize, Deserialize};
 
 /// Mobile confirmation. Used primarily for confirming trade offers or listing items on the market.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq,  Clone)]
 pub struct Confirmation {
     /// The ID of the confirmation.
     #[serde(with = "serialize::string")]
@@ -52,17 +52,24 @@ impl fmt::Display for Confirmation {
 }
 
 impl Confirmation {
-    /// Description for items we are giving.
+    /// Description for items we are giving in a trade.
     pub fn giving(&self) -> Option<&str> {
+        if self.r#type != ConfirmationType::Trade {
+            return None;
+        }
+        
         self.summary.first().map(|s| s.as_str())
     }
     
-    /// Description for items we are receiving.
+    /// Description for items we are receiving in a trade.
     pub fn receiving(&self) -> Option<&str> {
+        if self.r#type != ConfirmationType::Trade {
+            return None;
+        }
+        
         let mut iter = self.summary.iter();
         // consume first element
-        let _ = iter.next();
-        
+        iter.next()?;
         iter.next().map(|s| s.as_str())
     }
 }

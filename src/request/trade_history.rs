@@ -1,7 +1,7 @@
 use crate::types::TradeId;
 
 /// Options for getting trade history.
-#[derive(Debug, PartialEq, Eq, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct GetTradeHistoryOptions {
     /// The max trades to request.
     pub max_trades: u32,

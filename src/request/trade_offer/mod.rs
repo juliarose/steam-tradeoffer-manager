@@ -11,7 +11,7 @@ use steamid_ng::SteamID;
 /// be created by calling `NewTradeOffer::from(offer)` on the owned or borrowed [`TradeOffer`].
 /// 
 /// For constructing offers with a blank starting point, use `NewTradeOffer::builder`.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct NewTradeOffer {
     /// The partner's [`SteamID`] for this offer.
     pub partner: SteamID,
@@ -35,6 +35,18 @@ impl NewTradeOffer {
     pub fn is_empty(&self) -> bool {
         self.items_to_give.is_empty() &&
         self.items_to_receive.is_empty()
+    }
+}
+
+impl From<NewTradeOfferBuilder> for NewTradeOffer {
+    fn from(builder: NewTradeOfferBuilder) -> Self {
+        Self {
+            partner: builder.partner,
+            items_to_give: builder.items_to_give,
+            items_to_receive: builder.items_to_receive,
+            message: builder.message,
+            token: builder.token,
+        }
     }
 }
 

@@ -3,7 +3,7 @@ use crate::serialize;
 use serde::{Serialize, Deserialize};
 
 /// The result returned after sending a new trade offer.
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct SentOffer {
     /// The ID of the offer sent.
     #[serde(with = "serialize::string")]

@@ -17,7 +17,7 @@ use steamid_ng::SteamID;
 pub type Poll = Vec<(TradeOffer, Option<TradeOfferState>)>;
 /// The result of a poll. Either containing a [`Poll`] or an [`Error`] if an error was encountered
 /// during a poll.
-pub type PollResult = Result<Poll, Error>;
+pub type Result = std::result::Result<Poll, Error>;
 
 const OFFERS_SINCE_BUFFER_SECONDS: i64 = 60 * 30;
 const OFFERS_SINCE_ALL_TIMESTAMP: i64 = 1;
@@ -38,7 +38,7 @@ impl Poller {
     pub async fn do_poll(
         &mut self,
         poll_type: PollType,
-    ) -> PollResult {
+    ) -> Result {
         let now = time::get_server_time_now();
         let mut offers_since = self.poll_data.offers_since
             // Steam can be dumb and backdate a modified offer. We need to handle this by adding a buffer.

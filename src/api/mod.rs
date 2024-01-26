@@ -1,5 +1,5 @@
-//! This is the underlying API for the manager. More direct control over API calls are contained
-//! within this modoule.
+//! This is the underlying API for the manager. In most cases you should stick to using the 
+//! manager, but if you need more control over the requests, you can use this API directly.
 
 pub mod response;
 
@@ -308,7 +308,7 @@ impl SteamTradeOfferAPI {
             })
             .collect::<HashMap<_, _>>();
         
-        self.classinfo_cache.insert_map(&classinfos);
+        self.classinfo_cache.insert_map(classinfos.clone());
 
         Ok(classinfos)
     }
@@ -367,7 +367,7 @@ impl SteamTradeOfferAPI {
                     inserts.insert(class, Arc::clone(&classinfo));
                 }
                 
-                self.classinfo_cache.insert_map(&inserts);
+                self.classinfo_cache.insert_map(inserts.clone());
                 map.extend(inserts);
             }
         }

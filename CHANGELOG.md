@@ -9,7 +9,11 @@
 - `TradeOfferManagerBuilder` no longer requires a data directory. The data directory now defaults to the user's config directory.
 - `TradeOfferManagerBuilder` no longer requires a API key.
 - `ParameterError::CannotAcceptOfferThatIsOurs` into `ParameterError::CannotAcceptOfferWeCreated` for consistency.
-- Builder fields are now private.
+- `TradeOfferManagerBuilder`, `SteamTradeOfferAPIBuilder`, `MobileAPIBuilder`, and `NewTradeOfferBuilder` fields are now private.
+- `PollResult` to `Result`.
+
+### Added
+- Some missing derives for various structs.
 
 ## 0.3.0 (2023-10-08)
 

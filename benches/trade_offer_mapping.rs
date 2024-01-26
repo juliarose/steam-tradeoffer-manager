@@ -94,7 +94,7 @@ fn get_classinfo_cache(
         .collect::<HashMap<_, _>>();
     let classinfo_cache = ClassInfoCache::with_capacity(500);
     
-    classinfo_cache.insert_map(&classes);
+    classinfo_cache.insert_map(classes);
     classinfo_cache
 }
 

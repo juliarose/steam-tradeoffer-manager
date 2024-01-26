@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use chrono::serde::ts_seconds;
 
 /// Trade offer.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct TradeOffer {
     /// The ID for this offer.
     #[serde(with = "serialize::string")]
