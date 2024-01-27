@@ -2,7 +2,7 @@ mod builder;
 pub(crate) mod polling;
 
 pub use builder::TradeOfferManagerBuilder;
-use polling::{PollingMpsc, PollAction, PollOptions};
+use polling::{PollingMpsc, PollOptions};
 
 use crate::time;
 use crate::ServerTime;
@@ -20,8 +20,10 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{Ordering, AtomicU64};
 use steamid_ng::SteamID;
-use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
+
+use self::polling::PollReceiver;
+use self::polling::PollSender;
 
 /// Manager which includes functionality for interacting with trade offers, confirmations and 
 /// inventories.
@@ -120,7 +122,8 @@ impl TradeOfferManager {
     
     /// Gets the logged-in user's [`SteamID`].
     /// 
-    /// Fails if no login is detected (cookies must be set first).
+    /// # Errors
+    /// If no login is detected (cookies must be set first).
     pub fn get_steamid(
         &self,
     ) -> Result<SteamID, Error> {
@@ -134,7 +137,7 @@ impl TradeOfferManager {
     }
     
     /// Starts polling offers. Listen to the returned receiver for events. Use the returned sender 
-    /// to send an action to the poller using [`PollAction`].
+    /// to send an action to the poller using [`steam_tradeoffer_manager::polling::PollAction`].
     /// 
     /// Call `stop_polling` to stop polling offers. Polling will also stop if either the receiver 
     /// or this [`TradeOfferManager`] are dropped. If this method is called again, the previous 
@@ -198,6 +201,8 @@ impl TradeOfferManager {
     ///         .build();
     ///     let (_sender, receiver) = manager.start_polling(PollOptions::default()).unwrap();
     ///     
+    ///     // Cloning isn't necessary here, but if you need to use the manager elsewhere, you can
+    ///     // clone it for each task. The state for each clone is shared.
     ///     tokio::spawn(poll_offers(manager.clone(), receiver));
     /// }
     /// ```
@@ -208,7 +213,7 @@ impl TradeOfferManager {
     pub fn start_polling(
         &self,
         options: PollOptions,
-    ) -> Result<(mpsc::Sender<PollAction>, mpsc::Receiver<polling::Result>), Error> {
+    ) -> Result<(PollSender, PollReceiver), Error> {
         if self.api.api_key.is_none() {
             return Err(ParameterError::MissingApiKey.into());
         }
@@ -388,6 +393,13 @@ impl TradeOfferManager {
     }
     
     /// Confirms a trade offer.
+    /// 
+    /// This will load up the trade confirmations, find the confirmation for the trade offer, and 
+    /// confirm it.
+    /// 
+    /// # Errors
+    /// - If no confirmation is found for the trade offer.
+    /// - Any other error encountered while performing requests.
     pub async fn confirm_offer(
         &self,
         trade_offer: &TradeOffer,
@@ -396,6 +408,13 @@ impl TradeOfferManager {
     }
     
     /// Confirms a trade offer using its ID.
+    /// 
+    /// This will load up the trade confirmations, find the confirmation for the trade offer, and 
+    /// confirm it.
+    /// 
+    /// # Errors
+    /// - If no confirmation is found for the trade offer.
+    /// - Any other error encountered while performing requests.
     pub async fn confirm_offer_id(
         &self,
         tradeofferid: TradeOfferId,
@@ -406,10 +425,10 @@ impl TradeOfferManager {
             .find(|confirmation| confirmation.creator_id == tradeofferid);
         
         if let Some(confirmation) = confirmation {
-            self.accept_confirmation(&confirmation).await
-        } else {
-            Err(Error::NoConfirmationForOffer(tradeofferid))
+            return self.accept_confirmation(&confirmation).await;
         }
+        
+        Err(Error::NoConfirmationForOffer(tradeofferid))
     }
     
     /// Accepts a confirmation.
