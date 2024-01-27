@@ -152,7 +152,7 @@ impl Poller {
         }
         
         // Eventually the state map gets very large. This needs to be trimmed so it does not 
-        // expand infintely.
+        // expand infinitely.
         //
         // This isn't perfect and I may change this later on.
         if self.poll_data.state_map.len() > STATE_MAP_SIZE_LIMIT {

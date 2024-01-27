@@ -123,7 +123,7 @@ impl TradeOfferManager {
     /// Gets the logged-in user's [`SteamID`].
     /// 
     /// # Errors
-    /// If no login is detected (cookies must be set first).
+    /// If the cookies are not set. (See [`TradeOfferManager::set_cookies`])
     pub fn get_steamid(
         &self,
     ) -> Result<SteamID, Error> {
