@@ -50,6 +50,23 @@ impl TradeOfferManager {
     /// This method requires your cookies. If your account does not have an API key set, one will 
     /// be created using `localhost` as the domain. By calling this method you are agreeing to the 
     /// [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms). 
+    /// 
+    /// # Examples
+    /// ```no_run
+    /// use steam_tradeoffer_manager::TradeOfferManager;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     // You'll need to use your own cookies here.
+    ///     let cookies = vec![
+    ///         "sessionid=blahblahblah".to_string(),
+    ///         "steamLoginSecure=blahblahblah".to_string(),
+    ///     ];
+    ///     let api_key = TradeOfferManager::get_api_key(&cookies).await.unwrap();
+    ///     
+    ///     println!("Your API key is: {api_key}");
+    /// }
+    /// ````
     pub async fn get_api_key(
         cookies: &[String],
     ) -> Result<String, Error> {
@@ -60,6 +77,22 @@ impl TradeOfferManager {
     /// 
     /// Some features will only work if cookies are set, such as sending or responding to trade 
     /// offers. Make sure your cookies are set before calling these methods.
+    /// 
+    /// # Examples
+    /// ```no_run
+    /// use steam_tradeoffer_manager::TradeOfferManager;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let manager = TradeOfferManager::builder().build();
+    ///     let cookies = vec![
+    ///         "sessionid=blahblahblah".to_string(),
+    ///         "steamLoginSecure=blahblahblah".to_string(),
+    ///     ];
+    ///     
+    ///     manager.set_cookies(&cookies);
+    /// }
+    /// ```
     pub fn set_cookies(
         &self,
         cookies: &[String],
@@ -107,11 +140,71 @@ impl TradeOfferManager {
     /// or this [`TradeOfferManager`] are dropped. If this method is called again, the previous 
     /// polling task will be aborted.
     /// 
-    /// Fails if:
-    /// - The API key is not set. (See [`TradeOfferManagerBuilder::api_key`])
-    /// - The cookies are not set. (See [`TradeOfferManager::set_cookies`])
+    /// # Examples
+    /// ```no_run
+    /// use steam_tradeoffer_manager::TradeOfferManager;
+    /// use steam_tradeoffer_manager::enums::TradeOfferState;
+    /// use steam_tradeoffer_manager::polling::{PollOptions, PollReceiver, Poll};
     /// 
-    /// Make sure these are set before calling.
+    /// // Polls offers.
+    /// async fn poll_offers(
+    ///     manager: TradeOfferManager,
+    ///     receiver: PollReceiver,
+    /// ) {
+    ///     while let Some(result) = receiver.recv().await {
+    ///         match result {
+    ///             Ok(offers) => on_poll(&manager, offers).await,
+    ///             Err(error) => println!("Error encountered polling offers: {error}"),
+    ///         }
+    ///     }
+    ///     
+    ///     println!("Polling stopped");
+    /// }
+    /// 
+    /// // Do something with offers.
+    /// async fn on_poll(
+    ///     manager: &TradeOfferManager,
+    ///     offers: Poll, // Poll is an alias for Vec<(TradeOffer, Option<TradeOfferState>)>
+    /// ) {
+    ///     for (mut offer, _old_state) in offers {
+    ///         let is_free_items = {
+    ///             // Offer must be active.
+    ///             offer.trade_offer_state == TradeOfferState::Active &&
+    ///             // Offer must not be created by us.
+    ///             !offer.is_our_offer && 
+    ///             // Offer must not be giving items.
+    ///             offer.items_to_give.is_empty()
+    ///         };
+    ///         
+    ///         if is_free_items {
+    ///             println!("{offer} is giving us free items - accepting");
+    ///             
+    ///             match manager.accept_offer(&mut offer).await {
+    ///                 Ok(accepted_offer) => println!("{} Accepted", offer),
+    ///                 Err(error) => println!("Error accepting {offer}: {error}"),
+    ///             }
+    ///         }
+    ///     }
+    /// }
+    /// 
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let manager = TradeOfferManager::builder()
+    ///         .api_key("00000000000000000000000000000000".to_string())
+    ///         .cookies(vec![
+    ///             "sessionid=blahblahblah".to_string(),
+    ///             "steamLoginSecure=blahblahblah".to_string(),
+    ///         ])
+    ///         .build();
+    ///     let (_sender, receiver) = manager.start_polling(PollOptions::default()).unwrap();
+    ///     
+    ///     tokio::spawn(poll_offers(manager.clone(), receiver));
+    /// }
+    /// ```
+    /// 
+    /// # Errors
+    /// - If the API key is not set. (See [`TradeOfferManagerBuilder::get_api_key`])
+    /// - If the cookies are not set. (See [`TradeOfferManager::set_cookies`])
     pub fn start_polling(
         &self,
         options: PollOptions,

@@ -14,6 +14,7 @@
 
 ### Added
 - Some missing derives for various structs.
+- `PollAction::StopPolling`.
 
 ## 0.3.0 (2023-10-08)
 

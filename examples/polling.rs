@@ -77,10 +77,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     while let Some(message) = rx.recv().await {
         match message {
             Ok(offers) => {
-                if offers.is_empty() {
-                    println!("Got poll; no changes");
-                }
-                
                 for (mut offer, old_state) in offers {
                     if let Some(state) = old_state {
                         println!(

@@ -49,7 +49,15 @@ pub use manager::{TradeOfferManager, TradeOfferManagerBuilder};
 
 pub mod polling {
     //! Models related to polling trade offers.
-    pub use super::manager::polling::{Poll, Result, PollAction, PollType, PollOptions};
+    pub use super::manager::polling::{
+        Poll,
+        Result,
+        PollAction,
+        PollType,
+        PollOptions,
+        PollReceiver,
+        PollSender,
+    };
 }
 
 pub use reqwest;

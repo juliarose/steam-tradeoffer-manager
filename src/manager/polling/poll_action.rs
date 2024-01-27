@@ -5,4 +5,6 @@ use super::PollType;
 pub enum PollAction {
     /// Perform a poll.
     DoPoll(PollType),
+    /// Stop polling.
+    StopPolling,
 }

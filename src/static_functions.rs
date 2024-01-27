@@ -124,6 +124,26 @@ pub async fn get_api_key(
 
 /// A stand-alone method for getting a user's inventory. Optionally allows specifying a client to 
 /// use for requests (useful if you need to proxy your requests, for example).
+/// 
+/// # Examples
+/// ```no_run
+/// use steam_tradeoffer_manager::get_inventory;
+/// use steam_tradeoffer_manager::request::GetInventoryOptions;
+/// 
+/// #[tokio::main]
+/// async fn main() {
+///     let options = GetInventoryOptions {
+///         steamid: SteamID::from(76561199436464454),
+///         appid: 730,
+///         contextid: 2,
+///         tradable_only: false,
+///         ..Default::default()
+///     };
+///     let inventory = get_inventory(&options).await.unwrap();
+///     
+///     println!("{} item(s) in CS:GO inventory", inventory.len());
+/// }
+/// ```
 pub async fn get_inventory<'a>(
     options: &GetInventoryOptions<'a>,
 ) -> Result<Vec<Asset>, Error> { 

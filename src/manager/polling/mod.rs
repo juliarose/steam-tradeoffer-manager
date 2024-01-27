@@ -1,4 +1,4 @@
-//! Models related to offer polling.
+//! Models related to polling offers.
 
 mod file;
 mod poll_type;
@@ -10,6 +10,10 @@ pub use poll_type::PollType;
 pub use poll_action::PollAction;
 pub use poller::{Result, Poll};
 pub use poll_data::PollData;
+/// The receiver for polling events.
+pub type PollReceiver = mpsc::Receiver<Result>;
+/// The sender for polling events.
+pub type PollSender = mpsc::Sender<PollAction>;
 
 use poller::Poller;
 
@@ -34,7 +38,7 @@ pub struct PollOptions {
     /// not be cancelled if this is not set.
     pub cancel_duration: Option<Duration>,
     /// The duration after the last poll becomes stale and a new one must be obtained when 
-    /// polling using [`crate::polling::PollType::Auto`]. Default is 4 minutes.
+    /// polling using [`steam_tradeoffer_manager::polling::PollType::Auto`]. Default is 5 minutes.
     pub poll_full_update_duration: Duration,
     /// Interval to poll at. Default is 30 seconds.
     pub poll_interval: Duration,
@@ -61,7 +65,7 @@ impl PollOptions {
     }
 }
 
-/// Packs the sender, receiver, and `JoinHandle` for the poller.
+/// Packs the sender, receiver, and [`JoinHandle`] for the poller.
 pub struct PollingMpsc {
     pub sender: mpsc::Sender<PollAction>,
     pub receiver: mpsc::Receiver<Result>,
@@ -89,7 +93,7 @@ pub fn create_poller(
         polling_rx,
     ) = mpsc::channel::<Result>(10);
     let handle = tokio::spawn(async move {
-        // Since the mutex is concurrent only one poll can be performed at a time.
+        // The mutex allows only one poll to be performed at a time.
         let poller = Arc::new(Mutex::new(Poller {
             api,
             steamid,
@@ -121,7 +125,7 @@ pub fn create_poller(
                             false
                         };
                         
-                        // The last time this type of poll was called too recently.
+                        // This type of poll was called too recently.
                         if called_too_recently {
                             // Ignore it.
                             continue;
@@ -134,6 +138,8 @@ pub fn create_poller(
                             break;
                         }
                     },
+                    // Breaks out of the loop and ends the task.
+                    PollAction::StopPolling => break,
                 }
             }
         });
@@ -143,7 +149,7 @@ pub fn create_poller(
             
             match polling_tx.send(poll).await {
                 Ok(_) => async_std::task::sleep(poll_interval).await,
-                // They closed the connection.
+                // The connection was closed or receiver stopped listening for events.
                 Err(_error) => break,
             }
         }
