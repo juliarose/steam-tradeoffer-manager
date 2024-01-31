@@ -1,6 +1,6 @@
 use crate::types::{AppId, ClassId, InstanceId};
 use crate::serialize;
-use crate::ServerTime;
+use crate::types::ServerTime;
 use serde::{Serialize, Deserialize};
 
 /// Contains details about an item including names and descriptions.

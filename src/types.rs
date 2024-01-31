@@ -18,6 +18,9 @@ pub type TradeOfferId = u64;
 /// An ID of a trade.
 pub type TradeId = u128;
 
+
+pub use crate::time::ServerTime;
+
 // Types internally used by the crate.
 use crate::response::ClassInfo;
 use std::sync::Arc;

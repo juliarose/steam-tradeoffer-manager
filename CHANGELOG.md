@@ -11,6 +11,7 @@
 - `ParameterError::CannotAcceptOfferThatIsOurs` into `ParameterError::CannotAcceptOfferWeCreated` for consistency.
 - `TradeOfferManagerBuilder`, `SteamTradeOfferAPIBuilder`, `MobileAPIBuilder`, and `NewTradeOfferBuilder` fields are now private.
 - `PollResult` to `Result`.
+- Moved `ServerTime` to `types::ServerTime`.
 
 ### Added
 - Some missing derives for various structs.

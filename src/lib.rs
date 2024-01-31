@@ -44,7 +44,6 @@ pub mod mobile_api;
 
 pub use static_functions::get_inventory;
 pub use classinfo_cache::ClassInfoCache;
-pub use time::ServerTime;
 pub use manager::{TradeOfferManager, TradeOfferManagerBuilder};
 
 pub mod polling {

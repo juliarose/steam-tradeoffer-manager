@@ -2,10 +2,10 @@ mod builder;
 pub(crate) mod polling;
 
 pub use builder::TradeOfferManagerBuilder;
-use polling::{PollingMpsc, PollOptions};
+use polling::{PollingMpsc, PollOptions, PollReceiver, PollSender};
 
 use crate::time;
-use crate::ServerTime;
+use crate::types::ServerTime;
 use crate::api::SteamTradeOfferAPI;
 use crate::mobile_api::MobileAPI;
 use crate::static_functions::get_api_key;
@@ -21,9 +21,6 @@ use std::sync::Arc;
 use std::sync::atomic::{Ordering, AtomicU64};
 use steamid_ng::SteamID;
 use tokio::task::JoinHandle;
-
-use self::polling::PollReceiver;
-use self::polling::PollSender;
 
 /// Manager which includes functionality for interacting with trade offers, confirmations and 
 /// inventories.
@@ -84,16 +81,13 @@ impl TradeOfferManager {
     /// ```no_run
     /// use steam_tradeoffer_manager::TradeOfferManager;
     /// 
-    /// #[tokio::main]
-    /// async fn main() {
-    ///     let manager = TradeOfferManager::builder().build();
-    ///     let cookies = vec![
-    ///         "sessionid=blahblahblah".to_string(),
-    ///         "steamLoginSecure=blahblahblah".to_string(),
-    ///     ];
-    ///     
-    ///     manager.set_cookies(&cookies);
-    /// }
+    /// let manager = TradeOfferManager::builder().build();
+    /// let cookies = vec![
+    ///     "sessionid=blahblahblah".to_string(),
+    ///     "steamLoginSecure=blahblahblah".to_string(),
+    /// ];
+    /// 
+    /// manager.set_cookies(&cookies);
     /// ```
     pub fn set_cookies(
         &self,
@@ -253,8 +247,13 @@ impl TradeOfferManager {
         }
     }
     
-    /// Accepts an offer. This checks if the offer can be acted on and updates the state of the 
-    /// offer upon success as long as it does not require mobile confirmation.
+    /// Accepts an offer. Updates the state of the offer upon success as long as it does not 
+    /// require mobile confirmation.
+    /// 
+    /// # Errors
+    /// - If the offer is ours.
+    /// - If the offer is not active.
+    /// - Any other error encountered while performing requests.
     pub async fn accept_offer(
         &self,
         offer: &mut TradeOffer,
@@ -281,8 +280,11 @@ impl TradeOfferManager {
         Ok(accepted_offer)
     }
     
-    /// Cancels an offer. This checks if the offer was not creating by us and updates the state of 
-    /// the offer upon success.
+    /// Cancels an offer. Updates the state of the offer upon success.
+    /// 
+    /// # Errors
+    /// - If the offer is not ours.
+    /// - Any other error encountered while performing requests.
     pub async fn cancel_offer(
         &self,
         offer: &mut TradeOffer,
@@ -297,8 +299,11 @@ impl TradeOfferManager {
         Ok(())
     }
     
-    /// Declines an offer. This checks if the offer was creating by us and updates the state of 
-    /// the offer upon success.
+    /// Declines an offer. Updates the state of the offer upon success.
+    /// 
+    /// # Errors
+    /// - If the offer is ours.
+    /// - Any other error encountered while performing requests.
     pub async fn decline_offer(
         &self,
         offer: &mut TradeOffer,
@@ -337,8 +342,10 @@ impl TradeOfferManager {
         Ok(sent_offer)
     }
     
-    /// Gets our nventory. This method **does not** include untradable items. If you did not set 
-    /// cookies, this will fail.
+    /// Gets our inventory. This method **does not** include untradable items.
+    /// 
+    /// # Errors
+    /// If the cookies are not set. (See [`TradeOfferManager::set_cookies`])
     pub async fn get_my_inventory(
         &self,
         appid: AppId,
@@ -460,6 +467,11 @@ impl TradeOfferManager {
     }
     
     /// Gets the trade receipt (new items) upon completion of a trade.
+    /// 
+    /// # Errors
+    /// - If the offer is not in the accepted state.
+    /// - If the offer does not have a trade ID.
+    /// - Any other error encountered while performing requests.
     pub async fn get_receipt(
         &self,
         offer: &TradeOffer,
@@ -542,8 +554,7 @@ impl TradeOfferManager {
         })
     }
     
-    /// Gets trade history. The second part of the returned tuple is whether more trades can be 
-    /// fetched.
+    /// Gets trade history.
     pub async fn get_trade_history(
         &self,
         options: &GetTradeHistoryOptions,

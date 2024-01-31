@@ -1,4 +1,4 @@
-use crate::ServerTime;
+use crate::types::ServerTime;
 
 /// The type of poll to perform.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

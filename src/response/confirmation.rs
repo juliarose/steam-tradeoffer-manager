@@ -1,5 +1,5 @@
 use crate::enums::ConfirmationType;
-use crate::ServerTime;
+use crate::types::ServerTime;
 use crate::serialize;
 use std::fmt;
 use chrono::serde::ts_seconds;

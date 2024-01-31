@@ -562,12 +562,12 @@ impl SteamTradeOfferAPI {
             tradeofferid: TradeOfferId,
         }
         
-        #[derive(Deserialize, Debug)]
+        #[derive(Deserialize)]
         struct Body {
             offer: response::RawTradeOffer,
         }
         
-        #[derive(Deserialize, Debug)]
+        #[derive(Deserialize)]
         struct Response {
             response: Body,
         }
@@ -587,8 +587,7 @@ impl SteamTradeOfferAPI {
         Ok(body.response.offer)
     }
     
-    /// Gets trade history. The second part of the returned tuple is whether more trades can be 
-    /// fetched.
+    /// Gets trade history.
     pub async fn get_trade_history(
         &self,
         options: &GetTradeHistoryOptions,
@@ -724,7 +723,7 @@ impl SteamTradeOfferAPI {
         Ok(user_details)
     }
     
-    /// Accepts an offer. 
+    /// Accepts an offer.
     pub async fn accept_offer(
         &self,
         tradeofferid: TradeOfferId,
@@ -762,7 +761,7 @@ impl SteamTradeOfferAPI {
         Ok(body)
     }
     
-    /// Declines an offer. 
+    /// Declines an offer.
     pub async fn decline_offer(
         &self,
         tradeofferid: TradeOfferId,
@@ -772,7 +771,7 @@ impl SteamTradeOfferAPI {
             sessionid: String,
         }
         
-        #[derive(Deserialize, Debug)]
+        #[derive(Deserialize)]
         struct Response {
             #[serde(with = "serialize::string")]
             tradeofferid: TradeOfferId,
@@ -794,7 +793,7 @@ impl SteamTradeOfferAPI {
         Ok(body.tradeofferid)
     }
     
-    /// Cancels an offer. 
+    /// Cancels an offer.
     pub async fn cancel_offer(
         &self,
         tradeofferid: TradeOfferId,
@@ -804,7 +803,7 @@ impl SteamTradeOfferAPI {
             sessionid: String,
         }
         
-        #[derive(Deserialize, Debug)]
+        #[derive(Deserialize)]
         struct Response {
             #[serde(with = "serialize::string")]
             tradeofferid: TradeOfferId,

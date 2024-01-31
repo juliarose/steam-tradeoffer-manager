@@ -123,7 +123,7 @@ impl MobileAPI {
     pub async fn get_trade_confirmations(
         &self,
     ) -> Result<Vec<Confirmation>, Error> {
-        #[derive(Deserialize, Debug)]
+        #[derive(Deserialize)]
         pub struct GetTradeConfirmationsResponse {
             #[serde(default)]
             pub success: bool,
@@ -174,7 +174,7 @@ impl MobileAPI {
         nonce: &u64,
         operation: Operation,
     ) -> Result<(), Error>  {
-        #[derive(Debug, Deserialize)]
+        #[derive(Deserialize)]
         struct SendConfirmationResponse {
             pub success: bool,
             #[serde(default)]
