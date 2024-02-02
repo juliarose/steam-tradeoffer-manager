@@ -148,8 +148,9 @@ pub async fn get_api_key(
     let sessionid = sessionid
         .ok_or(Error::NotLoggedIn)?;
     let cookie_store = Arc::new(Jar::default());
+    // Should not panic since the URL is hardcoded.
     let url = format!("https://{COMMUNITY_HOSTNAME}").parse::<Url>()
-        .unwrap_or_else(|_| panic!("URL could not be parsed from {COMMUNITY_HOSTNAME}"));
+        .unwrap_or_else(|error| panic!("URL could not be parsed from {COMMUNITY_HOSTNAME}: {error}"));
     
     for cookie in cookies {
         cookie_store.add_cookie_str(cookie, &url);

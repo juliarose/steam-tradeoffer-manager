@@ -7,7 +7,7 @@ use serde::{Serialize, Deserialize};
 /// An item to send in a trade offer.
 #[derive(Deserialize, Serialize, Debug, Clone, Default, Eq, PartialEq)]
 pub struct NewTradeOfferItem {
-    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global offensive.
+    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global Offensive.
     pub appid: AppId,
     #[serde(with = "serialize::string")]
     /// The context ID.

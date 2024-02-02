@@ -1,3 +1,5 @@
+//! Contains custom serialization and deserialization functions.
+
 use crate::response::ClassInfo;
 use crate::types::{ClassInfoAppClass, ClassInfoAppMap, ClassInfoMap};
 use std::collections::HashMap;
@@ -9,7 +11,7 @@ use steamid_ng::SteamID;
 use serde::{Serializer, Deserialize};
 use serde::de::{self, MapAccess, Visitor, SeqAccess, Deserializer, Unexpected};
 use serde_json::value::RawValue;
-use lazy_regex::{regex_is_match, regex_captures};
+use lazy_regex::regex_is_match;
 
 pub fn empty_string_is_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
 where
@@ -462,14 +464,14 @@ where
     deserializer.deserialize_any(ClassInfoMapVisitor)
 }
 
-pub fn deserialize_classinfo_map_raw<'de, D>(deserializer: D) -> Result<HashMap<ClassInfoAppClass, String>, D::Error>
+pub fn deserialize_classinfo_map_raw<'de, D>(deserializer: D) -> Result<HashMap<ClassInfoAppClass, Box<RawValue>>, D::Error>
 where
     D: Deserializer<'de>,
 {
     struct ClassInfoMapVisitor;
     
     impl<'de> Visitor<'de> for ClassInfoMapVisitor {
-        type Value = HashMap<ClassInfoAppClass, String>;
+        type Value = HashMap<ClassInfoAppClass, Box<RawValue>>;
     
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("a map")
@@ -482,18 +484,22 @@ where
             let mut map = HashMap::new();
             
             while let Some(key) = access.next_key::<String>()? {
-                if let Some((_, classid_string, instanceid_string)) = regex_captures!(r#"(\d+)_?(\d+)?"#, &key) {
-                    let classid = classid_string.parse::<u64>().map_err(de::Error::custom)?;
-                    let instanceid = match instanceid_string.parse::<u64>() {
-                        Ok(instanceid) => Some(instanceid),
-                        Err(_) => None,
-                    };
-                    let raw_value = access.next_value::<Box<RawValue>>()?;
-                    let classinfo_string = raw_value.to_string();
-                    
-                    map.insert((classid, instanceid), classinfo_string);
-                } else if let Ok(_invalid) = access.next_value::<u8>() {
-                    // invalid key - discard
+                let mut iter = key.split('_');
+                
+                if let Some(classid_str) = iter.next() {
+                    if let Ok(classid) = classid_str.parse::<u64>() {
+                        let instanceid = if let Some(instanceid_str) = iter.next() {
+                            instanceid_str.parse::<u64>().ok()
+                        } else {
+                            None
+                        };
+                        let raw_value = access.next_value::<Box<RawValue>>()?;
+                        // let classinfo_string = raw_value.to_string();
+                        
+                        map.insert((classid, instanceid), raw_value);
+                    } else if let Ok(_invalid) = access.next_value::<Box<RawValue>>() {
+                        // ignore invalid keys e.g. "success"
+                    }
                 }
             }
             

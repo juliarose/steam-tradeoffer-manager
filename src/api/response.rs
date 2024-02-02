@@ -126,7 +126,7 @@ impl RawTradeOffer {
 /// An asset belonging to a [`RawTrade`].
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RawAsset {
-    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global offensive.
+    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global Offensive.
     pub appid: AppId,
     /// The context ID.
     #[serde(with = "serialize::string")]
@@ -148,7 +148,7 @@ pub struct RawAsset {
     pub instanceid: InstanceId,
 }
 
-/// Converts a [`RawTradeAsset`] into a[`RawAsset`]. The `contextid` and `assetid` are taken from 
+/// Converts a [`RawTradeAsset`] into a [`RawAsset`]. The `contextid` and `assetid` are taken from 
 /// `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
 /// 
 /// If you need a [`RawAsset`] of the newly acquired item, call `try_into_new_asset` on the
@@ -167,7 +167,7 @@ impl From<RawTradeAsset> for RawAsset {
     }
 }
 
-/// Converts a borrowed [`RawTradeAsset`] into a[`RawAsset`]. The `contextid` and `assetid` are 
+/// Converts a borrowed [`RawTradeAsset`] into a [`RawAsset`]. The `contextid` and `assetid` are 
 /// taken from `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
 /// 
 /// If you need a [`RawAsset`] of the newly acquired item, call `try_into_new_asset` on the
@@ -189,7 +189,7 @@ impl From<&RawTradeAsset> for RawAsset {
 /// An asset belonging to a receipt.
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RawReceiptAsset {
-    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global offensive.
+    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global Offensive.
     pub appid: AppId,
     /// The context ID.
     pub contextid: ContextId,
@@ -259,7 +259,7 @@ pub struct RawTrade {
 /// An asset belonging to a [`RawTrade`].
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawTradeAsset {
-    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global offensive.
+    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global Offensive.
     pub appid: AppId,
     /// The context ID.
     #[serde(with = "serialize::string")]

@@ -76,8 +76,9 @@ impl MobileAPI {
             cookies.push(format!("sessionid={sessionid}"));
             sessionid
         };
+        // Should not panic since the URL is hardcoded.
         let url = format!("https://{}", Self::HOSTNAME).parse::<Url>()
-            .unwrap_or_else(|_| panic!("URL could not be parsed from {}", Self::HOSTNAME));
+            .unwrap_or_else(|error| panic!("URL could not be parsed from {}: {}", Self::HOSTNAME, error));
         
         *self.sessionid.write().unwrap() = Some(sessionid);
         

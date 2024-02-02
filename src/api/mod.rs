@@ -100,8 +100,9 @@ impl SteamTradeOfferAPI {
             cookies.push(format!("sessionid={sessionid}"));
             sessionid
         };
+        // Should not panic since the URL is hardcoded.
         let url = format!("https://{}", Self::HOSTNAME).parse::<Url>()
-            .unwrap_or_else(|_| panic!("URL could not be parsed from {}", Self::HOSTNAME));
+            .unwrap_or_else(|error| panic!("URL could not be parsed from {}: {}", Self::HOSTNAME, error));
         
         *self.sessionid.write().unwrap() = Some(sessionid);
         
@@ -297,8 +298,8 @@ impl SteamTradeOfferAPI {
             .into_iter()
             // Sometimes Steam returns empty classinfo data.
             // We just ignore them until they are successfully fetched.
-            .filter_map(|((classid, instanceid), classinfo_string)| {
-                serde_json::from_str::<ClassInfo>(&classinfo_string)
+            .filter_map(|((classid, instanceid), classinfo_value)| {
+                serde_json::from_str::<ClassInfo>(classinfo_value.get())
                     // ignore classinfos that failed parsed
                     .ok()
                     .map(|classinfo| (

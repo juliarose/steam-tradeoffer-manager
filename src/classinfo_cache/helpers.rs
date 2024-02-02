@@ -12,7 +12,7 @@ type ClassInfoFile = (ClassInfoClass, ClassInfo);
 /// Saves the classinfo.
 async fn save_classinfo(
     class: ClassInfoClass,
-    classinfo: String,
+    classinfo: &str,
     data_directory: PathBuf, 
 ) -> Result<(), FileError> {
     // Before saving we want to validate if the JSON is valid
@@ -50,18 +50,16 @@ pub async fn load_classinfos(
 /// Saves classinfos.
 pub async fn save_classinfos(
     appid: AppId,
-    classinfos: &HashMap<ClassInfoAppClass, String>,
+    classinfos: &HashMap<ClassInfoAppClass, Box<serde_json::value::RawValue>>,
     data_directory: &Path, 
 ) {
     let tasks = classinfos
         .iter()
         .map(|((classid, instanceid), classinfo)|  {
-            // must be cloned to move across threads
-            let classinfo = classinfo.to_owned();
             let class = (appid, *classid, *instanceid);
             let class_data_directory = data_directory.to_path_buf();
             
-            save_classinfo(class, classinfo, class_data_directory)
+            save_classinfo(class, classinfo.get(), class_data_directory)
         })
         .collect::<Vec<_>>();
     

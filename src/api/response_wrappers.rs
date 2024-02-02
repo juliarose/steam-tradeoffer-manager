@@ -105,7 +105,7 @@ pub struct GetInventoryOldResponse {
 #[derive(Deserialize, Debug)]
 pub struct GetAssetClassInfoResponse {
     #[serde(deserialize_with = "serialize::deserialize_classinfo_map_raw")]
-    pub result: HashMap<ClassInfoAppClass, String>,
+    pub result: HashMap<ClassInfoAppClass, Box<serde_json::value::RawValue>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -130,8 +130,8 @@ mod tests {
     #[test]
     fn parses_get_asset_classinfo_response() {
         let response: GetAssetClassInfoResponse = serde_json::from_str(include_str!("fixtures/get_asset_classinfo.json")).unwrap();
-        let classinfo_string = response.result.get(&(101785959, Some(11040578))).unwrap();
-        let parsed = serde_json::from_str::<response::ClassInfo>(classinfo_string).unwrap();
+        let classinfo_value = response.result.get(&(101785959, Some(11040578))).unwrap();
+        let parsed = serde_json::from_str::<response::ClassInfo>(classinfo_value.get()).unwrap();
         
         assert_eq!(parsed.market_hash_name, Some(String::from("Mann Co. Supply Crate Key")));
     }

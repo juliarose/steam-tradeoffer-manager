@@ -8,7 +8,7 @@ use serde::{Serialize, Deserialize};
 /// An asset which includes its related [`ClassInfo`] mapping.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Asset {
-    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global offensive.
+    /// The app ID e.g. `440` for Team Fortress 2 or `730` for Counter-Strike Global Offensive.
     pub appid: AppId,
     /// The context ID.
     #[serde(with = "serialize::string")]
