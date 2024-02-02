@@ -1,5 +1,6 @@
 use super::file;
 use super::{PollData, PollType};
+use crate::api::request::GetTradeOffersOptions;
 use crate::time;
 use crate::enums::TradeOfferState;
 use crate::types::TradeOfferId;
@@ -64,14 +65,17 @@ impl Poller {
             active_only = false;
         }
         
-        let (mut offers, descriptions) = self.api.get_raw_trade_offers(
+        let (
+            mut offers,
+            descriptions,
+        ) = self.api.get_raw_trade_offers(&GetTradeOffersOptions {
             active_only,
-            false,
-            true,
-            true,
-            poll_type.is_active_only(),
-            Some(time::timestamp_to_server_time(offers_since)),
-        ).await?;
+            historical_only: false,
+            get_sent_offers: true,
+            get_received_offers: true,
+            get_descriptions: poll_type.is_active_only(),
+            historical_cutoff: Some(time::timestamp_to_server_time(offers_since)),
+        }).await?;
         
         if !poll_type.is_active_only() {
             self.poll_data.set_last_poll(now);

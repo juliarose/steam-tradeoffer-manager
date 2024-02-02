@@ -16,111 +16,8 @@ use reqwest::header::REFERER;
 use scraper::{Html, Selector};
 use url::Url;
 
-/// Gets your Steam Web API key.
-/// 
-/// This method requires your cookies. If your account does not have an API key set, one will be 
-/// created using `localhost` as the domain. By calling this method you are agreeing to the 
-/// [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms). 
-pub async fn get_api_key(
-    cookies: &[String],
-) -> Result<String, Error> {
-    async fn try_get_key(client: &reqwest::Client) -> Result<String, Error> {
-        let uri = format!("https://{COMMUNITY_HOSTNAME}/dev/apikey");
-        let response = client.get(uri)
-            .send()
-            .await?;
-        let text = response.text().await?;
-        let fragment = Html::parse_fragment(&text);
-        let main_selector = Selector::parse("#mainContents h2")
-            .map_err(|_error| ParseHtmlError::ParseSelector)?;
-        let body_contents_selector = Selector::parse("#bodyContents_ex")
-            .map_err(|_error| ParseHtmlError::ParseSelector)?;
-        let h2_selector = Selector::parse("h2")
-            .map_err(|_error| ParseHtmlError::ParseSelector)?;
-        let p_selector = Selector::parse("p")
-            .map_err(|_error| ParseHtmlError::ParseSelector)?;
-        
-        if let Some(element) = fragment.select(&main_selector).next() {
-            if element.text().collect::<String>() == "Access Denied" {
-                return Err(Error::NotLoggedIn);
-            }
-        }
-        
-        if let Some(body_contents_element) = fragment.select(&body_contents_selector).next() {
-            if let Some(element) = body_contents_element.select(&h2_selector).next() {
-                if element.text().collect::<String>().trim() == "Your Steam Web API Key" {
-                    if let Some(element) = body_contents_element.select(&p_selector).next() {
-                        let text = element.text().collect::<String>();
-                        let mut text = text.trim().split(' ');
-                        
-                        text.next();
-                        
-                        if let Some(api_key) = text.next() {
-                            return Ok(api_key.to_string());
-                        } else {
-                            return Err(Error::ParseHtml(
-                                ParseHtmlError::Malformed(COULD_NOT_GET_KEY)
-                            ));
-                        }
-                    }
-                }
-            }
-        }
-        
-        Err(Error::ParseHtml(
-            ParseHtmlError::Malformed(NO_API_KEY)
-        ))
-    }
-    
-    #[derive(Serialize)]
-    #[serde(rename_all = "camelCase")]
-    struct CreateAPIKey {
-        domain: String,
-        agree_to_terms: String,
-        sessionid: String,
-        submit: String,
-    }
-    
-    const COULD_NOT_GET_KEY: &str = "API key could not be parsed from response";
-    const NO_API_KEY: &str = "This account does not have an API key";
-    
-    let (
-        sessionid,
-        _steamid,
-    ) = get_sessionid_and_steamid_from_cookies(cookies);
-    let sessionid = sessionid
-        .ok_or(Error::NotLoggedIn)?;
-    let cookie_store = Arc::new(Jar::default());
-    let url = format!("https://{COMMUNITY_HOSTNAME}").parse::<Url>()
-        .unwrap_or_else(|_| panic!("URL could not be parsed from {COMMUNITY_HOSTNAME}"));
-    
-    for cookie in cookies {
-        cookie_store.add_cookie_str(cookie, &url);
-    }
-    
-    let client = reqwest::ClientBuilder::new()
-        .cookie_provider(cookie_store)
-        .build()?;
-    
-    match try_get_key(&client).await {
-        Ok(api_key) => Ok(api_key),
-        Err(Error::ParseHtml(ParseHtmlError::Malformed(message))) if message == NO_API_KEY => {
-            let uri = format!("https://{COMMUNITY_HOSTNAME}/dev/registerkey");
-            let _response = client.post(uri)
-                .form(&CreateAPIKey {
-                    domain: "localhost".into(),
-                    sessionid,
-                    agree_to_terms: "agreed".into(),
-                    submit: "Register".into(),
-                })
-                .send()
-                .await?;
-            
-            try_get_key(&client).await
-        },
-        Err(error) => Err(error),
-    }
-}
+const ERROR_COULD_NOT_GET_API_KEY: &str = "API key could not be parsed from response";
+const ERROR_NO_API_KEY: &str = "This account does not have an API key";
 
 /// A stand-alone method for getting a user's inventory. Optionally allows specifying a client to 
 /// use for requests (useful if you need to proxy your requests, for example).
@@ -225,6 +122,106 @@ pub async fn get_inventory<'a>(
     }
     
     Ok(inventory)
+}
+
+/// Gets your Steam Web API key.
+/// 
+/// This method requires your cookies. If your account does not have an API key set, one will be 
+/// created using `localhost` as the domain. By calling this method you are agreeing to the 
+/// [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms).
+pub async fn get_api_key(
+    cookies: &[String],
+) -> Result<String, Error> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct CreateAPIKey {
+        domain: String,
+        agree_to_terms: String,
+        sessionid: String,
+        submit: String,
+    }
+    
+    let (
+        sessionid,
+        _steamid,
+    ) = get_sessionid_and_steamid_from_cookies(cookies);
+    let sessionid = sessionid
+        .ok_or(Error::NotLoggedIn)?;
+    let cookie_store = Arc::new(Jar::default());
+    let url = format!("https://{COMMUNITY_HOSTNAME}").parse::<Url>()
+        .unwrap_or_else(|_| panic!("URL could not be parsed from {COMMUNITY_HOSTNAME}"));
+    
+    for cookie in cookies {
+        cookie_store.add_cookie_str(cookie, &url);
+    }
+    
+    let client = reqwest::ClientBuilder::new()
+        .cookie_provider(cookie_store)
+        .build()?;
+    
+    match try_get_key(&client).await {
+        Ok(api_key) => Ok(api_key),
+        Err(Error::ParseHtml(ParseHtmlError::Malformed(message))) if message == ERROR_NO_API_KEY => {
+            let uri = format!("https://{COMMUNITY_HOSTNAME}/dev/registerkey");
+            let _response = client.post(uri)
+                .form(&CreateAPIKey {
+                    domain: "localhost".into(),
+                    sessionid,
+                    agree_to_terms: "agreed".into(),
+                    submit: "Register".into(),
+                })
+                .send()
+                .await?;
+            
+            try_get_key(&client).await
+        },
+        Err(error) => Err(error),
+    }
+}
+
+/// Makes a request to https://steamcommunity.com/dev/apikey and scrapes the page for the API key.
+async fn try_get_key(client: &reqwest::Client) -> Result<String, Error> {
+    let uri = format!("https://{COMMUNITY_HOSTNAME}/dev/apikey");
+    let response = client.get(uri)
+        .send()
+        .await?;
+    let text = response.text().await?;
+    let fragment = Html::parse_fragment(&text);
+    let main_selector = Selector::parse("#mainContents h2")
+        .map_err(|_error| ParseHtmlError::ParseSelector)?;
+    let body_contents_selector = Selector::parse("#bodyContents_ex")
+        .map_err(|_error| ParseHtmlError::ParseSelector)?;
+    let h2_selector = Selector::parse("h2")
+        .map_err(|_error| ParseHtmlError::ParseSelector)?;
+    let p_selector = Selector::parse("p")
+        .map_err(|_error| ParseHtmlError::ParseSelector)?;
+    
+    if let Some(element) = fragment.select(&main_selector).next() {
+        if element.text().collect::<String>() == "Access Denied" {
+            return Err(Error::NotLoggedIn);
+        }
+    }
+    
+    if let Some(body_contents_element) = fragment.select(&body_contents_selector).next() {
+        if let Some(element) = body_contents_element.select(&h2_selector).next() {
+            if element.text().collect::<String>().trim() == "Your Steam Web API Key" {
+                if let Some(element) = body_contents_element.select(&p_selector).next() {
+                    let text = element.text().collect::<String>();
+                    let mut text = text.trim().split(' ');
+                    
+                    text.next();
+                    
+                    if let Some(api_key) = text.next() {
+                        return Ok(api_key.to_string());
+                    } else {
+                        return Err(ParseHtmlError::Malformed(ERROR_COULD_NOT_GET_API_KEY).into());
+                    }
+                }
+            }
+        }
+    }
+    
+    Err(ParseHtmlError::Malformed(ERROR_NO_API_KEY).into())
 }
 
 #[derive(Deserialize)]

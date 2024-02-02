@@ -2,6 +2,7 @@
 //! manager, but if you need more control over the requests, you can use this API directly.
 
 pub mod response;
+pub mod request;
 
 mod builder;
 mod response_wrappers;
@@ -14,7 +15,6 @@ pub use builder::SteamTradeOfferAPIBuilder;
 
 use crate::SteamID;
 use crate::helpers::get_default_middleware;
-use crate::time::ServerTime;
 use crate::types::*;
 use crate::response::*;
 use crate::enums::{Language, GetUserDetailsMethod};
@@ -397,12 +397,7 @@ impl SteamTradeOfferAPI {
     /// the offers using the `map_raw_trade_offers_with_descriptions` method.
     pub async fn get_raw_trade_offers(
         &self,
-        active_only: bool,
-        historical_only: bool,
-        get_sent_offers: bool,
-        get_received_offers: bool,
-        get_descriptions: bool,
-        historical_cutoff: Option<ServerTime>,
+        options: &request::GetTradeOffersOptions,
     ) -> Result<(Vec<response::RawTradeOffer>, Option<ClassInfoMap>), Error> {
         #[derive(Serialize)]
         struct Form<'a> {
@@ -417,6 +412,14 @@ impl SteamTradeOfferAPI {
             cursor: Option<u32>,
         }
         
+        let request::GetTradeOffersOptions {
+            active_only,
+            historical_only,
+            get_sent_offers,
+            get_received_offers,
+            get_descriptions,
+            historical_cutoff,
+        } = options;
         let uri = self.get_api_url("IEconService", "GetTradeOffers", 1);
         let key = self.api_key.as_ref()
             .ok_or(ParameterError::MissingApiKey)?;
@@ -431,11 +434,11 @@ impl SteamTradeOfferAPI {
                 .query(&Form {
                     key,
                     language: self.language.web_api_language_code(),
-                    active_only,
-                    historical_only,
-                    get_sent_offers,
-                    get_received_offers,
-                    get_descriptions,
+                    active_only: *active_only,
+                    historical_only: *historical_only,
+                    get_sent_offers: *get_sent_offers,
+                    get_received_offers: *get_received_offers,
+                    get_descriptions: *get_descriptions,
                     time_historical_cutoff,
                     cursor,
                 })
@@ -456,7 +459,7 @@ impl SteamTradeOfferAPI {
                 // Is there an offer older than the cutoff?
                 let has_older = response_offers
                     .iter()
-                    .any(|offer| offer.time_created < historical_cutoff);
+                    .any(|offer| offer.time_created < *historical_cutoff);
                 
                 // we don't need to go any further...
                 if has_older {
@@ -489,11 +492,11 @@ impl SteamTradeOfferAPI {
         Ok((offers, descriptions))
     }
     
-    /// Maps trade offer data with descriptions from the cache and API. Ignores offers with 
-    /// missing descriptions.
+    /// Combines trade offers with their descriptions using the cache and the Steam Web API. 
+    /// Ignores offers with missing descriptions.
     pub async fn map_raw_trade_offers(
         &self,
-        offers: Vec<RawTradeOffer>,
+        offers: Vec<response::RawTradeOffer>,
     ) -> Result<Vec<TradeOffer>, Error> {
         let classes = offers
             .iter()
@@ -531,21 +534,9 @@ impl SteamTradeOfferAPI {
     /// Gets trade offers.
     pub async fn get_trade_offers(
         &self,
-        active_only: bool,
-        historical_only: bool,
-        get_sent_offers: bool,
-        get_received_offers: bool,
-        get_descriptions: bool,
-        historical_cutoff: Option<ServerTime>,
+        options: &request::GetTradeOffersOptions,
     ) -> Result<Vec<TradeOffer>, Error> {
-        let (raw_offers, _descriptions) = self.get_raw_trade_offers(
-            active_only,
-            historical_only,
-            get_sent_offers,
-            get_received_offers,
-            get_descriptions,
-            historical_cutoff,
-        ).await?;
+        let (raw_offers, _descriptions) = self.get_raw_trade_offers(options).await?;
         let offers = self.map_raw_trade_offers(raw_offers).await?;
         
         Ok(offers)
@@ -592,15 +583,15 @@ impl SteamTradeOfferAPI {
         &self,
         options: &GetTradeHistoryOptions,
     ) -> Result<Trades, Error> {
-        let body = self.get_trade_history_request(
-            options.max_trades,
-            options.start_after_time,
-            options.start_after_tradeid,
-            options.navigating_back,
-            true,
-            options.include_failed,
-            true,
-        ).await?;
+        let body = self.get_trade_history_request(request::GetTradeHistoryRequestOptions{
+            max_trades: options.max_trades,
+            start_after_time: options.start_after_time,
+            start_after_tradeid: options.start_after_tradeid,
+            navigating_back: options.navigating_back,
+            get_descriptions: true,
+            include_failed: options.include_failed,
+            include_total: true,
+        }).await?;
         
         if let Some(descriptions) = body.descriptions {
             let trades = body.trades
@@ -624,18 +615,18 @@ impl SteamTradeOfferAPI {
     pub async fn get_trade_history_without_descriptions(
         &self,
         options: &GetTradeHistoryOptions,
-    ) -> Result<RawTrades, Error> {
-        let body = self.get_trade_history_request(
-            options.max_trades,
-            options.start_after_time,
-            options.start_after_tradeid,
-            options.navigating_back,
-            false,
-            options.include_failed,
-            true,
-        ).await?;
+    ) -> Result<response::RawTrades, Error> {
+        let body = self.get_trade_history_request(request::GetTradeHistoryRequestOptions{
+            max_trades: options.max_trades,
+            start_after_time: options.start_after_time,
+            start_after_tradeid: options.start_after_tradeid,
+            navigating_back: options.navigating_back,
+            get_descriptions: false,
+            include_failed: options.include_failed,
+            include_total: true,
+        }).await?;
         
-        Ok(RawTrades {
+        Ok(response::RawTrades {
             trades: body.trades,
             more: body.more,
             // Should always be present since include_total was passed.
@@ -643,16 +634,9 @@ impl SteamTradeOfferAPI {
         })
     }
     
-    #[cfg_attr(feature = "cargo-clippy", allow(clippy::too_many_arguments))]
     async fn get_trade_history_request(
         &self,
-        max_trades: u32,
-        start_after_time: Option<u32>,
-        start_after_tradeid: Option<TradeId>,
-        navigating_back: bool,
-        get_descriptions: bool,
-        include_failed: bool,
-        include_total: bool,
+        options: request::GetTradeHistoryRequestOptions,
     ) -> Result<GetTradeHistoryResponseBody, Error> {
         #[derive(Serialize)]
         struct Form<'a> {
@@ -666,6 +650,15 @@ impl SteamTradeOfferAPI {
             include_total: bool,
         }
         
+        let request::GetTradeHistoryRequestOptions {
+            max_trades,
+            start_after_time,
+            start_after_tradeid,
+            navigating_back,
+            get_descriptions,
+            include_failed,
+            include_total,
+        } = options;
         let uri = self.get_api_url("IEconService", "GetTradeHistory", 1);
         let key = self.api_key.as_ref()
             .ok_or(ParameterError::MissingApiKey)?;

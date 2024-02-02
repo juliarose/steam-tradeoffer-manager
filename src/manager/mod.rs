@@ -4,6 +4,7 @@ pub(crate) mod polling;
 pub use builder::TradeOfferManagerBuilder;
 use polling::{PollingMpsc, PollOptions, PollReceiver, PollSender};
 
+use crate::api::request::GetTradeOffersOptions;
 use crate::time;
 use crate::types::ServerTime;
 use crate::api::SteamTradeOfferAPI;
@@ -525,14 +526,14 @@ impl TradeOfferManager {
         filter: OfferFilter,
         historical_cutoff: Option<ServerTime>,
     ) -> Result<Vec<TradeOffer>, Error> {
-        let offers = self.api.get_trade_offers(
-            filter == OfferFilter::ActiveOnly,
-            filter == OfferFilter::HistoricalOnly,
-            true,
-            true,
-            false,
+        let offers = self.api.get_trade_offers(&GetTradeOffersOptions {
+            active_only: filter == OfferFilter::ActiveOnly,
+            historical_only: filter == OfferFilter::HistoricalOnly,
+            get_sent_offers: true,
+            get_received_offers: true,
+            get_descriptions: false,
             historical_cutoff,
-        ).await?;
+        }).await?;
         
         // trim responses since these don't always return what we want
         Ok(match filter {
