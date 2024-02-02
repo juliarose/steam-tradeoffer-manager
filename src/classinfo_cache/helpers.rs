@@ -1,7 +1,6 @@
 use crate::response::ClassInfo;
 use crate::error::FileError;
-use crate::types::AppId;
-use crate::types::{ClassInfoClass, ClassInfoAppClass};
+use crate::types::{AppId, ClassInfoClass, ClassInfoAppClass};
 use crate::helpers::write_file_atomic;
 use std::path::{Path, PathBuf};
 use std::collections::{HashMap, HashSet};
@@ -9,11 +8,52 @@ use futures::future::join_all;
 
 type ClassInfoFile = (ClassInfoClass, ClassInfo);
 
+/// Saves classinfos.
+pub async fn save_classinfos(
+    appid: AppId,
+    classinfos: &HashMap<ClassInfoAppClass, Box<serde_json::value::RawValue>>,
+    data_directory: &Path, 
+) {
+    let tasks = classinfos
+        .iter()
+        .map(|((classid, instanceid), classinfo)|  {
+            let class = (appid, *classid, *instanceid);
+            
+            save_classinfo(class, classinfo.get(), data_directory)
+        })
+        .collect::<Vec<_>>();
+    
+    for result in join_all(tasks).await {
+        if let Err(error) = result {
+            // These are allowed to fail but we want a message of the error.
+            log::debug!("Error saving classinfo: {}", error);
+        }
+    }
+}
+
+/// Loads classinfos.
+pub async fn load_classinfos(
+    classes: &HashSet<&ClassInfoClass>,
+    data_directory: &Path, 
+) -> Vec<Result<ClassInfoFile, FileError>> {
+    let tasks = classes
+        .iter()
+        .map(|class|  {
+            // must be cloned to move across threads
+            let class = **class;
+            
+            load_classinfo(class, data_directory)
+        })
+        .collect::<Vec<_>>();
+    
+    join_all(tasks).await
+}
+
 /// Saves the classinfo.
 async fn save_classinfo(
     class: ClassInfoClass,
     classinfo: &str,
-    data_directory: PathBuf, 
+    data_directory: &Path,
 ) -> Result<(), FileError> {
     // Before saving we want to validate if the JSON is valid
     serde_json::from_str::<ClassInfo>(&classinfo)?;
@@ -28,52 +68,9 @@ async fn save_classinfo(
     Ok(())
 }
 
-/// Loads classinfos.
-pub async fn load_classinfos(
-    classes: &HashSet<&ClassInfoClass>,
-    data_directory: &Path, 
-) -> Vec<Result<ClassInfoFile, FileError>> {
-    let tasks = classes
-        .iter()
-        .map(|class|  {
-            // must be cloned to move across threads
-            let class = **class;
-            let class_data_directory = data_directory.to_path_buf();
-            
-            load_classinfo(class, class_data_directory)
-        })
-        .collect::<Vec<_>>();
-    
-    join_all(tasks).await
-}
-
-/// Saves classinfos.
-pub async fn save_classinfos(
-    appid: AppId,
-    classinfos: &HashMap<ClassInfoAppClass, Box<serde_json::value::RawValue>>,
-    data_directory: &Path, 
-) {
-    let tasks = classinfos
-        .iter()
-        .map(|((classid, instanceid), classinfo)|  {
-            let class = (appid, *classid, *instanceid);
-            let class_data_directory = data_directory.to_path_buf();
-            
-            save_classinfo(class, classinfo.get(), class_data_directory)
-        })
-        .collect::<Vec<_>>();
-    
-    for result in join_all(tasks).await {
-        if let Err(error) = result {
-            // These are allowed to fail but we want a message of the error.
-            log::debug!("Error saving classinfo: {}", error);
-        }
-    }
-}
-
 async fn load_classinfo(
     class: ClassInfoClass,
-    data_directory: PathBuf, 
+    data_directory: &Path,
 ) -> Result<ClassInfoFile, FileError> {
     let filepath = get_classinfo_file_path(&class, &data_directory);
     let data = async_fs::read_to_string(&filepath).await?;

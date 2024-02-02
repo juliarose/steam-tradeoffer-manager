@@ -83,7 +83,6 @@ impl RawTradeOffer {
                             classinfo: Arc::clone(classinfo),
                         })
                     } else {
-                        // todo use a less broad error for this
                         Err(MissingClassInfoError {
                             appid: asset.appid,
                             classid: asset.classid,
@@ -348,7 +347,6 @@ impl RawTrade {
                             classinfo: Arc::clone(classinfo),
                         })
                     } else {
-                        // todo use a less broad error for this
                         Err(MissingClassInfoError {
                             appid: asset.appid,
                             classid: asset.classid,
