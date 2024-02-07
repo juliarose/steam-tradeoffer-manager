@@ -127,7 +127,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             &classinfo_cache,
         );
         let _ = offers
-            .clone()
+            .clone() // cloning only makes a small detriment in the benchmark (~3%)
             .into_iter()
             .map(|offer| offer.try_combine_classinfos(&map).unwrap())
             .collect::<Vec<_>>();

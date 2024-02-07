@@ -10,7 +10,6 @@ use std::fmt::{self, Display};
 use steamid_ng::SteamID;
 use serde::{Serializer, Deserialize};
 use serde::de::{self, MapAccess, Visitor, SeqAccess, Deserializer, Unexpected};
-use serde_json::value::RawValue;
 use lazy_regex::regex_is_match;
 
 pub fn empty_string_is_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
@@ -464,14 +463,28 @@ where
     deserializer.deserialize_any(ClassInfoMapVisitor)
 }
 
-pub fn deserialize_classinfo_map_raw<'de, D>(deserializer: D) -> Result<HashMap<ClassInfoAppClass, Box<RawValue>>, D::Error>
+pub fn deserialize_classinfo_map_raw<'de, D, T>(deserializer: D) -> Result<HashMap<ClassInfoAppClass, T>, D::Error>
 where
     D: Deserializer<'de>,
+    T: Deserialize<'de>,
 {
-    struct ClassInfoMapVisitor;
+    struct ClassInfoMapVisitor<T> {
+        marker: PhantomData<T>,
+    }
     
-    impl<'de> Visitor<'de> for ClassInfoMapVisitor {
-        type Value = HashMap<ClassInfoAppClass, Box<RawValue>>;
+    impl<T> ClassInfoMapVisitor<T> {
+        pub fn new() -> Self {
+            Self {
+                marker: PhantomData,
+            }
+        }
+    }
+    
+    impl<'de, T> Visitor<'de> for ClassInfoMapVisitor<T>
+    where
+        T: Deserialize<'de>,
+    {
+        type Value = HashMap<ClassInfoAppClass, T>;
     
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("a map")
@@ -493,11 +506,10 @@ where
                         } else {
                             None
                         };
-                        let raw_value = access.next_value::<Box<RawValue>>()?;
-                        // let classinfo_string = raw_value.to_string();
+                        let raw_value = access.next_value::<T>()?;
                         
                         map.insert((classid, instanceid), raw_value);
-                    } else if let Ok(_invalid) = access.next_value::<Box<RawValue>>() {
+                    } else if let Ok(_invalid) = access.next_value::<()>() {
                         // ignore invalid keys e.g. "success"
                     }
                 }
@@ -507,7 +519,7 @@ where
         }
     }
     
-    deserializer.deserialize_any(ClassInfoMapVisitor)
+    deserializer.deserialize_any(ClassInfoMapVisitor::new())
 }
 
 pub fn option_str_to_number<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
