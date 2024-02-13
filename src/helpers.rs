@@ -7,7 +7,7 @@ use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest::header;
 use reqwest::cookie::{Jar, CookieStore};
 use serde::de::DeserializeOwned;
-use lazy_regex::{regex_is_match, regex_captures};
+use lazy_regex::{regex_captures, regex_is_match};
 use async_fs::File;
 use futures::io::AsyncWriteExt;
 use lazy_static::lazy_static;
@@ -122,7 +122,7 @@ where
 fn is_login(location_option: Option<&header::HeaderValue>) -> bool {
     if let Some(location) = location_option {
         if let Ok(location_str) = location.to_str() {
-            regex_is_match!("/login", location_str)
+            location_str.contains("/login")
         } else {
             false
         }
@@ -154,13 +154,13 @@ where
             // unexpected response
             let html = String::from_utf8_lossy(&body);
             
-            if regex_is_match!(r#"<h1>Sorry!</h1>"#, &html) {
+            if html.contains(r#"<h1>Sorry!</h1>"#) {
                 if let Some((_, message)) = regex_captures!("<h3>(.+)</h3>", &html) {
                     Err(Error::UnexpectedResponse(message.into()))
                 } else {
                     Err(Error::MalformedResponse)
                 }
-            } else if regex_is_match!(r#"<h1>Sign In</h1>"#, &html) && regex_is_match!(r#"g_steamID = false;"#, &html) {
+            } else if html.contains(r#"<h1>Sign In</h1>"#) && !html.contains(r#"g_steamID = false;"#) {
                 Err(Error::NotLoggedIn)
             } else if regex_is_match!(r#"\{"success": ?false\}"#, &html) {
                 Err(Error::ResponseUnsuccessful)

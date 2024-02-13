@@ -1,7 +1,7 @@
 //! Contains custom serialization and deserialization functions.
 
 use crate::response::ClassInfo;
-use crate::types::{ClassInfoAppClass, ClassInfoAppMap, ClassInfoMap};
+use crate::types::{ClassId, ClassInfoAppClass, ClassInfoAppMap, ClassInfoMap};
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -10,7 +10,6 @@ use std::fmt::{self, Display};
 use steamid_ng::SteamID;
 use serde::{Serializer, Deserialize};
 use serde::de::{self, MapAccess, Visitor, SeqAccess, Deserializer, Unexpected};
-use lazy_regex::regex_is_match;
 
 pub fn empty_string_is_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
 where
@@ -447,11 +446,17 @@ where
             let mut map = HashMap::new();
             
             while let Some(key) = access.next_key::<String>()? {
-                if regex_is_match!(r#"\d+"#, &key) {
+                // generally the key is a string similar to "101785959_11040578"
+                // we want to verify that the key appears to be a classid or classid, instanceid
+                let is_digits = key
+                    .split('_')
+                    .all(|s| s.parse::<ClassId>().is_ok());
+                
+                if is_digits {
                     let classinfo = access.next_value::<ClassInfo>()?;
                     
                     map.insert((classinfo.classid, classinfo.instanceid), Arc::new(classinfo));
-                } else if let Ok(_invalid) = access.next_value::<u8>() {
+                } else if let Ok(_invalid) = access.next_value::<bool>() {
                     // invalid key - discard
                 }
             }
