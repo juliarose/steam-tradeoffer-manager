@@ -122,13 +122,12 @@ where
 fn is_login(location_option: Option<&header::HeaderValue>) -> bool {
     if let Some(location) = location_option {
         if let Ok(location_str) = location.to_str() {
-            location_str.contains("/login")
-        } else {
-            false
+            // starts_with is probably more accurate (should be tested)
+            return location_str.contains("/login")
         }
-    } else {
-        false
     }
+    
+    false
 }
 
 /// Deserializes and checks response for errors.
