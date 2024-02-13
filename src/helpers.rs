@@ -160,7 +160,7 @@ where
                 } else {
                     Err(Error::MalformedResponse)
                 }
-            } else if html.contains(r#"<h1>Sign In</h1>"#) && !html.contains(r#"g_steamID = false;"#) {
+            } else if html.contains(r#"<h1>Sign In</h1>"#) && html.contains(r#"g_steamID = false;"#) {
                 Err(Error::NotLoggedIn)
             } else if regex_is_match!(r#"\{"success": ?false\}"#, &html) {
                 Err(Error::ResponseUnsuccessful)
