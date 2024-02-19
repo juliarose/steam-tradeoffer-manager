@@ -15,7 +15,7 @@ type ClassInfoMap = HashMap<ClassInfoClass, Arc<ClassInfo>>;
 type ClassInfoFile = (ClassInfoClass, ClassInfo);
 
 fn get_classinfo_file_path(
-    class: &ClassInfoClass,
+    class: ClassInfoClass,
     data_directory: &Path, 
 ) -> Result<PathBuf, FileError> {
     let (appid, classid, instanceid) = class;
@@ -28,7 +28,7 @@ fn load_classinfo_sync(
     class: ClassInfoClass,
     data_directory: &Path, 
 ) -> Result<ClassInfoFile, FileError> {
-    let filepath = get_classinfo_file_path(&class, data_directory)?;
+    let filepath = get_classinfo_file_path(class, data_directory)?;
     let data = std::fs::read_to_string(&filepath)?;
     
     match serde_json::from_str::<ClassInfo>(&data) {
@@ -109,6 +109,17 @@ fn get_map(
 fn criterion_benchmark(c: &mut Criterion) {
     let offers = get_offers();
     let classinfo_cache = get_classinfo_cache(&offers);
+    let classes = offers
+        .iter()
+        .flat_map(|offer| {
+            offer.items_to_give
+                .iter()
+                .chain(offer.items_to_receive.iter())
+                .map(|item| (item.appid, item.classid, item.instanceid))
+        })
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect::<Vec<_>>();
     
     c.bench_function("maps items in offer with descriptions", |b| b.iter(|| {
         let classes = offers
@@ -131,6 +142,13 @@ fn criterion_benchmark(c: &mut Criterion) {
             .into_iter()
             .map(|offer| offer.try_combine_classinfos(&map).unwrap())
             .collect::<Vec<_>>();
+    }));
+    
+    c.bench_function("gets classinfo caches from cache", |b| b.iter(|| {
+        let _map = get_map(
+            &classes,
+            &classinfo_cache,
+        );
     }));
 }
 

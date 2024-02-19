@@ -7,8 +7,7 @@ use crate::types::TradeOfferId;
 use crate::response::TradeOffer;
 use crate::api::SteamTradeOfferAPI;
 use crate::error::Error;
-use std::path::PathBuf;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use chrono::Duration;
 use steamid_ng::SteamID;
 
@@ -22,13 +21,10 @@ pub type Result = std::result::Result<Poll, Error>;
 
 const OFFERS_SINCE_BUFFER_SECONDS: i64 = 60 * 30;
 const OFFERS_SINCE_ALL_TIMESTAMP: i64 = 1;
-const STATE_MAP_SIZE_LIMIT: usize = 2500;
-const STATE_MAP_SPLIT_AT: usize = 2000;
 
 pub struct Poller {
     pub steamid: SteamID,
     pub api: SteamTradeOfferAPI,
-    pub data_directory: PathBuf,
     pub cancel_duration: Option<Duration>,
     pub poll_full_update_duration: Duration,
     pub poll_data: PollData,
@@ -46,7 +42,7 @@ impl Poller {
             .map(|date| date.timestamp() - OFFERS_SINCE_BUFFER_SECONDS)
             .unwrap_or(OFFERS_SINCE_ALL_TIMESTAMP);
         let mut active_only = true;
-        let mut full_update = {
+        let mut is_full_update = {
             poll_type.is_full_update() || 
             // The date of the last full poll is outdated.
             self.poll_data.last_full_poll_is_stale(&self.poll_full_update_duration)
@@ -55,12 +51,12 @@ impl Poller {
         if poll_type == PollType::NewOffers {
             // a very high date
             offers_since = u32::MAX as i64;
-            full_update = false;
+            is_full_update = false;
         } else if let PollType::OffersSince(date) = poll_type {
             offers_since = date.timestamp();
             active_only = false;
-            full_update = false;
-        } else if full_update {
+            is_full_update = false;
+        } else if is_full_update {
             offers_since = OFFERS_SINCE_ALL_TIMESTAMP;
             active_only = false;
         }
@@ -81,7 +77,7 @@ impl Poller {
             self.poll_data.set_last_poll(now);
         }
         
-        if full_update {
+        if is_full_update {
             self.poll_data.set_last_poll_full_update(now);
         }
         
@@ -118,12 +114,19 @@ impl Poller {
         let mut poll: Vec<_> = Vec::new();
         let mut offers_since = self.poll_data.offers_since
             .unwrap_or_else(|| time::timestamp_to_server_time(offers_since));
+        // Tradeofferids to retain when evicting items from the state map.
+        let mut retained_tradeofferids = HashSet::with_capacity(offers.len());
         
         for mut offer in offers {
             // This offer was successfully cancelled above...
             // We need to update its state here.
             if cancelled_offers.contains(&offer.tradeofferid) {
                 offer.trade_offer_state = TradeOfferState::Canceled;
+            }
+            
+            // No need to insert into the state map if this isn't a full update.
+            if !is_full_update {
+                retained_tradeofferids.insert(offer.tradeofferid);
             }
             
             // Just don't do anything with this offer.
@@ -155,26 +158,9 @@ impl Poller {
             self.poll_data.set_offers_since(offers_since);
         }
         
-        // Eventually the state map gets very large. This needs to be trimmed so it does not 
-        // expand infinitely.
-        //
-        // This isn't perfect and I may change this later on.
-        if self.poll_data.state_map.len() > STATE_MAP_SIZE_LIMIT {
-            // Using a higher number than is removed so this process needs to run less frequently.
-            let mut tradeofferids = self.poll_data.state_map
-                .keys()
-                .cloned()
-                .collect::<Vec<_>>();
-            
-            // High to low.
-            tradeofferids.sort_by(|a, b| b.cmp(a));
-            
-            let (
-                _tradeofferids,
-                tradeofferids_to_remove,
-            ) = tradeofferids.split_at(STATE_MAP_SPLIT_AT);
-            
-            self.poll_data.clear_offers(tradeofferids_to_remove);
+        // Trim the state map so it does not grow indefinitely.
+        if is_full_update && !retained_tradeofferids.is_empty() {
+            self.poll_data.retain_offers(&retained_tradeofferids);
         }
         
         // Maps raw offers to offers with classinfo descriptions.
@@ -207,11 +193,11 @@ impl Poller {
         if self.poll_data.changed {
             self.poll_data.changed = false;
             // It's really not a problem to await on this.
-            // Saving the file takes under a millisecond.
+            // Saving the file takes a negligible amount of time (usually under a ms on an SSD).
             let _ = file::save_poll_data(
                 self.steamid,
                 &serde_json::to_string(&self.poll_data)?,
-                &self.data_directory,
+                &self.api.data_directory,
             ).await;
         }
         

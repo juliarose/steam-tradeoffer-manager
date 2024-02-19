@@ -17,7 +17,6 @@ use crate::enums::{TradeOfferState, OfferFilter, GetUserDetailsMethod};
 use crate::types::{AppId, ContextId, TradeOfferId};
 use crate::response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Confirmation, Trades};
 use std::sync::Mutex;
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::atomic::{Ordering, AtomicU64};
 use steamid_ng::SteamID;
@@ -33,8 +32,6 @@ pub struct TradeOfferManager {
     mobile_api: MobileAPI,
     /// The account's SteamID.
     steamid: Arc<AtomicU64>,
-    /// The directory to store poll data and classinfo data.
-    data_directory: PathBuf,
     /// The sender for sending messages to polling, along with the task handle.
     polling: Arc<Mutex<Option<JoinHandle<()>>>>,
 }
@@ -228,7 +225,6 @@ impl TradeOfferManager {
         } = polling::create_poller(
             steamid,
             self.api.clone(),
-            self.data_directory.clone(),
             options,
         );
         
@@ -587,7 +583,7 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
         let steamid = Arc::new(AtomicU64::new(0));
         let classinfo_cache = builder.classinfo_cache.unwrap_or_default();
         let mut api_builder = SteamTradeOfferAPI::builder()
-            .data_directory(builder.data_directory.clone())
+            .data_directory(builder.data_directory)
             .client(client.clone(), Arc::clone(&cookies))
             .language(builder.language)
             .classinfo_cache(classinfo_cache);
@@ -608,7 +604,6 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
             steamid: Arc::clone(&steamid),
             api: api_builder.build(),
             mobile_api: mobile_api_builder.build(),
-            data_directory: builder.data_directory,
             polling: Arc::new(Mutex::new(None)),
         };
         

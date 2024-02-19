@@ -51,7 +51,7 @@ pub struct SteamTradeOfferAPI {
     /// The cache for setting and getting [`ClassInfo`] data.
     classinfo_cache: ClassInfoCache,
     /// The directory to store [`ClassInfo`] data.
-    data_directory: PathBuf,
+    pub(crate) data_directory: PathBuf,
 }
 
 impl SteamTradeOfferAPI {
@@ -286,35 +286,47 @@ impl SteamTradeOfferAPI {
             .send()
             .await?;
         let body: GetAssetClassInfoResponse = parses_response(response).await?;
-        let classinfos = body.result;
-        
-        classinfo_cache_helpers::save_classinfos(
-            appid,
-            &classinfos,
-            &self.data_directory,
-        ).await;
-        
-        let classinfos = classinfos
+        // Convert the classinfos into a map.
+        let (
+            classinfos,
+            classinfos_raw,
+        ): (
+            HashMap<_, _>,
+            Vec<_>,
+        ) = body.result
             .into_iter()
             // Sometimes Steam returns empty classinfo data.
             // We just ignore them until they are successfully fetched.
-            .filter_map(|((classid, instanceid), classinfo_value)| {
-                serde_json::from_str::<ClassInfo>(classinfo_value.get())
-                    // ignore classinfos that failed parsed
-                    .ok()
-                    .map(|classinfo| (
-                        (appid, classid, instanceid),
-                        Arc::new(classinfo),
-                    ))
+            .filter_map(|((classid, instanceid), classinfo_raw)| {
+                let classinfo = serde_json::from_str::<ClassInfo>(classinfo_raw.get())
+                    // Ignores invalid or empty classinfo data.
+                    .ok()?;
+                // We return a pair so that we have a deserialized version to return from the 
+                // method and a raw version to save to the file system. We do not need to clone 
+                // data since we are keeping the boxed raw values to send to the tokio task. This 
+                // should be quite efficient.
+                let pair = (
+                    ((appid, classid, instanceid), Arc::new(classinfo)),
+                    ((classid, instanceid), classinfo_raw),
+                );
+                
+                Some(pair)
             })
-            .collect::<HashMap<_, _>>();
+            .unzip();
+        // Save the classinfos to the filesystem.
+        // This spawns a tokio task which will save the classinfos to the filesystem in the 
+        // background so that this method does not need to await on it.
+        let _handle = classinfo_cache_helpers::save_classinfos(
+            appid,
+            classinfos_raw,
+            &self.data_directory,
+        );
         
-        self.classinfo_cache.insert_map(classinfos.clone());
-
+        // And return the classinfos.
         Ok(classinfos)
     }
     
-    /// Gets [`ClassInfo`] data for appid.
+    /// Gets [`ClassInfo`] data for `appid`.
     async fn get_app_asset_classinfos(
         &self,
         appid: AppId,
@@ -349,7 +361,7 @@ impl SteamTradeOfferAPI {
         let mut needed = HashSet::from_iter(misses);
         
         if !needed.is_empty() {
-            // check filesystem for caches
+            // Check filesystem for caches.
             let results = classinfo_cache_helpers::load_classinfos(
                 &needed,
                 &self.data_directory,
@@ -359,7 +371,7 @@ impl SteamTradeOfferAPI {
                 .collect::<Vec<_>>();
             
             if !results.is_empty() {
-                let mut inserts = HashMap::new();
+                let mut inserts = HashMap::with_capacity(results.len());
                 
                 for (class, classinfo) in results {
                     let classinfo = Arc::new(classinfo);
@@ -368,10 +380,13 @@ impl SteamTradeOfferAPI {
                     inserts.insert(class, Arc::clone(&classinfo));
                 }
                 
+                // Insert the classinfos into the cache.
                 self.classinfo_cache.insert_map(inserts.clone());
                 map.extend(inserts);
             }
         }
+        
+        let mut cache_map = HashMap::with_capacity(needed.len());
         
         for (appid, classid, instanceid) in needed {
             match apps.get_mut(appid) {
@@ -385,9 +400,15 @@ impl SteamTradeOfferAPI {
         }
         
         for (appid, classes) in apps {
-            for maps in self.get_app_asset_classinfos(appid, classes).await? {
-                map.extend(maps);
+            for app_map in self.get_app_asset_classinfos(appid, classes).await? {
+                cache_map.extend(app_map.clone());
+                map.extend(app_map);
             }
+        }
+        
+        if !cache_map.is_empty() {
+            // Insert newly obtained classinfos into the cache for later use.
+            self.classinfo_cache.insert_map(cache_map);
         }
         
         Ok(map)

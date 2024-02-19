@@ -9,6 +9,7 @@ use std::sync::Arc;
 use std::fmt;
 use serde::Deserialize;
 use serde::de::{MapAccess, Visitor, SeqAccess, Deserializer};
+use serde_json::value::RawValue;
 
 type RgInventory = HashMap<String, api_response::RawAssetOld>;
 
@@ -104,8 +105,9 @@ pub struct GetInventoryOldResponse {
 
 #[derive(Deserialize, Debug)]
 pub struct GetAssetClassInfoResponse {
+    // The result only needs to be iterated over where a hashmap is unnecessary.
     #[serde(deserialize_with = "serialize::deserialize_classinfo_map_raw")]
-    pub result: HashMap<ClassInfoAppClass, Box<serde_json::value::RawValue>>,
+    pub result: Vec<(ClassInfoAppClass, Box<RawValue>)>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -130,10 +132,14 @@ mod tests {
     #[test]
     fn parses_get_asset_classinfo_response() {
         let response: GetAssetClassInfoResponse = serde_json::from_str(include_str!("fixtures/get_asset_classinfo.json")).unwrap();
-        let classinfo_value = response.result.get(&(101785959, Some(11040578))).unwrap();
-        let parsed = serde_json::from_str::<response::ClassInfo>(classinfo_value.get()).unwrap();
         
-        assert_eq!(parsed.market_hash_name, Some(String::from("Mann Co. Supply Crate Key")));
+        for (class, classinfo) in response.result {
+            let parsed = serde_json::from_str::<response::ClassInfo>(classinfo.get()).unwrap();
+            
+            if class == (101785959, Some(11040578)) {
+                assert_eq!(parsed.market_hash_name, Some(String::from("Mann Co. Supply Crate Key")));
+            }
+        }
     }
     
     #[test]

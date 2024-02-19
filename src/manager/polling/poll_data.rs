@@ -1,7 +1,7 @@
 use crate::time::{date_difference_from_now, ServerTime};
 use crate::types::TradeOfferId;
 use crate::enums::TradeOfferState;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use serde::{Serialize, Deserialize};
 use chrono::Duration;
 
@@ -45,12 +45,13 @@ impl PollData {
         }
     }
     
-    /// Clears offers from the state map.
-    pub fn clear_offers(&mut self, tradeofferids_to_remove: &[TradeOfferId]) {
-        for tradeofferid in tradeofferids_to_remove {
-            self.state_map.remove(tradeofferid);
-            self.changed = true;
-        }
+    /// Retains offers in the state map.
+    pub fn retain_offers(&mut self, tradeofferids_to_retain: &HashSet<TradeOfferId>) {
+        let length = self.state_map.len();
+        
+        self.state_map.retain(|tradeofferid, _| tradeofferids_to_retain.contains(tradeofferid));
+        // If the length of the map has changed, then the state has changed.
+        self.changed = self.changed || self.state_map.len() != length;
     }
     
     /// Updates the `offers_since` value.

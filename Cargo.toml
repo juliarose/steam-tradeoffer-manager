@@ -52,3 +52,7 @@ harness = false
 [[bench]]
 name = "deserialize"
 harness = false
+
+[[bench]]
+name = "hashset_vs_vec"
+harness = false

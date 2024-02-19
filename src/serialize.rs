@@ -468,7 +468,7 @@ where
     deserializer.deserialize_any(ClassInfoMapVisitor)
 }
 
-pub fn deserialize_classinfo_map_raw<'de, D, T>(deserializer: D) -> Result<HashMap<ClassInfoAppClass, T>, D::Error>
+pub fn deserialize_classinfo_map_raw<'de, D, T>(deserializer: D) -> Result<Vec<(ClassInfoAppClass, T)>, D::Error>
 where
     D: Deserializer<'de>,
     T: Deserialize<'de>,
@@ -489,7 +489,7 @@ where
     where
         T: Deserialize<'de>,
     {
-        type Value = HashMap<ClassInfoAppClass, T>;
+        type Value = Vec<(ClassInfoAppClass, T)>;
     
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("a map")
@@ -499,7 +499,7 @@ where
         where
             M: MapAccess<'de>,
         {
-            let mut map = HashMap::new();
+            let mut map = Self::Value::new();
             
             while let Some(key) = access.next_key::<String>()? {
                 let mut iter = key.split('_');
@@ -512,8 +512,9 @@ where
                             None
                         };
                         let raw_value = access.next_value::<T>()?;
+                        let class = (classid, instanceid);
                         
-                        map.insert((classid, instanceid), raw_value);
+                        map.push((class, raw_value));
                     } else if let Ok(_invalid) = access.next_value::<()>() {
                         // ignore invalid keys e.g. "success"
                     }

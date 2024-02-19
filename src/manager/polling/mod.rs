@@ -19,7 +19,6 @@ use poller::Poller;
 
 use crate::SteamID;
 use crate::api::SteamTradeOfferAPI;
-use std::path::PathBuf;
 use std::collections::HashMap;
 use std::sync::Arc;
 use chrono::{Duration, DateTime};
@@ -75,12 +74,11 @@ pub struct PollingMpsc {
 pub fn create_poller(
     steamid: SteamID,
     api: SteamTradeOfferAPI,
-    data_directory: PathBuf,
     options: PollOptions,
 ) -> PollingMpsc {
     let poll_data = file::load_poll_data(
         steamid,
-        &data_directory,
+        &api.data_directory,
     ).unwrap_or_else(|_| PollData::new());
     // Allows sending a message into the poller.
     let (
@@ -97,7 +95,6 @@ pub fn create_poller(
         let poller = Arc::new(Mutex::new(Poller {
             api,
             steamid,
-            data_directory,
             poll_data,
             cancel_duration: options.cancel_duration,
             poll_full_update_duration: options.poll_full_update_duration,
