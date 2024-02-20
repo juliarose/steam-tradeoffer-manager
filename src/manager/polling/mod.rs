@@ -65,98 +65,121 @@ impl PollOptions {
 }
 
 /// Packs the sender, receiver, and [`JoinHandle`] for the poller.
-pub struct PollingMpsc {
+pub struct Polling {
     pub sender: mpsc::Sender<PollAction>,
     pub receiver: mpsc::Receiver<Result>,
     pub handle: JoinHandle<()>,
 }
 
-pub fn create_poller(
-    steamid: SteamID,
-    api: SteamTradeOfferAPI,
-    options: PollOptions,
-) -> PollingMpsc {
-    let poll_data = file::load_poll_data(
-        steamid,
-        &api.data_directory,
-    ).unwrap_or_else(|_| PollData::new());
-    // Allows sending a message into the poller.
-    let (
-        tx,
-        mut rx,
-    ) = mpsc::channel::<PollAction>(10);
-    // Allows broadcasting polls outside of the poller.
-    let (
-        polling_tx,
-        polling_rx,
-    ) = mpsc::channel::<Result>(10);
-    let handle = tokio::spawn(async move {
-        // The mutex allows only one poll to be performed at a time.
-        let poller = Arc::new(Mutex::new(Poller {
-            api,
+impl Polling {
+    pub fn new(
+        steamid: SteamID,
+        api: SteamTradeOfferAPI,
+        options: PollOptions,
+    ) -> Self {
+        let poll_data = file::load_poll_data(
             steamid,
-            poll_data,
-            cancel_duration: options.cancel_duration,
-            poll_full_update_duration: options.poll_full_update_duration,
-        }));
-        let receiver_poller = Arc::clone(&poller);
-        let receiver_polling_tx = polling_tx.clone();
-        let poll_interval = options.poll_interval.to_std()
-            .unwrap_or_else(|_| std::time::Duration::from_secs(DEFAULT_POLL_INTERVAL_SECONDS as u64));
+            &api.data_directory,
+        ).unwrap_or_default();
+        // Allows sending a message into the poller.
+        let (
+            sender,
+            receiver,
+        ) = mpsc::channel::<PollAction>(10);
+        // Allows broadcasting polls outside of the poller.
+        let (
+            polling_sender,
+            polling_receiver,
+        ) = mpsc::channel::<Result>(10);
         let handle = tokio::spawn(async move {
-            // To prevent spam.
-            let mut poll_events: HashMap<PollType, DateTime<chrono::Utc>> = HashMap::new();
+            // The asynchronous mutex allows only one poll to be performed at a time. This not only 
+            // ensures that the poller is not spammed with requests but also that the state is not 
+            // modified by multiple tasks at the same time.
+            let poller = Arc::new(Mutex::new(Poller {
+                api,
+                steamid,
+                poll_data,
+                cancel_duration: options.cancel_duration,
+                poll_full_update_duration: options.poll_full_update_duration,
+            }));
+            let handle = tokio::spawn(receive_poll_action_events(
+                receiver,
+                polling_sender.clone(),
+                poller.clone(),
+            ));
+            let poll_interval = options.poll_interval.to_std()
+                .unwrap_or(std::time::Duration::from_secs(DEFAULT_POLL_INTERVAL_SECONDS as u64));
             
-            while let Some(message) = rx.recv().await {
-                match message {
-                    PollAction::DoPoll(poll_type) => {
-                        let called_too_recently = if let Some(last_poll_date) = poll_events.get_mut(&poll_type) {
-                            let now = chrono::Utc::now();
-                            let duration = now - *last_poll_date;
-                            
-                            *last_poll_date = now;
-                            
-                            duration < Duration::milliseconds(CALLED_TOO_RECENTLY_MILLISECONDS)
-                        } else {
-                            poll_events.insert(poll_type, chrono::Utc::now());
-                            false
-                        };
-                        
-                        // This type of poll was called too recently.
-                        if called_too_recently {
-                            // Ignore it.
-                            continue;
-                        }
-                        
-                        let poll = receiver_poller.lock().await.do_poll(poll_type).await;
-                        
-                        if receiver_polling_tx.send(poll).await.is_err() {
-                            // They closed the connection.
-                            break;
-                        }
-                    },
-                    // Breaks out of the loop and ends the task.
-                    PollAction::StopPolling => break,
+            // Performs polls.
+            loop {
+                let poll = poller
+                    .lock().await
+                    .do_poll(PollType::Auto).await;
+                
+                match polling_sender.send(poll).await {
+                    Ok(_) => async_std::task::sleep(poll_interval).await,
+                    // The connection was closed or receiver stopped listening for events.
+                    Err(_error) => break,
                 }
             }
+            
+            handle.abort();
         });
         
-        loop {
-            let poll = poller.lock().await.do_poll(PollType::Auto).await;
-            
-            match polling_tx.send(poll).await {
-                Ok(_) => async_std::task::sleep(poll_interval).await,
-                // The connection was closed or receiver stopped listening for events.
-                Err(_error) => break,
-            }
+        Self {
+            sender,
+            receiver: polling_receiver,
+            handle,
         }
-        
-        handle.abort();
-    });
+    }
+}
+
+/// Receives poll action events.
+async fn receive_poll_action_events(
+    mut receiver: mpsc::Receiver<PollAction>,
+    sender: mpsc::Sender<Result>,
+    poller: Arc<Mutex<Poller>>,
+) {
+    // To prevent spam.
+    let mut poll_events: HashMap<PollType, DateTime<chrono::Utc>> = HashMap::new();
     
-    PollingMpsc {
-        sender: tx,
-        receiver: polling_rx,
-        handle,
+    while let Some(message) = receiver.recv().await {
+        match message {
+            PollAction::DoPoll(poll_type) => {
+                // This type of poll was called too recently.
+                if is_called_too_recently(&mut poll_events, poll_type) {
+                    // Ignore it.
+                    continue;
+                }
+                
+                let poll = poller.lock().await.do_poll(poll_type).await;
+                
+                if sender.send(poll).await.is_err() {
+                    // They closed the connection.
+                    break;
+                }
+            },
+            // Breaks out of the loop and ends the task.
+            PollAction::StopPolling => break,
+        }
+    }
+}
+
+/// Checks if a poll was called too recently. Mutates the `poll_events` map to update the last 
+/// poll date to now.
+fn is_called_too_recently(
+    poll_events: &mut HashMap<PollType, DateTime<chrono::Utc>>,
+    poll_type: PollType,
+) -> bool {
+    if let Some(last_poll_date) = poll_events.get_mut(&poll_type) {
+        let now = chrono::Utc::now();
+        let duration = now - *last_poll_date;
+        
+        *last_poll_date = now;
+        
+        duration < Duration::milliseconds(CALLED_TOO_RECENTLY_MILLISECONDS)
+    } else {
+        poll_events.insert(poll_type, chrono::Utc::now());
+        false
     }
 }

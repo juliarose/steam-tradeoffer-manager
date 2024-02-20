@@ -31,7 +31,7 @@ pub struct Poller {
 }
 
 impl Poller {
-    /// Performs a poll for changes to offers. Provides a parameter to determine what type of poll to perform.
+    /// Performs a poll for changes to offers. `poll_type` determines the type of poll to perform.
     pub async fn do_poll(
         &mut self,
         poll_type: PollType,

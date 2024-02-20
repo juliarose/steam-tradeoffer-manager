@@ -2,7 +2,7 @@ mod builder;
 pub(crate) mod polling;
 
 pub use builder::TradeOfferManagerBuilder;
-use polling::{PollingMpsc, PollOptions, PollReceiver, PollSender};
+use polling::{Polling, PollOptions, PollReceiver, PollSender};
 
 use crate::api::request::GetTradeOffersOptions;
 use crate::time;
@@ -218,11 +218,11 @@ impl TradeOfferManager {
             handle.abort();
         }
         
-        let PollingMpsc {
+        let Polling {
             sender,
             receiver,
             handle,
-        } = polling::create_poller(
+        } = Polling::new(
             steamid,
             self.api.clone(),
             options,

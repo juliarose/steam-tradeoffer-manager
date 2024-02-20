@@ -25,8 +25,8 @@ pub struct PollData {
     pub changed: bool,
 }
 
-impl PollData {
-    pub fn new() -> Self {
+impl Default for PollData {
+    fn default() -> Self {
         Self {
             offers_since: None,
             last_poll: None,
@@ -35,7 +35,9 @@ impl PollData {
             changed: false,
         }
     }
-    
+}
+
+impl PollData {
     /// Checks if the last full poll is stale based on the `update_interval`.
     pub fn last_full_poll_is_stale(&self, update_interval: &Duration) -> bool {
         if let Some(last_poll_full_update) = self.last_poll_full_update {
