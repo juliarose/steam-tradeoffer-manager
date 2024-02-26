@@ -65,15 +65,13 @@ impl SteamTradeOfferAPI {
         SteamTradeOfferAPIBuilder::new()
     }
     
-    fn get_uri(
-        &self,
+    fn get_url(
         pathname: &str,
     ) -> String {
         format!("https://{}{pathname}", Self::HOSTNAME)
     }
     
     fn get_api_url(
-        &self,
         interface: &str,
         method: &str,
         version: usize,
@@ -151,12 +149,6 @@ impl SteamTradeOfferAPI {
             partner: &'b SteamID,
         }
         
-        #[derive(Serialize)]
-        struct RefererParams<'b> {
-            partner: u32,
-            token: &'b Option<String>,
-        }
-        
         let num_items = offer.items_to_give.len() + offer.items_to_receive.len();
         
         if num_items == 0 {
@@ -170,12 +162,9 @@ impl SteamTradeOfferAPI {
                 Some(id) => id.to_string(),
                 None => String::from("new"),
             };
-            let qs_params = serde_qs::to_string(&RefererParams {
-                partner: offer.partner.account_id(),
-                token: &offer.token,
-            }).map_err(ParameterError::SerdeQS)?;
+            let url = helpers::offer_referer_url(&pathname, offer.partner, &offer.token.as_deref())?;
             
-            self.get_uri(&format!("/tradeoffer/{pathname}?{qs_params}"))
+            url
         };
         let params = {
             let json_tradeoffer = serde_json::to_string(&OfferForm {
@@ -208,7 +197,7 @@ impl SteamTradeOfferAPI {
                 tradeofferid_countered: &counter_tradeofferid,
             }
         };
-        let uri = self.get_uri("/tradeoffer/new/send");
+        let uri = Self::get_url("/tradeoffer/new/send");
         let response = self.client.post(&uri)
             .header(REFERER, referer)
             .form(&params)
@@ -224,7 +213,7 @@ impl SteamTradeOfferAPI {
         &self,
         trade_id: &TradeId,
     ) -> Result<Vec<Asset>, Error> {
-        let uri = self.get_uri(&format!("/trade/{trade_id}/receipt"));
+        let uri = Self::get_url(&format!("/trade/{trade_id}/receipt"));
         let response = self.client.get(&uri)
             .send()
             .await?;
@@ -250,7 +239,7 @@ impl SteamTradeOfferAPI {
         } else if regex_is_match!(r#"\{"success": ?false\}"#, &body) {
             Err(Error::NotLoggedIn)
         } else {
-            Err(Error::MalformedResponse)
+            Err(Error::MalformedResponse("Page does include receipt script."))
         }
     }
     
@@ -280,7 +269,7 @@ impl SteamTradeOfferAPI {
             
             query
         };
-        let uri = self.get_api_url("ISteamEconomy", "GetAssetClassInfo", 1);
+        let uri = Self::get_api_url("ISteamEconomy", "GetAssetClassInfo", 1);
         let response = self.client.get(&uri)
             .query(&query)
             .send()
@@ -442,7 +431,7 @@ impl SteamTradeOfferAPI {
             get_descriptions,
             historical_cutoff,
         } = options;
-        let uri = self.get_api_url("IEconService", "GetTradeOffers", 1);
+        let uri = Self::get_api_url("IEconService", "GetTradeOffers", 1);
         let key = self.api_key.as_ref()
             .ok_or(ParameterError::MissingApiKey)?;
         let mut cursor = None;
@@ -585,7 +574,7 @@ impl SteamTradeOfferAPI {
             response: Body,
         }
         
-        let uri = self.get_api_url("IEconService", "GetTradeOffer", 1);
+        let uri = Self::get_api_url("IEconService", "GetTradeOffer", 1);
         let key = self.api_key.as_ref()
             .ok_or(ParameterError::MissingApiKey)?;
         let response = self.client.get(&uri)
@@ -681,7 +670,7 @@ impl SteamTradeOfferAPI {
             include_failed,
             include_total,
         } = options;
-        let uri = self.get_api_url("IEconService", "GetTradeHistory", 1);
+        let uri = Self::get_api_url("IEconService", "GetTradeHistory", 1);
         let key = self.api_key.as_ref()
             .ok_or(ParameterError::MissingApiKey)?;
         let response = self.client.get(&uri)
@@ -711,21 +700,12 @@ impl SteamTradeOfferAPI {
     ) -> Result<UserDetails, Error> 
         where T: Into<GetUserDetailsMethod>,
     {
-        #[derive(Serialize)]
-        struct Params<'b> {
-            partner: u32,
-            token: Option<&'b str>,
-        }
-        
         let uri = {
             let method = method.into();
             let pathname = method.pathname();
-            let qs_params = serde_qs::to_string(&Params {
-                partner: partner.account_id(),
-                token: method.token(),
-            }).map_err(ParameterError::SerdeQS)?;
+            let url = helpers::offer_referer_url(&pathname, partner, &method.token())?;
             
-            self.get_uri(&format!("/tradeoffer/{pathname}?{qs_params}"))
+            url
         };
         let response = self.client.get(&uri)
             .send()
@@ -757,7 +737,7 @@ impl SteamTradeOfferAPI {
         
         let sessionid = self.sessionid.read().unwrap().clone()
             .ok_or(Error::NotLoggedIn)?;
-        let referer = self.get_uri(&format!("/tradeoffer/{tradeofferid}"));
+        let referer = Self::get_url(&format!("/tradeoffer/{tradeofferid}"));
         let params = AcceptOfferParams {
             sessionid,
             tradeofferid,
@@ -765,7 +745,7 @@ impl SteamTradeOfferAPI {
             serverid: 1,
             captcha: "",
         };
-        let uri = self.get_uri(&format!("/tradeoffer/{tradeofferid}/accept"));
+        let uri = Self::get_url(&format!("/tradeoffer/{tradeofferid}/accept"));
         let response = self.client.post(&uri)
             .header(REFERER, referer)
             .form(&params)
@@ -794,8 +774,8 @@ impl SteamTradeOfferAPI {
         
         let sessionid = self.sessionid.read().unwrap().clone()
             .ok_or(Error::NotLoggedIn)?;
-        let referer = self.get_uri(&format!("/tradeoffer/{tradeofferid}"));
-        let uri = self.get_uri(&format!("/tradeoffer/{tradeofferid}/decline"));
+        let referer = Self::get_url(&format!("/tradeoffer/{tradeofferid}"));
+        let uri = Self::get_url(&format!("/tradeoffer/{tradeofferid}/decline"));
         let response = self.client.post(&uri)
             .header(REFERER, referer)
             .form(&DeclineOfferParams {
@@ -826,8 +806,8 @@ impl SteamTradeOfferAPI {
         
         let sessionid = self.sessionid.read().unwrap().clone()
             .ok_or(Error::NotLoggedIn)?;
-        let referer = self.get_uri(&format!("/tradeoffer/{tradeofferid}"));
-        let uri = self.get_uri(&format!("/tradeoffer/{tradeofferid}/cancel"));
+        let referer = Self::get_url(&format!("/tradeoffer/{tradeofferid}"));
+        let uri = Self::get_url(&format!("/tradeoffer/{tradeofferid}/cancel"));
         let response = self.client.post(&uri)
             .header(REFERER, referer)
             .form(&CancelOfferParams {
@@ -858,8 +838,8 @@ impl SteamTradeOfferAPI {
         let mut responses: Vec<GetInventoryOldResponse> = Vec::new();
         let mut start: Option<u64> = None;
         let sid = u64::from(steamid);
-        let uri = self.get_uri(&format!("/profiles/{sid}/inventory/json/{appid}/{contextid}"));
-        let referer = self.get_uri(&format!("/profiles/{sid}/inventory"));
+        let uri = Self::get_url(&format!("/profiles/{sid}/inventory/json/{appid}/{contextid}"));
+        let referer = Self::get_url(&format!("/profiles/{sid}/inventory"));
         
         loop {
             let response = self.client.get(&uri)
@@ -875,10 +855,12 @@ impl SteamTradeOfferAPI {
             
             if !body.success {
                 return Err(Error::ResponseUnsuccessful);
-            } else if body.more_items {
+            }
+            
+            if body.more_items {
                 // shouldn't occur, but we wouldn't want to call this endlessly if it does...
                 if body.more_start == start {
-                    return Err(Error::MalformedResponse);
+                    return Err(Error::MalformedResponse("Pagination cursor is the same as the previous response."));
                 }
                 
                 start = body.more_start;
@@ -950,8 +932,8 @@ impl SteamTradeOfferAPI {
         let mut responses: Vec<GetInventoryResponseIgnoreDescriptions> = Vec::new();
         let mut start_assetid: Option<u64> = None;
         let sid = u64::from(steamid);
-        let uri = self.get_uri(&format!("/inventory/{sid}/{appid}/{contextid}"));
-        let referer = self.get_uri(&format!("/profiles/{sid}/inventory"));
+        let uri = Self::get_url(&format!("/inventory/{sid}/{appid}/{contextid}"));
+        let referer = Self::get_url(&format!("/profiles/{sid}/inventory"));
         
         loop {
             let response = self.client.get(&uri)
@@ -967,10 +949,12 @@ impl SteamTradeOfferAPI {
             
             if !body.success {
                 return Err(Error::ResponseUnsuccessful);
-            } else if body.more_items {
+            }
+            
+            if body.more_items {
                 // shouldn't occur, but we wouldn't want to call this endlessly if it does...
                 if body.last_assetid == start_assetid {
-                    return Err(Error::MalformedResponse);
+                    return Err(Error::MalformedResponse("Pagination cursor is the same as the previous response."));
                 }
                 
                 start_assetid = body.last_assetid;

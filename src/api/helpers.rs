@@ -1,10 +1,32 @@
 use super::response as api_response;
-use crate::error::{MissingClassInfoError, ParseHtmlError};
+use super::SteamTradeOfferAPI;
+use crate::error::{MissingClassInfoError, ParseHtmlError, ParameterError};
+use crate::SteamID;
 use crate::types::ClassInfoMap;
 use crate::response::{self, User, UserDetails};
 use std::sync::Arc;
 use lazy_regex::Regex;
 use lazy_regex::regex_captures;
+
+pub fn offer_referer_url(
+    pathname: &str,
+    partner: SteamID,
+    token: &Option<&str>,
+) -> Result<String, ParameterError> {
+    let mut params = vec![
+        ("partner", partner.account_id().to_string()),
+    ];
+    
+    if let Some(token) = token {
+        params.push(("token", token.to_string()));
+    }
+    
+    let url = SteamTradeOfferAPI::get_url(&format!("/tradeoffer/{pathname}"));
+    let url = reqwest::Url::parse_with_params(&url, &params)
+        .map_err(ParameterError::UrlParse)?;
+    
+    Ok(url.into())
+}
 
 pub fn from_raw_receipt_asset(
     asset: api_response::RawReceiptAsset,
@@ -123,5 +145,24 @@ mod tests {
         let user_details = parse_user_details(body);
         
         assert!(user_details.is_ok());
+    }
+    
+    #[test]
+    fn gets_offer_referer_url() {
+        let url = offer_referer_url(
+            "new",
+            SteamID::from(76561198000000000), 
+            &Some("token"),
+        ).unwrap();
+        
+        assert_eq!(url, "https://steamcommunity.com/tradeoffer/new?partner=39734272&token=token");
+        
+        let url = offer_referer_url(
+            "new",
+            SteamID::from(76561198000000000), 
+            &None,
+        ).unwrap();
+        
+        assert_eq!(url, "https://steamcommunity.com/tradeoffer/new?partner=39734272");
     }
 }

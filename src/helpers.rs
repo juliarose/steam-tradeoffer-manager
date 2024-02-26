@@ -157,7 +157,7 @@ where
                 if let Some((_, message)) = regex_captures!("<h3>(.+)</h3>", &html) {
                     Err(Error::UnexpectedResponse(message.into()))
                 } else {
-                    Err(Error::MalformedResponse)
+                    Err(Error::MalformedResponse("Unexpected error response format."))
                 }
             } else if html.contains(r#"<h1>Sign In</h1>"#) && html.contains(r#"g_steamID = false;"#) {
                 Err(Error::NotLoggedIn)

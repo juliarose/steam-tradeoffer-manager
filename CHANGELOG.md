@@ -15,6 +15,8 @@
 - Reduced contention on `ClassInfoCache` by moving inserts to `get_asset_classinfos` from `get_app_asset_classinfos_chunk`.
 - Moved `save_classinfos` to a `tokio` task so that classinfo data can be returned without waiting for files to be written.
 - Poll data now trims to only offers returned in a full update.
+- `Error::MalformedResponse` now contains message with error details.
+- Re-exported all inner values for error variants.
 
 ### Added
 - Some missing derives for various structs.

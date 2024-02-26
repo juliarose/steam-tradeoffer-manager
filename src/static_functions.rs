@@ -76,7 +76,7 @@ pub async fn get_inventory<'a>(
         } else if body.more_items {
             // shouldn't occur, but we wouldn't want to call this endlessly if it does...
             if body.last_assetid == start_assetid {
-                return Err(Error::MalformedResponse);
+                return Err(Error::MalformedResponse("Pagination cursor is the same as the previous response."));
             }
             
             start_assetid = body.last_assetid;

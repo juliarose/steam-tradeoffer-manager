@@ -137,7 +137,7 @@ impl MobileAPI {
             pub conf: Vec<Confirmation>,
         }
         
-        let uri = self.get_uri("/mobileconf/getlist");
+        let uri = Self::get_url("/mobileconf/getlist");
         let query = self.get_confirmation_query_params(Tag::Conf)?;
         let response = self.client.get(&uri)
             .header("X-Requested-With", "com.valvesoftware.android.steam.community")
@@ -193,7 +193,7 @@ impl MobileAPI {
         query.insert("cid", id.to_string());
         query.insert("ck", nonce.to_string());
         
-        let uri = self.get_uri("/mobileconf/ajaxop");
+        let uri = Self::get_url("/mobileconf/ajaxop");
         let response = self.client.get(&uri)
             .header("X-Requested-With", "com.valvesoftware.android.steam.community")
             .query(&query)
@@ -221,8 +221,7 @@ impl MobileAPI {
         Ok(SteamID::from(steamid_64))
     }
     
-    fn get_uri(
-        &self,
+    fn get_url(
         pathname: &str,
     ) -> String {
         format!("https://{}{pathname}", Self::HOSTNAME)

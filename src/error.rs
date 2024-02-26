@@ -1,5 +1,10 @@
 //! Error types.
 
+pub use another_steam_totp::Error as TOTPError;
+pub use reqwest::Error as ReqwestError;
+pub use reqwest::StatusCode;
+pub use anyhow::Error as AnyhowError;
+
 use crate::enums::TradeOfferState;
 use crate::types::*;
 use std::fmt;
@@ -16,16 +21,16 @@ pub enum Error {
     UnexpectedResponse(String),
     /// An error was encountered making a request.
     #[error("reqwest error: {}", .0)]
-    Reqwest(#[from] reqwest::Error),
+    Reqwest(#[from] ReqwestError),
     /// An error was encountered within the request middleware.
     #[error("reqwest middleware error: {}", .0)]
-    ReqwestMiddleware(anyhow::Error),
+    ReqwestMiddleware(AnyhowError),
     /// An error was encountered parsing a JSON response body.
     #[error("Error parsing response: {}", .0)]
     Parse(#[from] serde_json::Error),
     /// An error was encountered on response. This is a response with an HTTP code other than 200.
     #[error("Error {}", .0)]
-    StatusCode(reqwest::StatusCode),
+    StatusCode(StatusCode),
     /// You are not logged in.
     #[error("Not logged in")]
     NotLoggedIn,
@@ -44,16 +49,16 @@ pub enum Error {
     MissingClassInfo(#[from] MissingClassInfoError),
     /// An error occurred within Steam TOTP.
     #[error("{}", .0)]
-    TOTP(#[from] another_steam_totp::Error),
+    TOTP(#[from] TOTPError),
     /// This trade offer has no confirmations.
     #[error("No confirmation for offer {}", .0)]
     NoConfirmationForOffer(TradeOfferId),
     /// A confirmation could not be confirmed. If a message was contained in the response body it will be included.
     #[error("Confirmation unsuccessful. {}", .0.as_ref().map(|s| s.as_str()).unwrap_or("The confirmation may have succeeded, the confirmation no longer exists, or another trade may be going through. Check confirmations again to verify."))]
     ConfirmationUnsuccessful(Option<String>),
-    /// The response is not expected.
-    #[error("Malformed response")]
-    MalformedResponse,
+    /// The response is not expected. Check the contained message for more details.
+    #[error("Malformed response: {}", .0)]
+    MalformedResponse(&'static str),
 }
 
 /// Any number of issues with a provided parameter.
@@ -86,9 +91,9 @@ pub enum ParameterError {
     /// Cannot decline an offer we created.
     #[error("Cannot decline an offer we created.")]
     CannotDeclineOfferWeCreated,
-    /// An error was encountered converting parameters to a valid URL string.
-    #[error("Unable to convert to query parameters: {}", .0)]
-    SerdeQS(#[from] serde_qs::Error)
+    /// An error was encountered parsing a URL.
+    #[error("Unable to parse URL: {}", .0)]
+    UrlParse(#[from] url::ParseError),
 }
 
 /// An error occurred when working with the file system.

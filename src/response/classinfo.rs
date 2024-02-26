@@ -6,9 +6,9 @@ use serde::{Serialize, Deserialize};
 /// Contains details about an item including names and descriptions.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ClassInfo {
-    #[serde(default)]
     /// The item's app ID. This is included when including descriptions in the `GetTradeOffers` 
     /// and `GetTradeHistory` response.
+    #[serde(default)]
     pub appid: Option<AppId>,
     /// The ID for this classinfo.
     #[serde(with = "serialize::string")]
