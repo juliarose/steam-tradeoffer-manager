@@ -2,7 +2,6 @@
 
 pub use another_steam_totp::Error as TOTPError;
 pub use reqwest::Error as ReqwestError;
-pub use reqwest::StatusCode;
 pub use anyhow::Error as AnyhowError;
 
 use crate::enums::TradeOfferState;
@@ -30,7 +29,7 @@ pub enum Error {
     Parse(#[from] serde_json::Error),
     /// An error was encountered on response. This is a response with an HTTP code other than 200.
     #[error("Error {}", .0)]
-    StatusCode(StatusCode),
+    StatusCode(reqwest::StatusCode),
     /// You are not logged in.
     #[error("Not logged in")]
     NotLoggedIn,
