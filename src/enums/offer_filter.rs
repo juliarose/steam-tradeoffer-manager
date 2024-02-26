@@ -11,5 +11,5 @@ pub enum OfferFilter {
     /// Fetch historical offers only.
     HistoricalOnly = 2,
     /// Fetch all offers.
-    All = 3
+    All = 3,
 }

@@ -32,3 +32,29 @@ pub enum TradeStatus {
     /// A trade in escrow was rolled back.
     EscrowRollback = 11,
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Serialize, Deserialize};
+    
+    #[derive(Serialize, Deserialize)]
+    struct Body {
+        status: TradeStatus,
+    }
+    
+    #[test]
+    fn serializes() {
+        
+        assert_eq!(serde_json::to_string(&Body { status: TradeStatus::Init }).unwrap(), r#"{"status":0}"#);
+    }
+    
+    #[test]
+    fn deserializes() {
+        let json = r#"{"status":0}"#;
+        let body: Body = serde_json::from_str(json).unwrap();
+        
+        assert_eq!(body.status, TradeStatus::Init);
+    }
+}
