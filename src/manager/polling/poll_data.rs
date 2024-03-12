@@ -41,7 +41,12 @@ impl PollData {
     /// Checks if the last full poll is stale based on the `update_interval`.
     pub fn last_full_poll_is_stale(&self, update_interval: &Duration) -> bool {
         if let Some(last_poll_full_update) = self.last_poll_full_update {
-            date_difference_from_now(&last_poll_full_update) >= *update_interval
+            if let Some(difference) = date_difference_from_now(&last_poll_full_update) {
+                difference >= *update_interval
+            } else {
+                log::warn!("Failed to get date difference using time {last_poll_full_update}");
+                false
+            }
         } else {
             true
         }

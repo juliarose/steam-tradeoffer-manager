@@ -670,6 +670,9 @@ impl SteamTradeOfferAPI {
             include_failed,
             include_total,
         } = options;
+        // Convert the datetime to a UNIX timestamp.
+        let start_after_time = start_after_time
+            .map(|time| time.timestamp() as u32);
         let uri = Self::get_api_url("IEconService", "GetTradeHistory", 1);
         let key = self.api_key.as_ref()
             .ok_or(ParameterError::MissingApiKey)?;

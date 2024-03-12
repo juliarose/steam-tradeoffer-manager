@@ -1,19 +1,15 @@
 use std::time::SystemTime;
-use chrono::{NaiveDateTime, DateTime, Utc, Duration};
+use chrono::{DateTime, Utc, Duration};
 
 /// The datetime format used for requests and responses.
 pub type ServerTime = DateTime<Utc>;
 
 /// Converts a unix timestamp to a [`DateTime`].
 pub fn timestamp_to_server_time(timestamp: i64) -> ServerTime {
-    // I'm not sure when this would ever fail, so hopefully it never fails
-    let naive_data_time = NaiveDateTime::from_timestamp_opt(
+    DateTime::from_timestamp(
         timestamp,
         0,
-    ).unwrap_or_default();
-    let time: ServerTime = DateTime::from_naive_utc_and_offset(naive_data_time, Utc);
-
-    time
+    ).unwrap_or_default()
 }
 
 /// Gets current time.
@@ -22,6 +18,21 @@ pub fn get_server_time_now() -> ServerTime {
 }
 
 /// Date difference from now.
-pub fn date_difference_from_now(date: &ServerTime) -> Duration {
-    Duration::seconds(get_server_time_now().timestamp() - date.timestamp())
+pub fn date_difference_from_now(date: &ServerTime) -> Option<Duration> {
+    // I don't think this should ever fail since `date` will always be a valid date, but in the 
+    // off chance that it does, the program does not panic.
+    Duration::try_seconds(get_server_time_now().timestamp() - date.timestamp())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn tests_date_difference_from_now() {
+        let datetime = ServerTime::from_timestamp_millis(0).unwrap();
+        let difference = date_difference_from_now(&datetime);
+        
+        assert!(difference.is_some());
+    }
 }

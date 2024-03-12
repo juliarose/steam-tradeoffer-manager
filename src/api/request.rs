@@ -24,7 +24,7 @@ pub(crate) struct GetTradeHistoryRequestOptions {
     /// The number of trades to get.
     pub max_trades: u32,
     /// The time to start getting trades after.
-    pub start_after_time: Option<u32>,
+    pub start_after_time: Option<ServerTime>,
     /// The trade ID to start getting trades after.
     pub start_after_tradeid: Option<TradeId>,
     /// Whether we are navigating backwards in the trade history.

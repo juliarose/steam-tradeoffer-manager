@@ -47,8 +47,10 @@ impl Default for PollOptions {
     fn default() -> Self {
         Self {
             cancel_duration: None,
-            poll_full_update_duration: Duration::seconds(DEFAULT_FULL_UPDATE_SECONDS),
-            poll_interval: Duration::seconds(DEFAULT_POLL_INTERVAL_SECONDS),
+            // unwrap is safe because the value is in range
+            poll_full_update_duration: Duration::try_seconds(DEFAULT_FULL_UPDATE_SECONDS).unwrap(),
+            // unwrap is safe because the value is in range
+            poll_interval: Duration::try_seconds(DEFAULT_POLL_INTERVAL_SECONDS).unwrap(),
         }
     }
 }
@@ -58,8 +60,7 @@ impl PollOptions {
     pub fn default_with_cancel_duration(duration: Duration) -> Self {
         Self {
             cancel_duration: Some(duration),
-            poll_full_update_duration: Duration::seconds(DEFAULT_FULL_UPDATE_SECONDS),
-            poll_interval: Duration::seconds(DEFAULT_POLL_INTERVAL_SECONDS),
+            ..Default::default()
         }
     }
 }
@@ -177,7 +178,8 @@ fn is_called_too_recently(
         
         *last_poll_date = now;
         
-        duration < Duration::milliseconds(CALLED_TOO_RECENTLY_MILLISECONDS)
+        // unwrap is safe because the value is in range
+        duration < Duration::try_milliseconds(CALLED_TOO_RECENTLY_MILLISECONDS).unwrap()
     } else {
         poll_events.insert(poll_type, chrono::Utc::now());
         false
