@@ -604,6 +604,15 @@ impl SteamTradeOfferAPI {
             include_total: true,
         }).await?;
         
+        if body.trades.is_empty() {
+            return Ok(Trades {
+                trades: Vec::new(),
+                more: body.more,
+                // Should always be present since include_total was passed.
+                total_trades: body.total_trades.unwrap_or_default(),
+            });
+        }
+        
         if let Some(descriptions) = body.descriptions {
             let trades = body.trades
                 .into_iter()

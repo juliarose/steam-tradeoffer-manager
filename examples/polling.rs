@@ -69,7 +69,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Fails if you did not set your cookies.
     let (_tx, mut rx) = manager.start_polling(PollOptions {
         // By default PollOptions does not have a cancel duration.
-        cancel_duration: Some(Duration::minutes(30)),
+        cancel_duration: Some(Duration::try_minutes(30).unwrap()),
         ..PollOptions::default()
     })?;
     
