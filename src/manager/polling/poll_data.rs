@@ -6,8 +6,7 @@ use serde::{Serialize, Deserialize};
 use chrono::Duration;
 
 /// Used for storing account poll data.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PollData {
     #[serde(default)]
     /// Where to fetch offers since the last poll.
@@ -25,8 +24,6 @@ pub struct PollData {
     /// Whether the data has changed. Used for reducing file writes.
     pub changed: bool,
 }
-
-
 
 impl PollData {
     /// Checks if the last full poll is stale based on the `update_interval`.

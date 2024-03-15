@@ -335,7 +335,7 @@ impl SteamTradeOfferAPI {
     /// Gets [`ClassInfo`] data for the given classes.
     pub async fn get_asset_classinfos(
         &self,
-        classes: &Vec<ClassInfoClass>,
+        classes: &[ClassInfoClass],
     ) -> Result<ClassInfoMap, Error> {
         if classes.is_empty() {
             return Ok(Default::default());
@@ -520,7 +520,7 @@ impl SteamTradeOfferAPI {
             // make unique
             .collect::<HashSet<_>>()
             .into_iter()
-            .collect();
+            .collect::<Vec<_>>();
         let map = self.get_asset_classinfos(&classes).await?;
         let offers = self.map_raw_trade_offers_with_descriptions(offers, map);
         
