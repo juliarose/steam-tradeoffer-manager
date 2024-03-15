@@ -37,8 +37,9 @@ pub struct ClassInfo {
     pub background_color: Option<String>,
     /// The URL to the icon for the item.
     pub icon_url: String,
-    /// The URL to the large icon for the item.
-    pub icon_url_large: String,
+    /// The URL to the large icon for the item. This is almost always present but is missing in 
+    /// rare events.
+    pub icon_url_large: Option<String>,
     /// The item's type. This is displayed underneath the name of the game in inventories.
     #[serde(rename = "type")]
     pub r#type: String,
