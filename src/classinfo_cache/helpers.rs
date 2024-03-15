@@ -69,7 +69,7 @@ async fn load_classinfo(
     class: ClassInfoClass,
     data_directory: &Path,
 ) -> Result<ClassInfoFile, FileError> {
-    let filepath = get_classinfo_file_path(class, &data_directory);
+    let filepath = get_classinfo_file_path(class, data_directory);
     let data = async_fs::read_to_string(&filepath).await?;
     
     match serde_json::from_str::<ClassInfo>(&data) {

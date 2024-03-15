@@ -59,7 +59,7 @@ impl ClassInfoCache {
         let mut inner = self.inner.lock().unwrap();
         
         classes
-            .into_iter()
+            .iter()
             .fold((HashMap::new(), Vec::new()), |mut output, class| {
                 if let Some(classinfo) = inner.get(class).map(Arc::clone) {
                     // Insert into the map if a classinfo exists in the cache.

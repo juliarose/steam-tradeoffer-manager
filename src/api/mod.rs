@@ -162,9 +162,9 @@ impl SteamTradeOfferAPI {
                 Some(id) => id.to_string(),
                 None => String::from("new"),
             };
-            let url = helpers::offer_referer_url(&pathname, offer.partner, &offer.token.as_deref())?;
             
-            url
+            
+            helpers::offer_referer_url(&pathname, offer.partner, &offer.token.as_deref())?
         };
         let params = {
             let json_tradeoffer = serde_json::to_string(&OfferForm {
@@ -715,9 +715,9 @@ impl SteamTradeOfferAPI {
         let uri = {
             let method = method.into();
             let pathname = method.pathname();
-            let url = helpers::offer_referer_url(&pathname, partner, &method.token())?;
             
-            url
+            
+            helpers::offer_referer_url(&pathname, partner, &method.token())?
         };
         let response = self.client.get(&uri)
             .send()
