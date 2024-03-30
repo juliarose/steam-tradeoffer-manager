@@ -1,5 +1,4 @@
-//! Includes raw response models for API responses. These are transformed into more convenient 
-//! models in [`crate::responses`].
+//! Includes raw response models for API responses.
 
 use crate::types::*;
 use crate::error::{MissingClassInfoError, TryIntoNewAssetError};
