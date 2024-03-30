@@ -1,13 +1,13 @@
 [package]
 name = "steam-tradeoffer-manager"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 description = "Makes Steam trade offers easy!"
 authors = ["Julia"]
 homepage = "https://github.com/juliarose/steam-tradeoffer-manager"
 repository = "https://github.com/juliarose/steam-tradeoffer-manager"
 license = "MIT"
-keywords = ["tf2", "steam"]
+keywords = ["steam", "trading", "tradeoffer"]
 readme = "README.md"
 exclude = ["/assets", ".*"]
 
