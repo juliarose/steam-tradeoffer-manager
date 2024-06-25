@@ -131,8 +131,8 @@ impl MobileAPI {
     ) -> Result<Vec<Confirmation>, Error> {
         #[derive(Deserialize)]
         pub struct GetTradeConfirmationsResponse {
-            #[serde(default)]
-            pub success: bool,
+            // #[serde(default)]
+            // pub success: bool,
             #[serde(default)]
             pub conf: Vec<Confirmation>,
         }
