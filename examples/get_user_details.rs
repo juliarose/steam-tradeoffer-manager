@@ -23,18 +23,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Trade will result in escrow? {}", user_details.has_escrow().bold());
     Ok(())
 }
-
-// Not really necessary, this just makes true/false values display in a more human way.
-trait Nope {
-    fn nope(&self) -> &'static str;
-}
-
-impl Nope for bool {
-    fn nope(&self) -> &'static str {
-        if *self {
-            "yep"
-        } else {
-            "nope"
-        }
-    }
-}
