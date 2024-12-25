@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 (2024-12-25)
+
+### Changed
+
+- Bumped `another-steam-totp` to `0.3.5`.
+
 ## 0.4.0 (2024-03-30)
 
 ### Changed
