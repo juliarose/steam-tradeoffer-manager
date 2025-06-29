@@ -27,7 +27,7 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use reqwest_middleware::ClientWithMiddleware;
 
-pub(crate) type Client = ClientWithMiddleware;
+pub(crate) type HttpClient = ClientWithMiddleware;
 pub(crate) type ClassInfoClass = (AppId, ClassId, InstanceId);
 pub(crate) type ClassInfoMap = HashMap<ClassInfoClass, Arc<ClassInfo>>;
 pub(crate) type ClassInfoAppClass = (ClassId, InstanceId);

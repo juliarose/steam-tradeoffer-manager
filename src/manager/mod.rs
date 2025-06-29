@@ -10,7 +10,7 @@ use crate::types::ServerTime;
 use crate::api::SteamTradeOfferAPI;
 use crate::mobile_api::MobileAPI;
 use crate::static_functions::get_api_key;
-use crate::helpers::{generate_sessionid, get_default_middleware, get_sessionid_and_steamid_from_cookies};
+use crate::helpers::get_default_client;
 use crate::error::{ParameterError, Error};
 use crate::request::{NewTradeOffer, GetTradeHistoryOptions};
 use crate::enums::{TradeOfferState, OfferFilter, GetUserDetailsMethod};
@@ -18,7 +18,6 @@ use crate::types::{AppId, ContextId, TradeOfferId};
 use crate::response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Confirmation, Trades};
 use std::sync::Mutex;
 use std::sync::Arc;
-use std::sync::atomic::{Ordering, AtomicU64};
 use steamid_ng::SteamID;
 use tokio::task::JoinHandle;
 
@@ -30,9 +29,7 @@ pub struct TradeOfferManager {
     api: SteamTradeOfferAPI,
     /// The underlying API for mobile confirmations.
     mobile_api: MobileAPI,
-    /// The account's SteamID.
-    steamid: Arc<AtomicU64>,
-    /// The sender for sending messages to polling, along with the task handle.
+    /// The task handle for polling offers.
     polling: Arc<Mutex<Option<JoinHandle<()>>>>,
 }
 
@@ -63,7 +60,7 @@ impl TradeOfferManager {
     ///     
     ///     println!("Your API key is: {api_key}");
     /// }
-    /// ````
+    /// ```
     pub async fn get_api_key(
         cookies: &[String],
     ) -> Result<String, Error> {
@@ -85,31 +82,14 @@ impl TradeOfferManager {
     ///     "steamLoginSecure=blahblahblah".to_string(),
     /// ];
     /// 
-    /// manager.set_cookies(&cookies);
+    /// manager.set_cookies(cookies);
     /// ```
     pub fn set_cookies(
         &self,
-        cookies: &[String],
+        cookies: Vec<String>,
     ) {
-        let (
-            sessionid,
-            steamid,
-        ) = get_sessionid_and_steamid_from_cookies(cookies);
-        let mut cookies = cookies.to_owned();
-        
-        if sessionid.is_none() {
-            // the cookies don't contain a sessionid, so generate one
-            let sessionid = generate_sessionid();
-            
-            cookies.push(format!("sessionid={sessionid}"));
-        }
-        
-        if let Some(steamid) = steamid {
-            self.steamid.store(steamid, Ordering::Relaxed);
-        }
-        
-        self.api.set_cookies(&cookies);
-        self.mobile_api.set_cookies(&cookies);
+        self.api.set_cookies(cookies.clone());
+        self.mobile_api.set_cookies(cookies);
     }
     
     /// Gets the logged-in user's [`SteamID`].
@@ -119,13 +99,7 @@ impl TradeOfferManager {
     pub fn get_steamid(
         &self,
     ) -> Result<SteamID, Error> {
-        let steamid_64 = self.steamid.load(Ordering::Relaxed);
-        
-        if steamid_64 == 0 {
-            return Err(Error::NotLoggedIn);
-        }
-        
-        Ok(SteamID::from(steamid_64))
+        self.mobile_api.get_steamid()
     }
     
     /// Starts polling offers. Listen to the returned receiver for events. Use the returned sender 
@@ -144,7 +118,7 @@ impl TradeOfferManager {
     /// // Polls offers.
     /// async fn poll_offers(
     ///     manager: TradeOfferManager,
-    ///     receiver: PollReceiver,
+    ///     mut receiver: PollReceiver,
     /// ) {
     ///     while let Some(result) = receiver.recv().await {
     ///         match result {
@@ -206,8 +180,8 @@ impl TradeOfferManager {
         &self,
         options: PollOptions,
     ) -> Result<(PollSender, PollReceiver), Error> {
-        if self.api.api_key.is_none() {
-            return Err(ParameterError::MissingApiKey.into());
+        if self.api.api_key.is_none() && self.api.access_token.read().unwrap().is_none() {
+            return Err(ParameterError::MissingApiKeyOrAccessToken.into());
         }
         
         let steamid = self.get_steamid()?;
@@ -348,13 +322,9 @@ impl TradeOfferManager {
         appid: AppId,
         contextid: ContextId,
     ) -> Result<Vec<Asset>, Error> {
-        let steamid_64 = self.steamid.load(Ordering::Relaxed);
+        let steamid = self.get_steamid()?;
         
-        if steamid_64 == 0 {
-            return Err(Error::NotLoggedIn);
-        }
-        
-        self.api.get_inventory(SteamID::from(steamid_64), appid, contextid, true).await
+        self.api.get_inventory(steamid, appid, contextid, true).await
     }
     
     /// Gets a user's inventory. This method **does not** include untradable items.
@@ -576,11 +546,10 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
         let cookies = builder.cookie_jar
             .unwrap_or_default();
         let client = builder.client
-            .unwrap_or_else(|| get_default_middleware(
+            .unwrap_or_else(|| get_default_client(
                 Arc::clone(&cookies),
                 builder.user_agent,
             ));
-        let steamid = Arc::new(AtomicU64::new(0));
         let classinfo_cache = builder.classinfo_cache.unwrap_or_default();
         let mut api_builder = SteamTradeOfferAPI::builder()
             .data_directory(builder.data_directory)
@@ -592,6 +561,10 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
             api_builder = api_builder.api_key(api_key);   
         }
         
+        if let Some(access_token) = builder.access_token {
+            api_builder = api_builder.access_token(access_token);
+        }
+        
         let mut mobile_api_builder = MobileAPI::builder()
             .client(client, cookies)
             .time_offset(builder.time_offset);
@@ -601,14 +574,13 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
         }
         
         let manager = Self {
-            steamid: Arc::clone(&steamid),
             api: api_builder.build(),
             mobile_api: mobile_api_builder.build(),
             polling: Arc::new(Mutex::new(None)),
         };
         
         if let Some(cookies) = builder.cookies {
-            manager.set_cookies(&cookies);
+            manager.set_cookies(cookies);
         }
         
         manager

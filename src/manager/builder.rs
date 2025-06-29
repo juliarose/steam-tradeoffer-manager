@@ -10,9 +10,10 @@ use reqwest_middleware::ClientWithMiddleware;
 
 /// Builder for constructing a [`TradeOfferManager`].
 /// 
-/// An API key is required to use the Steam Web API. You can get one from the 
-/// [Steam Community](https://steamcommunity.com/dev/apikey) or by using the 
-/// [`TradeOfferManager::get_api_key`][`crate::TradeOfferManager`] method.
+/// An API key or access token is required to use the Steam Web API for trade offers.
+/// 
+/// You can get an API key from [Steam Community](https://steamcommunity.com/dev/apikey) or by 
+/// using the [`TradeOfferManager::get_api_key`][`crate::TradeOfferManager`] method.
 /// 
 /// By default, the data directory is stored in the config directory of the current user 
 /// determined by the OS:
@@ -22,14 +23,15 @@ use reqwest_middleware::ClientWithMiddleware;
 /// 
 /// In some cases (such as when running in a Docker container), the config directory may not be 
 /// available. In this case, the data directory will be stored in the 
-/// `rust-steam-tradeoffer-manager` directory in the current working directory.
-/// 
-/// Refer to the [directories](https://docs.rs/directories/5.0.1/directories/struct.BaseDirs.html) 
-/// crate for more information.
+/// `rust-steam-tradeoffer-manager` directory in the current working directory. Refer to the 
+/// [directories](https://docs.rs/directories/5.0.1/directories/struct.BaseDirs.html) crate for 
+/// more information.
 #[derive(Debug, Clone)]
 pub struct TradeOfferManagerBuilder {
     /// Your account's API key from <https://steamcommunity.com/dev/apikey>.
     pub(crate) api_key: Option<String>,
+    /// Your account's access token.
+    pub(crate) access_token: Option<String>,
     /// The identity secret for the account (optional). Required for mobile confirmations.
     pub(crate) identity_secret: Option<String>,
     /// The language for API responses.
@@ -62,6 +64,7 @@ impl TradeOfferManagerBuilder {
     pub fn new() -> Self {
         Self {
             api_key: None,
+            access_token: None,
             identity_secret: None,
             language: Language::English,
             classinfo_cache: None,
@@ -79,6 +82,14 @@ impl TradeOfferManagerBuilder {
     /// as getting trade offers or trade histories.
     pub fn api_key(mut self, api_key: String) -> Self {
         self.api_key = Some(api_key);
+        self
+    }
+    
+    /// The access token. Some features will work without an access token and only require cookies,
+    /// such as sending or responding to trade offers. It is required for all Steam API requests, 
+    /// such as getting trade offers or trade histories.
+    pub fn access_token(mut self, access_token: String) -> Self {
+        self.access_token = Some(access_token);
         self
     }
     

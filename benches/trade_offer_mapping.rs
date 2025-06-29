@@ -46,7 +46,7 @@ fn load_classinfo_sync(
 
 fn get_offers() -> Vec<RawTradeOffer> {
     #[derive(Deserialize, Debug)]
-    pub struct GetTradeOffersResponseBody {
+    struct GetTradeOffersResponseBody {
         #[serde(default)]
         pub trade_offers_sent: Vec<RawTradeOffer>,
         #[serde(default)]
@@ -55,7 +55,7 @@ fn get_offers() -> Vec<RawTradeOffer> {
     }
     
     #[derive(Deserialize, Debug)]
-    pub struct GetTradeOffersResponse {
+    struct GetTradeOffersResponse {
         pub response: GetTradeOffersResponseBody,
     }
     

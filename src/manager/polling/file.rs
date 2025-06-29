@@ -5,6 +5,8 @@ use crate::helpers::write_file_atomic;
 use std::path::Path;
 use std::fs;
 
+// This method is intentionally synchronous to allow TradeOfferManager to be instantiated outside of an async context.
+// With most use-cases this will rarely be a problem and simplifies instantiation.
 pub fn load_poll_data(
     steamid: SteamID,
     path: &Path,

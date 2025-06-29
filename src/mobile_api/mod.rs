@@ -17,8 +17,8 @@ use crate::error::{Error, ParameterError};
 use crate::helpers::{
     parses_response,
     generate_sessionid,
-    get_sessionid_and_steamid_from_cookies,
-    get_default_middleware,
+    extract_auth_data_from_cookies,
+    get_default_client,
 };
 use crate::helpers::COMMUNITY_HOSTNAME;
 use std::collections::HashMap;
@@ -63,10 +63,13 @@ impl MobileAPI {
     /// this API.
     pub fn set_cookies(
         &self,
-        cookies: &[String],
+        mut cookies: Vec<String>,
     ) {
-        let (sessionid, steamid) = get_sessionid_and_steamid_from_cookies(cookies);
-        let mut cookies = cookies.to_owned();
+        let (
+            sessionid,
+            steamid,
+            _access_token,
+        ) = extract_auth_data_from_cookies(&cookies);
         let sessionid = if let Some(sessionid) = sessionid {
             sessionid
         } else {
@@ -76,6 +79,7 @@ impl MobileAPI {
             cookies.push(format!("sessionid={sessionid}"));
             sessionid
         };
+        
         // Should not panic since the URL is hardcoded.
         let url = format!("https://{}", Self::HOSTNAME).parse::<Url>()
             .unwrap_or_else(|error| panic!("URL could not be parsed from {}: {}", Self::HOSTNAME, error));
@@ -233,7 +237,7 @@ impl From<MobileAPIBuilder> for MobileAPI {
         let cookies = builder.cookies
             .unwrap_or_else(|| Arc::new(Jar::default()));
         let client = builder.client
-            .unwrap_or_else(|| get_default_middleware(
+            .unwrap_or_else(|| get_default_client(
                 Arc::clone(&cookies),
                 builder.user_agent,
             ));

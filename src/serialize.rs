@@ -596,6 +596,78 @@ where
     deserializer.deserialize_any(OptionVisitor::new())
 }
 
+pub mod option_string_or_number {
+    use std::fmt::Display;
+    use std::str::FromStr;
+    use serde::{Serializer, Deserializer, Deserialize};
+    use serde::de::{self, Visitor};
+    use std::marker::PhantomData;
+    
+    pub fn serialize<T, S>(value: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        T: Display,
+        S: Serializer,
+    {
+        match value {
+            Some(v) => serializer.collect_str(v),
+            None => serializer.serialize_none(),
+        }
+    }
+    
+    pub fn deserialize<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
+    where
+        T: FromStr + serde::Deserialize<'de>,
+        T::Err: Display,
+        D: Deserializer<'de>,
+    {
+        struct OptionStringOrNumberVisitor<T> {
+            marker: PhantomData<fn() -> Option<T>>,
+        }
+        
+        impl<'de, T> Visitor<'de> for OptionStringOrNumberVisitor<T>
+        where
+            T: FromStr + serde::Deserialize<'de>,
+            T::Err: Display,
+        {
+            type Value = Option<T>;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("an optional string or number")
+            }
+            
+            fn visit_none<E>(self) -> Result<Self::Value, E> where E: de::Error {
+                Ok(None)
+            }
+            
+            fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                // Try to deserialize as a number first
+                let raw: serde_json::Value = Deserialize::deserialize(deserializer)?;
+
+                match raw {
+                    serde_json::Value::String(s) => {
+                        let parsed = s.parse::<T>().map_err(de::Error::custom)?;
+                        Ok(Some(parsed))
+                    }
+                    serde_json::Value::Number(n) => {
+                        // Convert number to string then parse
+                        let s = n.to_string();
+                        let parsed = s.parse::<T>().map_err(de::Error::custom)?;
+                        Ok(Some(parsed))
+                    }
+                    _ => Err(de::Error::custom("expected string or number")),
+                }
+            }
+        }
+        
+        deserializer.deserialize_option(OptionStringOrNumberVisitor {
+            marker: PhantomData,
+        })
+    }
+}
+
 pub mod string {
     use std::fmt::Display;
     use std::str::FromStr;

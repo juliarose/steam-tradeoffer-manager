@@ -55,7 +55,7 @@ impl Default for TradeOffer {
         TradeOffer {
             tradeofferid: 0,
             tradeid: None,
-            partner: SteamID::from(0),
+            partner: SteamID::default(),
             message: None,
             items_to_receive: Vec::new(),
             items_to_give: Vec::new(),

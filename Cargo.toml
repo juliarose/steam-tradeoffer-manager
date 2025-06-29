@@ -12,31 +12,32 @@ readme = "README.md"
 exclude = ["/assets", ".*"]
 
 [dependencies]
-reqwest = { version = "0.11", features = ["json", "cookies"] }
-reqwest-middleware = "0.1"
+reqwest = { version = "0.12", features = ["json", "cookies", "gzip", "http2", "native-tls-alpn"] }
+reqwest-middleware = "0.4.2"
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = { version = "1.0", features = ["raw_value"] }
 serde_repr = "0.1"
 tokio = { version = "1", features = ["rt"] }
-async-fs = "1.5.0"
+async-fs = "2.1"
 async-std = "1.12.0"
 futures = "0.3.0"
-strum = { version = "0.23.0", features = ["derive"] }
-strum_macros = "0.23.0"
+strum = { version = "0.26", features = ["derive"] }
+strum_macros = "0.26"
 chrono = { version = "^0.4.27", features = ["serde"] }
-num_enum = "0.5.0"
+num_enum = "0.7"
 anyhow = "1.0"
-lazy-regex = "2.2.0"
+lazy-regex = "3.3"
 lazy_static = "1.4.0"
 url = "2.2.0"
 lfu_cache = "1.2.1"
-scraper = "0.14.0"
-thiserror = "1.0.30"
+scraper = "0.22"
+thiserror = "2"
 log = "0.4.0"
 rand = "0.8"
 directories = "^5.0"
 steamid-ng = "1.0"
 another-steam-totp = { version = "^0.3.5", features = ["reqwest"] }
+bytes = "1.10.1"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }

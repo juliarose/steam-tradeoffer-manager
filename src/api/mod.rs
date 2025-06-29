@@ -14,13 +14,13 @@ use response_wrappers::*;
 pub use builder::SteamTradeOfferAPIBuilder;
 
 use crate::SteamID;
-use crate::helpers::get_default_middleware;
+use crate::helpers::get_default_client;
 use crate::types::*;
 use crate::response::*;
 use crate::enums::{Language, GetUserDetailsMethod};
 use crate::static_functions::get_inventory;
 use crate::serialize;
-use crate::helpers::{parses_response, generate_sessionid, get_sessionid_and_steamid_from_cookies};
+use crate::helpers::{parses_response, generate_sessionid, extract_auth_data_from_cookies};
 use crate::helpers::{COMMUNITY_HOSTNAME, WEB_API_HOSTNAME};
 use crate::error::{Error, ParameterError, MissingClassInfoError};
 use crate::classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers};
@@ -39,10 +39,12 @@ use url::Url;
 pub struct SteamTradeOfferAPI {
     /// The API key.
     pub api_key: Option<String>,
+    /// The access token for trade offers.
+    pub(crate) access_token: Arc<RwLock<Option<String>>>,
     /// The language for descriptions.
     pub language: Language,
     /// The client for making requests.
-    client: Client,
+    client: HttpClient,
     /// The cookies to make requests with. Since the requests are made with the provided client, 
     /// the cookies should be the same as what the client uses.
     cookies: Arc<Jar>,
@@ -85,10 +87,13 @@ impl SteamTradeOfferAPI {
     /// offers. Make sure your cookies are set before calling these methods.
     pub fn set_cookies(
         &self,
-        cookies: &[String],
+        mut cookies: Vec<String>,
     ) {
-        let (sessionid, _steamid) = get_sessionid_and_steamid_from_cookies(cookies);
-        let mut cookies = cookies.to_owned();
+        let (
+            sessionid,
+            _steamid,
+            access_token,
+        ) = extract_auth_data_from_cookies(&cookies);
         let sessionid = if let Some(sessionid) = sessionid {
             sessionid
         } else {
@@ -103,6 +108,7 @@ impl SteamTradeOfferAPI {
             .unwrap_or_else(|error| panic!("URL could not be parsed from {}: {}", Self::HOSTNAME, error));
         
         *self.sessionid.write().unwrap() = Some(sessionid);
+        *self.access_token.write().unwrap() = access_token;
         
         for cookie_str in &cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
@@ -166,7 +172,7 @@ impl SteamTradeOfferAPI {
             
             helpers::offer_referer_url(&pathname, offer.partner, &offer.token.as_deref())?
         };
-        let params = {
+        let params: SendOfferParams<'_> = {
             let json_tradeoffer = serde_json::to_string(&OfferForm {
                 newversion: true,
                 // this is hopefully safe enough
@@ -220,8 +226,10 @@ impl SteamTradeOfferAPI {
         let body = response.text().await?;
         
         if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &body) {
-           Err(Error::UnexpectedResponse(message.trim().into()))
-        } else if let Some((_, script)) = regex_captures!(r#"(var oItem;[\s\S]*)</script>"#, &body) {
+           return Err(Error::UnexpectedResponse(message.trim().into()));
+        }
+        
+        if let Some((_, script)) = regex_captures!(r#"(var oItem;[\s\S]*)</script>"#, &body) {
             let raw_assets = helpers::parse_receipt_script(script)?;
             let classes = raw_assets
                 .iter()
@@ -235,12 +243,14 @@ impl SteamTradeOfferAPI {
                 .map(|asset| helpers::from_raw_receipt_asset(asset, &map))
                 .collect::<Result<Vec<_>, _>>()?;
             
-            Ok(assets)
-        } else if regex_is_match!(r#"\{"success": ?false\}"#, &body) {
-            Err(Error::NotLoggedIn)
-        } else {
-            Err(Error::MalformedResponse("Page does include receipt script."))
+            return Ok(assets);
         }
+        
+        if regex_is_match!(r#"\{"success": ?false\}"#, &body) {
+            return Err(Error::NotLoggedIn);
+        }
+        
+        Err(Error::MalformedResponseWithBody("Page does not include receipt script.", body))
     }
     
     /// Gets a chunk of [`ClassInfo`] data.
@@ -250,14 +260,26 @@ impl SteamTradeOfferAPI {
         classes: &[ClassInfoAppClass],
     ) -> Result<ClassInfoMap, Error> {
         let query = {
-            let key = self.api_key.as_ref()
-                .ok_or(ParameterError::MissingApiKey)?;
-            let mut query = vec![
-                ("key".to_string(), key.into()),
-                ("appid".to_string(), appid.to_string()),
-                ("language".to_string(), self.language.web_api_language_code().to_string()),
-                ("class_count".to_string(), classes.len().to_string()),
-            ];
+            let key = self.api_key.as_ref();
+            let access_token = self.access_token.read().unwrap().clone();
+            
+            if key.is_none() && access_token.is_none() {
+                return Err(ParameterError::MissingApiKeyOrAccessToken.into());
+            }
+            
+            let mut query = Vec::new();
+            
+            if let Some(access_token) = access_token {
+                // No need to provide the key if we have an access token.
+                query.push(("access_token".to_string(), access_token.into()));
+            } else {
+                // unwrap is safe here since we checked for the presence of the key above.
+                query.push(("key".to_string(), key.unwrap().into()));
+            }
+            
+            query.push(("appid".to_string(), appid.to_string()));
+            query.push(("language".to_string(), self.language.web_api_language_code().to_string()));
+            query.push(("class_count".to_string(), classes.len().to_string()));
             
             for (i, (classid, instanceid)) in classes.iter().enumerate() {
                 query.push((format!("classid{i}"), classid.to_string()));
@@ -411,8 +433,9 @@ impl SteamTradeOfferAPI {
         options: &request::GetTradeOffersOptions,
     ) -> Result<(Vec<response::RawTradeOffer>, Option<ClassInfoMap>), Error> {
         #[derive(Serialize)]
-        struct Form<'a> {
-            key: &'a str,
+        struct Form<'a, 'b> {
+            key: Option<&'a String>,
+            access_token: Option<&'b String>,
             language: &'a str,
             active_only: bool,
             historical_only: bool,
@@ -432,8 +455,18 @@ impl SteamTradeOfferAPI {
             historical_cutoff,
         } = options;
         let uri = Self::get_api_url("IEconService", "GetTradeOffers", 1);
-        let key = self.api_key.as_ref()
-            .ok_or(ParameterError::MissingApiKey)?;
+        let mut key = self.api_key.as_ref();
+        let access_token = self.access_token.read().unwrap().clone();
+        
+        if key.is_none() && access_token.is_none() {
+            return Err(ParameterError::MissingApiKeyOrAccessToken.into());
+        }
+        
+        if access_token.is_some() {
+            // No need to provide the key if we have an access token.
+            key = None;
+        }
+        
         let mut cursor = None;
         let time_historical_cutoff = historical_cutoff
             .map(|cutoff| cutoff.timestamp() as u64);
@@ -444,6 +477,7 @@ impl SteamTradeOfferAPI {
             let response = self.client.get(&uri)
                 .query(&Form {
                     key,
+                    access_token: access_token.as_ref(),
                     language: self.language.web_api_language_code(),
                     active_only: *active_only,
                     historical_only: *historical_only,
@@ -559,8 +593,9 @@ impl SteamTradeOfferAPI {
         tradeofferid: TradeOfferId,
     ) -> Result<response::RawTradeOffer, Error> {
         #[derive(Serialize)]
-        struct Form<'a> {
-            key: &'a str,
+        struct Form<'a, 'b> {
+            key: Option<&'a String>,
+            acccess_token: Option<&'b String>,
             tradeofferid: TradeOfferId,
         }
         
@@ -575,11 +610,22 @@ impl SteamTradeOfferAPI {
         }
         
         let uri = Self::get_api_url("IEconService", "GetTradeOffer", 1);
-        let key = self.api_key.as_ref()
-            .ok_or(ParameterError::MissingApiKey)?;
+        let mut key = self.api_key.as_ref();
+        let access_token = self.access_token.read().unwrap().clone();
+        
+        if key.is_none() && access_token.is_none() {
+            return Err(ParameterError::MissingApiKeyOrAccessToken.into());
+        }
+        
+        if access_token.is_some() {
+            // No need to provide the key if we have an access token.
+            key = None;
+        }
+        
         let response = self.client.get(&uri)
             .query(&Form {
                 key,
+                acccess_token: access_token.as_ref(),
                 tradeofferid,
             })
             .send()
@@ -659,8 +705,9 @@ impl SteamTradeOfferAPI {
         options: request::GetTradeHistoryRequestOptions,
     ) -> Result<GetTradeHistoryResponseBody, Error> {
         #[derive(Serialize)]
-        struct Form<'a> {
-            key: &'a str,
+        struct Form<'a, 'b> {
+            key: Option<&'a String>,
+            acccess_token: Option<&'b String>,
             max_trades: u32,
             start_after_time: Option<u32>,
             start_after_tradeid: Option<TradeId>,
@@ -682,12 +729,23 @@ impl SteamTradeOfferAPI {
         // Convert the datetime to a UNIX timestamp.
         let start_after_time = start_after_time
             .map(|time| time.timestamp() as u32);
+        let mut key = self.api_key.as_ref();
+        let access_token = self.access_token.read().unwrap().clone();
+        
+        if key.is_none() && access_token.is_none() {
+            return Err(ParameterError::MissingApiKeyOrAccessToken.into());
+        }
+        
+        if access_token.is_some() {
+            // No need to provide the key if we have an access token.
+            key = None;
+        }
+        
         let uri = Self::get_api_url("IEconService", "GetTradeHistory", 1);
-        let key = self.api_key.as_ref()
-            .ok_or(ParameterError::MissingApiKey)?;
         let response = self.client.get(&uri)
             .query(&Form {
                 key,
+                acccess_token: access_token.as_ref(),
                 max_trades,
                 start_after_time,
                 start_after_tradeid,
@@ -933,7 +991,7 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<Asset>, Error> { 
+    ) -> Result<Vec<Asset>, Error> {
         #[derive(Serialize)]
         struct Query<'a> {
             l: &'a str,
@@ -1025,7 +1083,7 @@ impl From<SteamTradeOfferAPIBuilder> for SteamTradeOfferAPI {
         let cookies = builder.cookie_jar
             .unwrap_or_default();
         let client = builder.client
-            .unwrap_or_else(|| get_default_middleware(
+            .unwrap_or_else(|| get_default_client(
                 Arc::clone(&cookies),
                 builder.user_agent,
             ));
@@ -1035,6 +1093,7 @@ impl From<SteamTradeOfferAPIBuilder> for SteamTradeOfferAPI {
             client,
             cookies,
             api_key: builder.api_key,
+            access_token: Arc::new(std::sync::RwLock::new(builder.access_token)),
             language: builder.language,
             classinfo_cache,
             data_directory: builder.data_directory,

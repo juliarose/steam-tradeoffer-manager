@@ -1,13 +1,13 @@
 use crate::SteamID;
 use crate::enums::Language;
-use crate::types::{AppId, ContextId, Client};
+use crate::types::{AppId, ContextId, HttpClient};
 use crate::helpers::DEFAULT_CLIENT;
 
 /// Options for loading a user's inventory.
 #[derive(Debug, Clone)]
 pub struct GetInventoryOptions<'a> {
     /// Client to use for making requests.
-    pub client: &'a Client,
+    pub client: &'a HttpClient,
     /// The user's Steam ID.
     pub steamid: SteamID,
     /// App ID of inventory.
@@ -18,6 +18,19 @@ pub struct GetInventoryOptions<'a> {
     pub tradable_only: bool,
     /// The language to use for descriptions.
     pub language: Language,
+}
+
+impl Default for GetInventoryOptions<'_> {
+    fn default() -> Self {
+        Self {
+            client: &DEFAULT_CLIENT,
+            steamid: SteamID::default(),
+            appid: 0,
+            contextid: 0,
+            tradable_only: true,
+            language: Language::English,
+        }
+    }
 }
 
 impl<'a> GetInventoryOptions<'a> {

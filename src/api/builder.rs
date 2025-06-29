@@ -8,11 +8,15 @@ use std::sync::Arc;
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
 
-/// Builder for constructing a [`SteamTradeOfferAPI`].
+/// Builder for constructing a [`SteamTradeOfferAPI`]. You need to supply either an API key or an 
+/// access token for most features to work, but some features will work with just cookies, such as
+/// sending or responding to trade offers.
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPIBuilder {
     /// Your account's API key from <https://steamcommunity.com/dev/apikey>.
     pub(crate) api_key: Option<String>,
+    /// The access token for your account.
+    pub(crate) access_token: Option<String>,
     /// The language for API responses.
     pub(crate) language: Language,
     /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
@@ -39,6 +43,7 @@ impl SteamTradeOfferAPIBuilder {
     pub fn new() -> Self {
         Self {
             api_key: None,
+            access_token: None,
             language: Language::English,
             classinfo_cache: None,
             data_directory: default_data_directory(),
@@ -53,6 +58,14 @@ impl SteamTradeOfferAPIBuilder {
     /// as getting trade offers or trade histories.
     pub fn api_key(mut self, api_key: String) -> Self {
         self.api_key = Some(api_key);
+        self
+    }
+    
+    /// The access token. Some features will work without an access token and only require cookies,
+    /// such as sending or responding to trade offers. It is required for all Steam API requests, 
+    /// such as getting trade offers or trade histories.
+    pub fn access_token(mut self, access_token: String) -> Self {
+        self.access_token = Some(access_token);
         self
     }
     

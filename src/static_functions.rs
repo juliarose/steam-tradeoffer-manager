@@ -4,7 +4,7 @@ use crate::api::response as api_response;
 use crate::response::{Asset, ClassInfo};
 use crate::request::GetInventoryOptions;
 use crate::types::*;
-use crate::helpers::{parses_response, get_sessionid_and_steamid_from_cookies};
+use crate::helpers::{parses_response, extract_auth_data_from_cookies};
 use crate::helpers::COMMUNITY_HOSTNAME;
 use crate::error::{Error, ParseHtmlError, MissingClassInfoError};
 use crate::serialize;
@@ -26,6 +26,7 @@ const ERROR_NO_API_KEY: &str = "This account does not have an API key";
 /// ```no_run
 /// use steam_tradeoffer_manager::get_inventory;
 /// use steam_tradeoffer_manager::request::GetInventoryOptions;
+/// use steamid_ng::SteamID;
 /// 
 /// #[tokio::main]
 /// async fn main() {
@@ -144,7 +145,8 @@ pub async fn get_api_key(
     let (
         sessionid,
         _steamid,
-    ) = get_sessionid_and_steamid_from_cookies(cookies);
+        _access_token,
+    ) = extract_auth_data_from_cookies(cookies);
     let sessionid = sessionid
         .ok_or(Error::NotLoggedIn)?;
     let cookie_store = Arc::new(Jar::default());

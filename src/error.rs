@@ -26,7 +26,7 @@ pub enum Error {
     ReqwestMiddleware(AnyhowError),
     /// An error was encountered parsing a JSON response body.
     #[error("Error parsing response: {}", .0)]
-    Parse(#[from] serde_json::Error),
+    ParseJson(#[from] serde_json::Error),
     /// An error was encountered on response. This is a response with an HTTP code other than 200.
     #[error("Error {}", .0)]
     StatusCode(reqwest::StatusCode),
@@ -43,7 +43,7 @@ pub enum Error {
     #[error("Trade error: {}", .0)]
     TradeOffer(TradeOfferError),
     /// A classinfo is missing. For some reason a classinfo could not be obtained from Steam or 
-    /// the file system. This can sometimes occur if Steam's servers are having issues.
+    /// the file system. This usually shouldn't occur.
     #[error("{}", .0)]
     MissingClassInfo(#[from] MissingClassInfoError),
     /// An error occurred within Steam TOTP.
@@ -58,14 +58,20 @@ pub enum Error {
     /// The response is not expected. Check the contained message for more details.
     #[error("Malformed response: {}", .0)]
     MalformedResponse(&'static str),
+    /// The response is not expected. Check the contained message for more details.
+    #[error("Malformed response: {}\nRaw body:{}", .0, .1)]
+    MalformedResponseWithBody(&'static str, String),
+    /// A response from Steam returned an EResult code.
+    #[error("Steam EResult error: {}\nRaw body:{}", .0, .1)]
+    SteamEResult(u32, String),
 }
 
 /// Any number of issues with a provided parameter.
 #[derive(thiserror::Error, Debug)]
 pub enum ParameterError {
-    /// An API key was expected but none was provided.
-    #[error("No API key provided. Make sure your API key is set before using this method.")]
-    MissingApiKey,
+    /// An API key or JWT access token was expected but none was provided.
+    #[error("No API key or access token provided. Make sure your API key or cookies are set.")]
+    MissingApiKeyOrAccessToken,
     /// No identity secret.
     #[error("No identity secret.")]
     NoIdentitySecret,
@@ -171,6 +177,15 @@ pub enum TradeOfferError {
     /// accepted.
     #[error("AlreadyRedeemed")]
     AlreadyRedeemed,
+    /// We cannot trade with partner because they have a trade ban.
+    #[error("TradeBan")]
+    TradeBan,
+    /// We have logged in from a new device and temporarily cannot trade.
+    #[error("NewDevice")]
+    NewDevice,
+    /// Partner cannot trade for some reason.
+    #[error("PartnerCannotTrade")]
+    PartnerCannotTrade,
 }
 
 impl TradeOfferError {
@@ -272,7 +287,7 @@ pub enum ParseHtmlError {
     ParseInt(#[from] std::num::ParseIntError),
     /// An error occurred parsing JSON in the response.
     #[error("{}", .0)]
-    ParseJSON(#[from] serde_json::Error),
+    ParseJson(#[from] serde_json::Error),
     /// A selector could not be parsed.
     #[error("Invalid selector")]
     ParseSelector,

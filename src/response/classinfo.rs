@@ -9,6 +9,7 @@ pub struct ClassInfo {
     /// The item's app ID. This is included when including descriptions in the `GetTradeOffers` 
     /// and `GetTradeHistory` response.
     #[serde(default)]
+    #[serde(with = "serialize::option_string_or_number")]
     pub appid: Option<AppId>,
     /// The ID for this classinfo.
     #[serde(with = "serialize::string")]

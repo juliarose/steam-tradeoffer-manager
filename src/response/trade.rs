@@ -45,7 +45,7 @@ impl Default for Trade {
     fn default() -> Self {
         Trade {
             tradeid: 0,
-            steamid_other: SteamID::from(0),
+            steamid_other: SteamID::default(),
             time_init: chrono::Utc::now(),
             status: TradeStatus::Complete,
             assets_given: Vec::new(),
