@@ -33,7 +33,6 @@ pub enum TradeStatus {
     EscrowRollback = 11,
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

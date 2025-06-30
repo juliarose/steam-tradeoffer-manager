@@ -52,7 +52,8 @@ pub enum Error {
     /// This trade offer has no confirmations.
     #[error("No confirmation for offer {}", .0)]
     NoConfirmationForOffer(TradeOfferId),
-    /// A confirmation could not be confirmed. If a message was contained in the response body it will be included.
+    /// A confirmation could not be confirmed. If a message was contained in the response body it 
+    /// will be included.
     #[error("Confirmation unsuccessful. {}", .0.as_ref().map(|s| s.as_str()).unwrap_or("The confirmation may have succeeded, the confirmation no longer exists, or another trade may be going through. Check confirmations again to verify."))]
     ConfirmationUnsuccessful(Option<String>),
     /// The response is not expected. Check the contained message for more details.

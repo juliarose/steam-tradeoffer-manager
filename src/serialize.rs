@@ -195,7 +195,7 @@ where
             V: SeqAccess<'de>,
         {
             let mut items = Vec::with_capacity(seq.size_hint().unwrap_or(0));
-
+            
             while let Some(item) = seq.next_element::<String>()? {
                 items.push(item);
             }

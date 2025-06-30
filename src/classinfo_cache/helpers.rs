@@ -57,7 +57,8 @@ pub async fn load_classinfos(
     join_all(tasks).await
 }
 
-/// Saves the classinfo. The classinfo value should be checked for validatity before calling this function.
+/// Saves the classinfo. The classinfo value should be checked for validatity before calling this 
+/// function.
 async fn save_classinfo(
     classinfo: Box<RawValue>,
     filepath: PathBuf,
