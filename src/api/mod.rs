@@ -43,6 +43,8 @@ pub struct SteamTradeOfferAPI {
     pub(crate) access_token: Arc<RwLock<Option<String>>>,
     /// The language for descriptions.
     pub language: Language,
+    /// The number of items to fetch per page when getting inventories.
+    pub get_inventory_page_size: u32,
     /// The client for making requests.
     client: HttpClient,
     /// The cookies to make requests with. Since the requests are made with the provided client, 
@@ -967,6 +969,9 @@ impl SteamTradeOfferAPI {
     }
     
     /// Gets a user's inventory.
+    /// 
+    /// The number of items to fetch per request can be set using with
+    /// [`crate::TradeOfferManagerBuilder::get_inventory_page_size`].
     pub async fn get_inventory(
         &self,
         steamid: SteamID,
@@ -981,10 +986,14 @@ impl SteamTradeOfferAPI {
             contextid,
             tradable_only,
             language: self.language,
+            page_size: self.get_inventory_page_size,
         }).await
     }
     
     /// Gets a user's inventory which includes `app_data` using the `GetAssetClassInfo` API.
+    /// 
+    /// The number of items to fetch per request can be set using with
+    /// [`crate::TradeOfferManagerBuilder::get_inventory_page_size`].
     pub async fn get_inventory_with_classinfos(
         &self,
         steamid: SteamID,
@@ -1010,7 +1019,7 @@ impl SteamTradeOfferAPI {
                 .header(REFERER, &referer)
                 .query(&Query {
                     l: self.language.api_language_code(),
-                    count: 2000,
+                    count: self.get_inventory_page_size,
                     start_assetid,
                 })
                 .send()
@@ -1095,6 +1104,7 @@ impl From<SteamTradeOfferAPIBuilder> for SteamTradeOfferAPI {
             api_key: builder.api_key,
             access_token: Arc::new(std::sync::RwLock::new(builder.access_token)),
             language: builder.language,
+            get_inventory_page_size: builder.get_inventory_page_size,
             classinfo_cache,
             data_directory: builder.data_directory,
             sessionid: Arc::new(std::sync::RwLock::new(None)),

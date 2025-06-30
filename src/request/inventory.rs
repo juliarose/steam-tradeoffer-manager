@@ -18,6 +18,8 @@ pub struct GetInventoryOptions<'a> {
     pub tradable_only: bool,
     /// The language to use for descriptions.
     pub language: Language,
+    /// The number of items to fetch per page. Defaults to 2000.
+    pub page_size: u32,
 }
 
 impl Default for GetInventoryOptions<'_> {
@@ -29,6 +31,7 @@ impl Default for GetInventoryOptions<'_> {
             contextid: 0,
             tradable_only: true,
             language: Language::English,
+            page_size: 2000,
         }
     }
 }
@@ -48,6 +51,7 @@ impl<'a> GetInventoryOptions<'a> {
             contextid,
             tradable_only: true,
             language: Language::English,
+            page_size: 2000,
         }
     }
 }

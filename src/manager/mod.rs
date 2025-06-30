@@ -555,6 +555,7 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
             .data_directory(builder.data_directory)
             .client(client.clone(), Arc::clone(&cookies))
             .language(builder.language)
+            .get_inventory_page_size(builder.get_inventory_page_size)
             .classinfo_cache(classinfo_cache);
         
         if let Some(api_key) = builder.api_key {

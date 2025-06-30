@@ -36,6 +36,8 @@ pub struct TradeOfferManagerBuilder {
     pub(crate) identity_secret: Option<String>,
     /// The language for API responses.
     pub(crate) language: Language,
+    /// The number of items to fetch per page when getting inventories. Defaults to 2000.
+    pub(crate) get_inventory_page_size: u32,
     /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
     /// to share state.
     pub(crate) classinfo_cache: Option<ClassInfoCache>,
@@ -67,6 +69,7 @@ impl TradeOfferManagerBuilder {
             access_token: None,
             identity_secret: None,
             language: Language::English,
+            get_inventory_page_size: 2000,
             classinfo_cache: None,
             data_directory: default_data_directory(),
             cookie_jar: None,
@@ -111,6 +114,12 @@ impl TradeOfferManagerBuilder {
     /// The language for API responses.
     pub fn language(mut self, language: Language) -> Self {
         self.language = language;
+        self
+    }
+    
+    /// The number of items to fetch per page when getting inventories. Defaults to 2000.
+    pub fn get_inventory_page_size(mut self, page_size: u32) -> Self {
+        self.get_inventory_page_size = page_size;
         self
     }
     

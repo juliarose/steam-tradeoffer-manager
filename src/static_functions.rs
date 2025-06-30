@@ -65,7 +65,7 @@ pub async fn get_inventory<'a>(
             .header(REFERER, &referer)
             .query(&Query {
                 l: options.language.api_language_code(),
-                count: 2000,
+                count: options.page_size,
                 start_assetid,
             })
             .send()
