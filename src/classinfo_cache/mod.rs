@@ -12,11 +12,11 @@ const DEFAULT_CACHE_SIZE: usize = 1000;
 
 /// Used for storing caches of [`ClassInfo`] data in memory. Data is stored using an [`LfuCache`]
 /// to limit how many elements are stored in memory. While you probably won't need to use this
-/// directly, it is used internally by [`TradeOfferManager`][crate::TradeOfferManager] for 
+/// directly, it is used internally by [`TradeOfferManager`][crate::TradeOfferManager] for
 /// managing [`ClassInfo`] data.
 /// 
-/// Internally the cache is wrapped in an `Arc<Mutex<T>>`. This allows you to clone the 
-/// [`ClassInfoCache`] and share it between multiple instances of 
+/// Internally the cache is wrapped in an `Arc<Mutex<T>>`. This allows you to clone the
+/// [`ClassInfoCache`] and share it between multiple instances of
 /// [`TradeOfferManager`][crate::TradeOfferManager] to reduce file reads and memory usage.
 /// 
 /// # Examples
@@ -50,7 +50,7 @@ impl ClassInfoCache {
         }
     }
     
-    /// Gets a map of [`ClassInfo`] wrapped in an [`Arc`] from the cache. The second element of 
+    /// Gets a map of [`ClassInfo`] wrapped in an [`Arc`] from the cache. The second element of
     /// the returned tuple is a [`Vec`] of classes that were not found in the cache.
     pub fn get_map<'a>(
         &self,

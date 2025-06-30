@@ -12,19 +12,19 @@ use reqwest_middleware::ClientWithMiddleware;
 /// 
 /// An API key or access token is required to use the Steam Web API for trade offers.
 /// 
-/// You can get an API key from [Steam Community](https://steamcommunity.com/dev/apikey) or by 
+/// You can get an API key from [Steam Community](https://steamcommunity.com/dev/apikey) or by
 /// using the [`TradeOfferManager::get_api_key`][`crate::TradeOfferManager`] method.
 /// 
-/// By default, the data directory is stored in the config directory of the current user 
+/// By default, the data directory is stored in the config directory of the current user
 /// determined by the OS:
 /// - Linux: `/home/<username>/.config/rust-steam-tradeoffer-manager`
 /// - MacOS: `/Users/<username>/Library/Application Support/rust-steam-tradeoffer-manager`
 /// - Windows: `C:\Users\<username>\AppData\Roaming\rust-steam-tradeoffer-manager`
 /// 
-/// In some cases (such as when running in a Docker container), the config directory may not be 
-/// available. In this case, the data directory will be stored in the 
-/// `rust-steam-tradeoffer-manager` directory in the current working directory. Refer to the 
-/// [directories](https://docs.rs/directories/5.0.1/directories/struct.BaseDirs.html) crate for 
+/// In some cases (such as when running in a Docker container), the config directory may not be
+/// available. In this case, the data directory will be stored in the
+/// `rust-steam-tradeoffer-manager` directory in the current working directory. Refer to the
+/// [directories](https://docs.rs/directories/5.0.1/directories/struct.BaseDirs.html) crate for
 /// more information.
 #[derive(Debug, Clone)]
 pub struct TradeOfferManagerBuilder {
@@ -38,7 +38,7 @@ pub struct TradeOfferManagerBuilder {
     pub(crate) language: Language,
     /// The number of items to fetch per page when getting inventories. Defaults to 2000.
     pub(crate) get_inventory_page_size: u32,
-    /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
+    /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers
     /// to share state.
     pub(crate) classinfo_cache: Option<ClassInfoCache>,
     /// The location to save data to.
@@ -80,8 +80,8 @@ impl TradeOfferManagerBuilder {
         }
     }
     
-    /// The API key. Some features will work without an API key and only require cookies, such as 
-    /// sending or responding to trade offers. It is required for all Steam API requests, such 
+    /// The API key. Some features will work without an API key and only require cookies, such as
+    /// sending or responding to trade offers. It is required for all Steam API requests, such
     /// as getting trade offers or trade histories.
     pub fn api_key(mut self, api_key: String) -> Self {
         self.api_key = Some(api_key);

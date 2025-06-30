@@ -21,7 +21,7 @@ use std::sync::Arc;
 use steamid_ng::SteamID;
 use tokio::task::JoinHandle;
 
-/// Manager which includes functionality for interacting with trade offers, confirmations and 
+/// Manager which includes functionality for interacting with trade offers, confirmations and
 /// inventories.
 #[derive(Debug, Clone)]
 pub struct TradeOfferManager {
@@ -41,8 +41,8 @@ impl TradeOfferManager {
     
     /// Gets your Steam Web API key.
     /// 
-    /// This method requires your cookies. If your account does not have an API key set, one will 
-    /// be created using `localhost` as the domain. By calling this method you are agreeing to the 
+    /// This method requires your cookies. If your account does not have an API key set, one will
+    /// be created using `localhost` as the domain. By calling this method you are agreeing to the
     /// [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms). 
     /// 
     /// # Examples
@@ -69,7 +69,7 @@ impl TradeOfferManager {
     
     /// Sets cookies.
     /// 
-    /// Some features will only work if cookies are set, such as sending or responding to trade 
+    /// Some features will only work if cookies are set, such as sending or responding to trade
     /// offers. Make sure your cookies are set before calling these methods.
     /// 
     /// # Examples
@@ -102,11 +102,11 @@ impl TradeOfferManager {
         self.mobile_api.get_steamid()
     }
     
-    /// Starts polling offers. Listen to the returned receiver for events. Use the returned sender 
+    /// Starts polling offers. Listen to the returned receiver for events. Use the returned sender
     /// to send an action to the poller using [`steam_tradeoffer_manager::polling::PollAction`].
     /// 
-    /// Call `stop_polling` to stop polling offers. Polling will also stop if either the receiver 
-    /// or this [`TradeOfferManager`] are dropped. If this method is called again, the previous 
+    /// Call `stop_polling` to stop polling offers. Polling will also stop if either the receiver
+    /// or this [`TradeOfferManager`] are dropped. If this method is called again, the previous
     /// polling task will be aborted.
     /// 
     /// # Examples
@@ -218,7 +218,7 @@ impl TradeOfferManager {
         }
     }
     
-    /// Accepts an offer. Updates the state of the offer upon success as long as it does not 
+    /// Accepts an offer. Updates the state of the offer upon success as long as it does not
     /// require mobile confirmation.
     /// 
     /// # Errors
@@ -241,8 +241,8 @@ impl TradeOfferManager {
         
         let accepted_offer = self.api.accept_offer(offer.tradeofferid, offer.partner).await?;
         
-        // This offer doesn't need confirmation, so we can update its state here. If the 
-        // accepted_offer returns without error and does not need confirmation, then we can 
+        // This offer doesn't need confirmation, so we can update its state here. If the
+        // accepted_offer returns without error and does not need confirmation, then we can
         // assume it was accepted.
         if !accepted_offer.needs_confirimation() {
             offer.trade_offer_state = TradeOfferState::Accepted;
@@ -347,7 +347,7 @@ impl TradeOfferManager {
         self.api.get_inventory(steamid, appid, contextid, false).await
     }
     
-    /// Gets escrow details for a user. The `method` for obtaining details can be a `tradeofferid` 
+    /// Gets escrow details for a user. The `method` for obtaining details can be a `tradeofferid`
     /// or `access_token` or neither.
     pub async fn get_user_details<T>(
         &self,
@@ -368,7 +368,7 @@ impl TradeOfferManager {
     
     /// Confirms a trade offer.
     /// 
-    /// This will load up the trade confirmations, find the confirmation for the trade offer, and 
+    /// This will load up the trade confirmations, find the confirmation for the trade offer, and
     /// confirm it.
     /// 
     /// # Errors
@@ -383,7 +383,7 @@ impl TradeOfferManager {
     
     /// Confirms a trade offer using its ID.
     /// 
-    /// This will load up the trade confirmations, find the confirmation for the trade offer, and 
+    /// This will load up the trade confirmations, find the confirmation for the trade offer, and
     /// confirm it.
     /// 
     /// # Errors

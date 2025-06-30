@@ -14,7 +14,7 @@ pub enum Error {
     /// An input parameter is missing or invalid.
     #[error("Invalid parameter: {}", .0)]
     Parameter(#[from] ParameterError),
-    /// An unexpected response containing a message was received. Check the message for more 
+    /// An unexpected response containing a message was received. Check the message for more
     /// details.
     #[error("Unexpected response: {}", .0)]
     UnexpectedResponse(String),
@@ -42,7 +42,7 @@ pub enum Error {
     /// An error was encountered when sending or acting on trade offers.
     #[error("Trade error: {}", .0)]
     TradeOffer(TradeOfferError),
-    /// A classinfo is missing. For some reason a classinfo could not be obtained from Steam or 
+    /// A classinfo is missing. For some reason a classinfo could not be obtained from Steam or
     /// the file system. This usually shouldn't occur.
     #[error("{}", .0)]
     MissingClassInfo(#[from] MissingClassInfoError),
@@ -52,7 +52,7 @@ pub enum Error {
     /// This trade offer has no confirmations.
     #[error("No confirmation for offer {}", .0)]
     NoConfirmationForOffer(TradeOfferId),
-    /// A confirmation could not be confirmed. If a message was contained in the response body it 
+    /// A confirmation could not be confirmed. If a message was contained in the response body it
     /// will be included.
     #[error("Confirmation unsuccessful. {}", .0.as_ref().map(|s| s.as_str()).unwrap_or("The confirmation may have succeeded, the confirmation no longer exists, or another trade may be going through. Check confirmations again to verify."))]
     ConfirmationUnsuccessful(Option<String>),
@@ -134,25 +134,25 @@ pub enum TradeOfferError {
     #[error("Fail")]
     Fail,
     /// # Code 11
-    /// This trade offer is in an invalid state, and cannot be acted upon. Usually 
+    /// This trade offer is in an invalid state, and cannot be acted upon. Usually
     /// you'll need to send a new trade offer.
     #[error("InvalidState")]
     InvalidState,
     /// # Code 15
-    /// You can't send or accept this trade offer because either you can't trade with the 
-    /// other user, or one of the parties in this trade can't send or receive one of the 
+    /// You can't send or accept this trade offer because either you can't trade with the
+    /// other user, or one of the parties in this trade can't send or receive one of the
     /// items in the trade.
     /// 
     /// Possible causes:
     /// - You aren't friends with the other user and you didn't provide a trade token.
     /// - The provided trade token was wrong.
-    /// - You are trying to send or receive an item for a game in which you or the other user 
+    /// - You are trying to send or receive an item for a game in which you or the other user
     /// can't trade (e.g. due to a VAC ban).
     /// - You are trying to send an item and the other user's inventory is full for that game.
     #[error("AccessDenied")]
     AccessDenied,
     /// # Code 16
-    /// The Steam Community web server did not receive a timely reply from the trade  offers 
+    /// The Steam Community web server did not receive a timely reply from the trade  offers
     /// server while sending/accepting this trade offer. It is possible (and not unlikely) 
     /// that the operation actually succeeded.
     #[error("Timeout")]
@@ -162,19 +162,19 @@ pub enum TradeOfferError {
     #[error("ServiceUnavailable")]
     ServiceUnavailable,
     /// # Code 25
-    /// Sending this trade offer would put you over your limit. You are limited to 5 Active offers 
-    /// (including those requiring confirmation, but excluding those in escrow) to a single 
-    /// recipient, or 30 Active offers total. If you are accepting a trade offer, then your 
+    /// Sending this trade offer would put you over your limit. You are limited to 5 Active offers
+    /// (including those requiring confirmation, but excluding those in escrow) to a single
+    /// recipient, or 30 Active offers total. If you are accepting a trade offer, then your
     /// inventory for a particular game may be full.
     #[error("LimitExceeded")]
     LimitExceeded,
     /// # Code 26
-    /// This response code suggests that one or more of the items in this trade offer does not 
+    /// This response code suggests that one or more of the items in this trade offer does not
     /// exist in the inventory from which it was requested.
     #[error("Revoked")]
     Revoked,
     /// # Code 28
-    /// When accepting a trade offer, this response code suggests that it has already been 
+    /// When accepting a trade offer, this response code suggests that it has already been
     /// accepted.
     #[error("AlreadyRedeemed")]
     AlreadyRedeemed,

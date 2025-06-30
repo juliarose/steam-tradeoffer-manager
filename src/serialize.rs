@@ -104,7 +104,7 @@ where
     }
     
     impl<'de, T> de::Visitor<'de> for NumericVisitor<T>
-    where 
+    where
         T: FromStr + TryFrom<u64> + Deserialize<'de>,
         T::Err: Display,
     {

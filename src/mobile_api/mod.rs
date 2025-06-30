@@ -1,7 +1,7 @@
-//! This is the underlying mobile API for the manager. In most cases you should stick to using the 
+//! This is the underlying mobile API for the manager. In most cases you should stick to using the
 //! manager, but if you need more control over the requests, you can use this API directly.
 
-// Most of the code here is taken from https://github.com/dyc3/steamguard-cli with some 
+// Most of the code here is taken from https://github.com/dyc3/steamguard-cli with some
 // modifications to fit with the rest of this crate.
 
 mod builder;
@@ -59,7 +59,7 @@ impl MobileAPI {
     
     /// Sets cookies.
     /// 
-    /// All requests require your cookies to be set. Make sure your cookies are set before using 
+    /// All requests require your cookies to be set. Make sure your cookies are set before using
     /// this API.
     pub fn set_cookies(
         &self,

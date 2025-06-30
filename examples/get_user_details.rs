@@ -13,7 +13,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect::<Vec<_>>();
     // An API key isn't needed for this example.
     let manager = TradeOfferManager::builder()
-        // Cookies are required for getting user details. These can be included in the builder or 
+        // Cookies are required for getting user details. These can be included in the builder or
         // using the `set_cookies` method on the manager.
         .cookies(cookies)
         .build();

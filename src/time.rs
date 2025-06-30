@@ -19,7 +19,7 @@ pub fn get_server_time_now() -> ServerTime {
 
 /// Date difference from now.
 pub fn date_difference_from_now(date: &ServerTime) -> Option<Duration> {
-    // I don't think this should ever fail since `date` will always be a valid date, but in the 
+    // I don't think this should ever fail since `date` will always be a valid date, but in the
     // off chance that it does, the program does not panic.
     Duration::try_seconds(get_server_time_now().timestamp() - date.timestamp())
 }

@@ -74,7 +74,7 @@ impl fmt::Display for Language {
 }
 
 impl Language {
-    /// API language codes are used with the clientside APIs in the 
+    /// API language codes are used with the clientside APIs in the
     /// [Steamworks API](https://partner.steamgames.com/doc/sdk/api).
     pub fn web_api_language_code(&self) -> &'static str {
         match self {

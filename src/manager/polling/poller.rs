@@ -11,7 +11,7 @@ use std::collections::{HashMap, HashSet};
 use chrono::Duration;
 use steamid_ng::SteamID;
 
-/// A poll containing new offers. For each item in the vector, the first element is the 
+/// A poll containing new offers. For each item in the vector, the first element is the
 /// [`TradeOffer`]. The second part is the previous [`TradeOfferState`] if this is not a newly
 /// encountered offer.
 pub type Poll = Vec<(TradeOffer, Option<TradeOfferState>)>;

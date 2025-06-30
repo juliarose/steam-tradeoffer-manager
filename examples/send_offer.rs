@@ -12,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let steamid: SteamID = std::env::var("STEAMID_OTHER")?.parse::<u64>()?.into();
     // An API key isn't needed for this example.
     let manager = TradeOfferManager::builder()
-        // Cookies are required for sending an offer. These can be included in the builder or 
+        // Cookies are required for sending an offer. These can be included in the builder or
         // using the `set_cookies` method on the manager.
         .cookies(cookies)
         .build();
@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .items_to_receive(items)
         .message("ayo the pizza here".into())
         .build();
-    // This isn't a full offer, but rather some details about the offer sent such as its 
+    // This isn't a full offer, but rather some details about the offer sent such as its
     // tradeofferid and whether it needs mobile confirmation.
     let sent_offer = manager.send_offer(&offer).await?;
     

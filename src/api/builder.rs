@@ -8,7 +8,7 @@ use std::sync::Arc;
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
 
-/// Builder for constructing a [`SteamTradeOfferAPI`]. You need to supply either an API key or an 
+/// Builder for constructing a [`SteamTradeOfferAPI`]. You need to supply either an API key or an
 /// access token for most features to work, but some features will work with just cookies, such as
 /// sending or responding to trade offers.
 #[derive(Debug, Clone)]
@@ -21,7 +21,7 @@ pub struct SteamTradeOfferAPIBuilder {
     pub(crate) language: Language,
     /// The number of items to fetch per page when getting inventories. Defaults to 2000.
     pub(crate) get_inventory_page_size: u32,
-    /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
+    /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers
     /// to share state.
     pub(crate) classinfo_cache: Option<ClassInfoCache>,
     /// The location to save data to.
@@ -56,8 +56,8 @@ impl SteamTradeOfferAPIBuilder {
         }
     }
     
-    /// The API key. Some features will work without an API key and only require cookies, such as 
-    /// sending or responding to trade offers. It is required for all Steam API requests, such 
+    /// The API key. Some features will work without an API key and only require cookies, such as
+    /// sending or responding to trade offers. It is required for all Steam API requests, such
     /// as getting trade offers or trade histories.
     pub fn api_key(mut self, api_key: String) -> Self {
         self.api_key = Some(api_key);
@@ -93,7 +93,7 @@ impl SteamTradeOfferAPIBuilder {
         self
     }
     
-    /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers 
+    /// The [`ClassInfoCache`] to use for this manager. Useful if instantiating multiple managers
     /// to share state.
     pub fn classinfo_cache(mut self, classinfo_cache: ClassInfoCache) -> Self {
         self.classinfo_cache = Some(classinfo_cache);

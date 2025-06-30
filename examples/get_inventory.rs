@@ -8,7 +8,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let steamid: SteamID = std::env::var("STEAMID_OTHER")?.parse::<u64>()?.into();
     let options = GetInventoryOptions::new(steamid, 440, 2);
-    // Getting a user's inventory can be done using the manager but it is also provided as a 
+    // Getting a user's inventory can be done using the manager but it is also provided as a
     // stand-alone method.
     let inventory = get_inventory(&options).await?;
     

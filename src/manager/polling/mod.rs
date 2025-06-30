@@ -33,10 +33,10 @@ const CALLED_TOO_RECENTLY_MILLISECONDS: i64 = 400;
 /// Options for polling.
 #[derive(Debug, Clone, Copy)]
 pub struct PollOptions {
-    /// The duration after a sent offer has been active to cancel during a poll. Offers will 
+    /// The duration after a sent offer has been active to cancel during a poll. Offers will
     /// not be cancelled if this is not set.
     pub cancel_duration: Option<Duration>,
-    /// The duration after the last poll becomes stale and a new one must be obtained when 
+    /// The duration after the last poll becomes stale and a new one must be obtained when
     /// polling using [`steam_tradeoffer_manager::polling::PollType::Auto`]. Default is 5 minutes.
     pub poll_full_update_duration: Duration,
     /// Interval to poll at. Default is 30 seconds.
@@ -113,8 +113,8 @@ impl Polling {
         ) = mpsc::channel::<Result>(10);
         // This is the task that performs the polling.
         let polling_handle = tokio::spawn(async move {
-            // The asynchronous mutex allows only one poll to be performed at a time. This not only 
-            // ensures that the poller is not spammed with requests but also that the state is not 
+            // The asynchronous mutex allows only one poll to be performed at a time. This not only
+            // ensures that the poller is not spammed with requests but also that the state is not
             // modified by multiple tasks at the same time.
             let poller = Arc::new(Mutex::new(Poller {
                 api,
@@ -162,7 +162,7 @@ async fn receive_poll_action_events(
     sender: mpsc::Sender<Result>,
     poller: Arc<Mutex<Poller>>,
 ) {
-    /// Checks if a poll was called too recently. Mutates the `poll_events` map to update the last 
+    /// Checks if a poll was called too recently. Mutates the `poll_events` map to update the last
     /// poll date to now.
     fn is_called_too_recently(
         poll_events: &mut HashMap<PollType, DateTime<chrono::Utc>>,

@@ -14,14 +14,14 @@ pub struct TradeOffer {
     /// The ID for this offer.
     #[serde(with = "serialize::string")]
     pub tradeofferid: TradeOfferId,
-    /// The trade ID for this offer. This should be present when the `trade_offer_state` of this 
-    /// offer is [`TradeOfferState::Accepted`]. It can also be present if the offer was accepted 
+    /// The trade ID for this offer. This should be present when the `trade_offer_state` of this
+    /// offer is [`TradeOfferState::Accepted`]. It can also be present if the offer was accepted
     /// but the trade is not yet complete. The trade should appear in your trade history.
     #[serde(with = "serialize::option_string")]
     pub tradeid: Option<TradeId>,
     /// The [`SteamID`] of our partner.
     pub partner: SteamID,
-    /// The message included in the offer. If the message is empty or not present this will be 
+    /// The message included in the offer. If the message is empty or not present this will be
     /// `None`.
     pub message: Option<String>,
     /// The items we're receiving in this offer.

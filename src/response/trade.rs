@@ -72,7 +72,7 @@ pub struct TradeAsset {
     #[serde(default)]
     #[serde(with = "serialize::option_string")]
     pub new_contextid: Option<ContextId>,
-    /// The unique asset ID of the item received. `None` if this item has not yet finished 
+    /// The unique asset ID of the item received. `None` if this item has not yet finished
     /// transferring.
     #[serde(default)]
     #[serde(with = "serialize::option_string")]
@@ -82,12 +82,12 @@ pub struct TradeAsset {
 }
 
 impl TradeAsset {
-    /// Attempts to convert this [`TradeAsset`] into an [`Asset`] of the newly acquired item. The 
+    /// Attempts to convert this [`TradeAsset`] into an [`Asset`] of the newly acquired item. The
     /// `contextid` and `assetid` are taken from `new_contextid` and `new_assetid` respectively.
     /// 
-    /// Fails if the `new_contextid` and `new_assetid` properties are not present. This occurs 
+    /// Fails if the `new_contextid` and `new_assetid` properties are not present. This occurs
     /// during trades that have either failed or have yet to complete and the item has not been
-    /// transferred. Check that the `trade_status` of the [`Trade`] this asset belongs to is 
+    /// transferred. Check that the `trade_status` of the [`Trade`] this asset belongs to is
     /// [`crate::enums::TradeStatus::Complete`].
     pub fn try_into_new_asset(&self) -> Result<Asset, TryIntoNewAssetError> {
         let contextid = self.new_contextid

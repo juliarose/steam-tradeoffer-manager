@@ -20,16 +20,16 @@ pub enum TradeOfferState {
     Canceled = 6,
     /// The recipient declined the offer.
     Declined = 7,
-    /// Some of the items in the offer are no longer available (indicated by the missing flag in 
+    /// Some of the items in the offer are no longer available (indicated by the missing flag in
 	/// the output).
     InvalidItems = 8,
-    /// The offer hasn't been sent yet and is awaiting email/mobile confirmation. The offer is 
+    /// The offer hasn't been sent yet and is awaiting email/mobile confirmation. The offer is
 	/// only visible to the sender.
     CreatedNeedsConfirmation = 9,
     /// Either party canceled the offer via email/mobile. The offer is visible to both parties, 
 	/// even if the sender canceled it before it was sent.
     CanceledBySecondFactor = 10,
-    /// The trade has been placed on hold. The items involved in the trade have all been removed 
+    /// The trade has been placed on hold. The items involved in the trade have all been removed
 	/// from both parties' inventories and will be automatically delivered in the future.
     InEscrow = 11,
 }

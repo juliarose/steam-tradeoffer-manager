@@ -16,15 +16,15 @@ pub struct RawTradeOffer {
     /// The ID for this offer.
     #[serde(with = "serialize::string")]
     pub tradeofferid: TradeOfferId,
-    /// The trade ID for this offer. This should be present when the `trade_offer_state` of this 
-    /// offer is [`TradeOfferState::Accepted`]. It can also be present if the offer was accepted 
+    /// The trade ID for this offer. This should be present when the `trade_offer_state` of this
+    /// offer is [`TradeOfferState::Accepted`]. It can also be present if the offer was accepted
     /// but the trade is not yet complete. The trade should appear in your trade history.
     #[serde(default)]
     #[serde(with = "serialize::option_string")]
     pub tradeid: Option<TradeId>,
     /// The [`SteamID`] of our partner.
     pub accountid_other: u32,
-    /// The message included in the offer. If the message is empty or not present this will be 
+    /// The message included in the offer. If the message is empty or not present this will be
     /// `None`.
     #[serde(default)]
     #[serde(deserialize_with = "serialize::empty_string_is_none")]
@@ -146,7 +146,7 @@ pub struct RawAsset {
     pub instanceid: InstanceId,
 }
 
-/// Converts a [`RawTradeAsset`] into a [`RawAsset`]. The `contextid` and `assetid` are taken from 
+/// Converts a [`RawTradeAsset`] into a [`RawAsset`]. The `contextid` and `assetid` are taken from
 /// `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
 /// 
 /// If you need a [`RawAsset`] of the newly acquired item, call `try_into_new_asset` on the
@@ -165,7 +165,7 @@ impl From<RawTradeAsset> for RawAsset {
     }
 }
 
-/// Converts a borrowed [`RawTradeAsset`] into a [`RawAsset`]. The `contextid` and `assetid` are 
+/// Converts a borrowed [`RawTradeAsset`] into a [`RawAsset`]. The `contextid` and `assetid` are
 /// taken from `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
 /// 
 /// If you need a [`RawAsset`] of the newly acquired item, call `try_into_new_asset` on the
@@ -274,12 +274,12 @@ pub struct RawTradeAsset {
     /// The specific instance ID of the classinfo belonging to the class ID.
     #[serde(with = "serialize::option_string_0_as_none")]
     pub instanceid: InstanceId,
-    /// The context ID of the item received. `None` if this item has not yet finished 
+    /// The context ID of the item received. `None` if this item has not yet finished
     /// transferring.
     #[serde(default)]
     #[serde(with = "serialize::option_string")]
     pub new_contextid: Option<ContextId>,
-    /// The unique asset ID of the item received. `None` if this item has not yet finished 
+    /// The unique asset ID of the item received. `None` if this item has not yet finished
     /// transferring.
     #[serde(default)]
     #[serde(with = "serialize::option_string")]
@@ -287,12 +287,12 @@ pub struct RawTradeAsset {
 }
 
 impl RawTradeAsset {
-    /// Attempts to convert this [`TradeAsset`] into an [`Asset`] of the newly acquired item. The 
+    /// Attempts to convert this [`TradeAsset`] into an [`Asset`] of the newly acquired item. The
     /// `contextid` and `assetid` are taken from `new_contextid` and `new_assetid` respectively.
     /// 
-    /// Fails if the `new_contextid` and `new_assetid` properties are not present. This occurs 
+    /// Fails if the `new_contextid` and `new_assetid` properties are not present. This occurs
     /// during trades that have either failed or have yet to complete and the item has not been
-    /// transferred. Check that the `trade_status` of the [`Trade`] this asset belongs to is 
+    /// transferred. Check that the `trade_status` of the [`Trade`] this asset belongs to is
     /// [`crate::enums::TradeStatus::Complete`].
     pub fn try_into_new_asset(&self) -> Result<RawAsset, TryIntoNewAssetError> {
         let contextid = self.new_contextid

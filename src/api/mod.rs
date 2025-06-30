@@ -1,4 +1,4 @@
-//! This is the underlying API for the manager. In most cases you should stick to using the 
+//! This is the underlying API for the manager. In most cases you should stick to using the
 //! manager, but if you need more control over the requests, you can use this API directly.
 
 pub mod response;
@@ -85,7 +85,7 @@ impl SteamTradeOfferAPI {
     
     /// Sets cookies.
     /// 
-    /// Some features will only work if cookies are set, such as sending or responding to trade 
+    /// Some features will only work if cookies are set, such as sending or responding to trade
     /// offers. Make sure your cookies are set before calling these methods.
     pub fn set_cookies(
         &self,
@@ -314,9 +314,9 @@ impl SteamTradeOfferAPI {
                 let classinfo = serde_json::from_str::<ClassInfo>(classinfo_raw.get())
                     // Ignores invalid or empty classinfo data.
                     .ok()?;
-                // We return a pair so that we have a deserialized version to return from the 
-                // method and a raw version to save to the file system. We do not need to clone 
-                // data since we are keeping the boxed raw values to send to the tokio task. This 
+                // We return a pair so that we have a deserialized version to return from the
+                // method and a raw version to save to the file system. We do not need to clone
+                // data since we are keeping the boxed raw values to send to the tokio task. This
                 // should be quite efficient.
                 let pair = (
                     ((appid, classid, instanceid), Arc::new(classinfo)),
@@ -327,7 +327,7 @@ impl SteamTradeOfferAPI {
             })
             .unzip();
         // Save the classinfos to the filesystem.
-        // This spawns a tokio task which will save the classinfos to the filesystem in the 
+        // This spawns a tokio task which will save the classinfos to the filesystem in the
         // background so that this method does not need to await on it.
         let _handle = classinfo_cache_helpers::save_classinfos(
             appid,
@@ -427,8 +427,8 @@ impl SteamTradeOfferAPI {
         Ok(map)
     }
     
-    /// Gets trade offer data before any descriptions are added. The 2nd part of the tuple are the 
-    /// descriptions from the response if `get_descriptions` was set. These can be combined with 
+    /// Gets trade offer data before any descriptions are added. The 2nd part of the tuple are the
+    /// descriptions from the response if `get_descriptions` was set. These can be combined with
     /// the offers using the `map_raw_trade_offers_with_descriptions` method.
     pub async fn get_raw_trade_offers(
         &self,
@@ -678,7 +678,7 @@ impl SteamTradeOfferAPI {
         }
     }
     
-    /// Gets trade history without descriptions. The second part of the returned tuple is whether 
+    /// Gets trade history without descriptions. The second part of the returned tuple is whether
     /// more trades can be fetched.
     pub async fn get_trade_history_without_descriptions(
         &self,
@@ -763,7 +763,7 @@ impl SteamTradeOfferAPI {
         Ok(body.response)
     }
     
-    /// Gets escrow details for a user. The `method` for obtaining details can be a `tradeofferid` 
+    /// Gets escrow details for a user. The `method` for obtaining details can be a `tradeofferid`
     /// or `access_token` or neither.
     pub async fn get_user_details<T>(
         &self,

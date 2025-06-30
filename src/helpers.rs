@@ -151,7 +151,7 @@ fn deserialize_response_for_errors<'a>(
     bytes: &'a Bytes,
 ) -> Result<TradeErrorOrEResultResponse<'a>, serde_json::Error> {
     // This function is much longer than it could be.
-    // Since parsing responses is a frequent operation we probably don't want to double allocate 
+    // Since parsing responses is a frequent operation we probably don't want to double allocate
     // responses just to check for errors.
     struct TradeErrorOrEResultVisitor<'a> {
         marker: std::marker::PhantomData<&'a ()>,
@@ -201,7 +201,7 @@ fn deserialize_response_for_errors<'a>(
     Ok(response)
 }
 
-/// Checks the response for errors. EResult is the x-eresult header which may include an EResult 
+/// Checks the response for errors. EResult is the x-eresult header which may include an EResult
 /// code.
 fn check_response_for_errors(bytes: &Bytes, eresult: Option<u32>) -> Result<(), Error> {
     if let Ok(json) = deserialize_response_for_errors(bytes) {

@@ -6,7 +6,7 @@ use serde::{Serialize, Deserialize};
 /// Contains details about an item including names and descriptions.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ClassInfo {
-    /// The item's app ID. This is included when including descriptions in the `GetTradeOffers` 
+    /// The item's app ID. This is included when including descriptions in the `GetTradeOffers`
     /// and `GetTradeHistory` response.
     #[serde(default)]
     #[serde(with = "serialize::option_string_or_number")]
@@ -23,8 +23,8 @@ pub struct ClassInfo {
     pub name: String,
     /// The name of the item on the Steam Community Market.
     pub market_name: String,
-    /// The market hash name. This is used to link to the item on the Steam Community Market. This 
-    /// is an empty string in some cases. For example, Steam coupons cannot be sold on the market 
+    /// The market hash name. This is used to link to the item on the Steam Community Market. This
+    /// is an empty string in some cases. For example, Steam coupons cannot be sold on the market
     /// therefore have no market hash name.
     #[serde(default)]
     pub market_hash_name: Option<String>,
@@ -38,7 +38,7 @@ pub struct ClassInfo {
     pub background_color: Option<String>,
     /// The URL to the icon for the item.
     pub icon_url: String,
-    /// The URL to the large icon for the item. This is almost always present but is missing in 
+    /// The URL to the large icon for the item. This is almost always present but is missing in
     /// rare events.
     pub icon_url_large: Option<String>,
     /// The item's type. This is displayed underneath the name of the game in inventories.
@@ -104,7 +104,7 @@ impl ClassInfo {
         }
     }
     
-    /// Convenience method for parsing a value from `app_data`. Parses string values into any 
+    /// Convenience method for parsing a value from `app_data`. Parses string values into any
     /// generic that implements [`std::str::FromStr`].
     pub fn get_app_data_value_parsed<T>(&self, key: &str) -> Option<T>
     where
@@ -186,11 +186,11 @@ impl Description {
 /// Tag.
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Tag {
-    /// The game's internal name of this tag e.g. for Team Fortress 2 items: "Unique" for items 
+    /// The game's internal name of this tag e.g. for Team Fortress 2 items: "Unique" for items
     /// under the "Quality" category or "primary" for items under the "Type" category.
     pub internal_name: String,
-    /// The name of this tag e.g. for Team Fortress 2 items: "Unique" for items under the 
-    /// "Quality" category or "Primary weapon" for items under the "Type" category. This value 
+    /// The name of this tag e.g. for Team Fortress 2 items: "Unique" for items under the
+    /// "Quality" category or "Primary weapon" for items under the "Type" category. This value
     /// has the alias of `localized_tag_name`.
     #[serde(alias = "localized_tag_name")]
     pub name: String,
@@ -199,7 +199,7 @@ pub struct Tag {
     /// The color associated with this tag.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub color: Option<String>,
-    /// The category name of this tag. This is usually the same as category but can sometimes be 
+    /// The category name of this tag. This is usually the same as category but can sometimes be
     /// different and is not always present. This value has the alias of `localized_category_name`.
     #[serde(alias = "localized_category_name")]
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -33,7 +33,7 @@ impl Asset {
     }
 }
 
-/// Converts a [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are taken from 
+/// Converts a [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are taken from
 /// `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
 /// 
 /// If you need an [`Asset`] of the newly acquired item, call `try_into_new_asset` on the
@@ -51,7 +51,7 @@ impl From<TradeAsset> for Asset {
     }
 }
 
-/// Converts a borrowed [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are taken 
+/// Converts a borrowed [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are taken
 /// from `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
 /// 
 /// If you need an [`Asset`] of the newly acquired item, call `try_into_new_asset` on the

@@ -19,7 +19,7 @@
 //! 
 //! ## Usage
 //! 
-//! All tasks relating to trade offers can be interfaced through [`TradeOfferManager`]. If more 
+//! All tasks relating to trade offers can be interfaced through [`TradeOfferManager`]. If more
 //! direct control is needed, the underlying API's can be found in [`api`] and [`mobile_api`].
 //!
 //! See [examples](https://github.com/juliarose/steam-tradeoffers/tree/main/examples).

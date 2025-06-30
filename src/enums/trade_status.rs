@@ -22,7 +22,7 @@ pub enum TradeStatus {
     FullSupportRollback = 6,
     /// A support person rolled back the trade for some set of items.
     SupportRollbackSelective = 7,
-    /// We tried to roll back the trade when it failed, but haven't managed to do that for all 
+    /// We tried to roll back the trade when it failed, but haven't managed to do that for all
     /// items yet.
     RollbackFailed = 8,
     /// We tried to roll back the trade, but some failure didn't go away and we gave up.

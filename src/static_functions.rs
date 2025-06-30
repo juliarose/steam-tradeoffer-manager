@@ -19,7 +19,7 @@ use url::Url;
 const ERROR_COULD_NOT_GET_API_KEY: &str = "API key could not be parsed from response";
 const ERROR_NO_API_KEY: &str = "This account does not have an API key";
 
-/// A stand-alone method for getting a user's inventory. Optionally allows specifying a client to 
+/// A stand-alone method for getting a user's inventory. Optionally allows specifying a client to
 /// use for requests (useful if you need to proxy your requests, for example).
 /// 
 /// # Examples
@@ -127,8 +127,8 @@ pub async fn get_inventory<'a>(
 
 /// Gets your Steam Web API key.
 /// 
-/// This method requires your cookies. If your account does not have an API key set, one will be 
-/// created using `localhost` as the domain. By calling this method you are agreeing to the 
+/// This method requires your cookies. If your account does not have an API key set, one will be
+/// created using `localhost` as the domain. By calling this method you are agreeing to the
 /// [Steam Web API Terms of Use](https://steamcommunity.com/dev/apiterms).
 pub async fn get_api_key(
     cookies: &[String],

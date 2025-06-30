@@ -18,7 +18,7 @@ pub fn save_classinfos<P>(
 where
     P: Into<PathBuf>,
 {
-    // We can accept anything that can be converted into a PathBuf but we need an owned value for 
+    // We can accept anything that can be converted into a PathBuf but we need an owned value for
     // our task.
     let data_directory: PathBuf = data_directory.into();
     
@@ -57,7 +57,7 @@ pub async fn load_classinfos(
     join_all(tasks).await
 }
 
-/// Saves the classinfo. The classinfo value should be checked for validatity before calling this 
+/// Saves the classinfo. The classinfo value should be checked for validatity before calling this
 /// function.
 async fn save_classinfo(
     classinfo: Box<RawValue>,

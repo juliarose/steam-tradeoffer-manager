@@ -10,7 +10,7 @@ pub type AssetId = u64;
 pub type Amount = u32;
 /// An ID for a [`ClassInfo`] which provides a general overview of an item.
 pub type ClassId = u64;
-/// A more specific instance of a [`ClassInfo`], for example a Team Fortress 2 item which is 
+/// A more specific instance of a [`ClassInfo`], for example a Team Fortress 2 item which is
 /// painted.
 pub type InstanceId = Option<u64>;
 /// An ID of a trade offer.
