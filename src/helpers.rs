@@ -214,10 +214,8 @@ fn check_response_for_errors(bytes: &Bytes, eresult: Option<u32>) -> Result<(), 
                 .and_then(|(_, num)| num.strip_suffix(')'))
                 .and_then(|num| num.trim().parse::<u32>().ok());
             // Match known error cause strings
-            let trade_err = if {
-                str_error.contains("You cannot trade with") &&
-                str_error.contains("trade ban")
-            } {
+            let trade_err = if str_error.contains("You cannot trade with") &&
+            str_error.contains("trade ban") {
                 TradeOfferError::TradeBan
             } else if str_error.contains("You have logged in from a new device") {
                 TradeOfferError::NewDevice

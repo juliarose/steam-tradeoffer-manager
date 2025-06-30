@@ -273,7 +273,7 @@ impl SteamTradeOfferAPI {
             
             if let Some(access_token) = access_token {
                 // No need to provide the key if we have an access token.
-                query.push(("access_token".to_string(), access_token.into()));
+                query.push(("access_token".to_string(), access_token));
             } else {
                 // unwrap is safe here since we checked for the presence of the key above.
                 query.push(("key".to_string(), key.unwrap().into()));
