@@ -147,7 +147,7 @@ pub enum TradeOfferError {
     /// - You aren't friends with the other user and you didn't provide a trade token.
     /// - The provided trade token was wrong.
     /// - You are trying to send or receive an item for a game in which you or the other user
-    /// can't trade (e.g. due to a VAC ban).
+    ///   can't trade (e.g. due to a VAC ban).
     /// - You are trying to send an item and the other user's inventory is full for that game.
     #[error("AccessDenied")]
     AccessDenied,

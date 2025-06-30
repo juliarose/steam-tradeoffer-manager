@@ -53,12 +53,7 @@ pub fn parse_user_details(
 ) -> Result<UserDetails, ParseHtmlError> {
     fn get_days(group: Option<(&str, &str)>) -> u32 {
         match group {
-            Some((_, days_str)) => {
-                match days_str.parse::<u32>() {
-                    Ok(days) => days,
-                    Err(_e) => 0,
-                }
-            },
+            Some((_, days_str)) => days_str.parse::<u32>().unwrap_or_default(),
             None => 0,
         }
     }
