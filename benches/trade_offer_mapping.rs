@@ -51,7 +51,7 @@ fn get_offers() -> Vec<RawTradeOffer> {
         pub trade_offers_sent: Vec<RawTradeOffer>,
         #[serde(default)]
         pub trade_offers_received: Vec<RawTradeOffer>,
-        pub next_cursor: Option<u32>,
+        // pub next_cursor: Option<u32>,
     }
     
     #[derive(Deserialize, Debug)]
@@ -144,6 +144,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             .collect::<Vec<_>>();
     }));
     
+    // tests how long it takes to get the classinfos from the cache for all items
     c.bench_function("gets classinfo caches from cache", |b| b.iter(|| {
         let _map = get_map(
             &classes,

@@ -1,4 +1,4 @@
-//! Models for making requests.
+//! Includes models used as parameters for making requests.
 
 use crate::types::{ServerTime, TradeId};
 

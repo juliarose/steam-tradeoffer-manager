@@ -8,6 +8,9 @@ mod builder;
 mod response_wrappers;
 mod helpers;
 
+/// The default number of items to fetch per page when getting inventories.
+pub(crate) const DEFAULT_GET_INVENTORY_PAGE_SIZE: u32 = 2000;
+
 use response::*;
 use response_wrappers::*;
 
@@ -21,8 +24,8 @@ use crate::enums::{Language, GetUserDetailsMethod};
 use crate::static_functions::get_inventory;
 use crate::serialize;
 use crate::helpers::{parses_response, generate_sessionid, extract_auth_data_from_cookies};
-use crate::helpers::{COMMUNITY_HOSTNAME, WEB_API_HOSTNAME};
-use crate::error::{Error, ParameterError, MissingClassInfoError};
+use crate::helpers::{COMMUNITY_HOSTNAME, WEB_API_HOSTNAME, CookiesData};
+use crate::error::{Error, ParameterError, MissingClassInfoError, SetCookiesError};
 use crate::classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers};
 use crate::request::{GetInventoryOptions, NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions};
 use std::path::PathBuf;
@@ -90,12 +93,12 @@ impl SteamTradeOfferAPI {
     pub fn set_cookies(
         &self,
         mut cookies: Vec<String>,
-    ) {
-        let (
+    ) -> Result<(), SetCookiesError> {
+        let CookiesData {
             sessionid,
-            _steamid,
             access_token,
-        ) = extract_auth_data_from_cookies(&cookies);
+            ..
+        } = extract_auth_data_from_cookies(&cookies)?;
         let sessionid = if let Some(sessionid) = sessionid {
             sessionid
         } else {
@@ -110,11 +113,13 @@ impl SteamTradeOfferAPI {
             .unwrap_or_else(|error| panic!("URL could not be parsed from {}: {}", Self::HOSTNAME, error));
         
         *self.sessionid.write().unwrap() = Some(sessionid);
-        *self.access_token.write().unwrap() = access_token;
+        *self.access_token.write().unwrap() = Some(access_token) ;
         
         for cookie_str in &cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
         }
+        
+        Ok(())
     }
     
     /// Sends an offer.
@@ -979,6 +984,8 @@ impl SteamTradeOfferAPI {
         contextid: ContextId,
         tradable_only: bool,
     ) -> Result<Vec<Asset>, Error> {
+        let access_token = self.access_token.read().unwrap().clone();
+        
         get_inventory(&GetInventoryOptions {
             client: &self.client,
             steamid,
@@ -987,6 +994,7 @@ impl SteamTradeOfferAPI {
             tradable_only,
             language: self.language,
             page_size: self.get_inventory_page_size,
+            access_token,
         }).await
     }
     
@@ -1006,10 +1014,12 @@ impl SteamTradeOfferAPI {
             l: &'a str,
             count: u32,
             start_assetid: Option<u64>,
+            access_token: Option<&'a String>,
         }
         
         let mut responses: Vec<GetInventoryResponseIgnoreDescriptions> = Vec::new();
         let mut start_assetid: Option<u64> = None;
+        let access_token = self.access_token.read().unwrap().clone();
         let sid = u64::from(steamid);
         let uri = Self::get_url(&format!("/inventory/{sid}/{appid}/{contextid}"));
         let referer = Self::get_url(&format!("/profiles/{sid}/inventory"));
@@ -1021,6 +1031,7 @@ impl SteamTradeOfferAPI {
                     l: self.language.api_language_code(),
                     count: self.get_inventory_page_size,
                     start_assetid,
+                    access_token: access_token.as_ref(),
                 })
                 .send()
                 .await?;

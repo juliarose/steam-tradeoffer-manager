@@ -13,14 +13,9 @@ pub use builder::MobileAPIBuilder;
 
 use crate::SteamID;
 use crate::response::Confirmation;
-use crate::error::{Error, ParameterError};
-use crate::helpers::{
-    parses_response,
-    generate_sessionid,
-    extract_auth_data_from_cookies,
-    get_default_client,
-};
-use crate::helpers::COMMUNITY_HOSTNAME;
+use crate::error::{Error, ParameterError, SetCookiesError};
+use crate::helpers::{extract_auth_data_from_cookies, generate_sessionid, get_default_client, parses_response};
+use crate::helpers::{COMMUNITY_HOSTNAME, CookiesData};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{Ordering, AtomicU64};
@@ -64,12 +59,12 @@ impl MobileAPI {
     pub fn set_cookies(
         &self,
         mut cookies: Vec<String>,
-    ) {
-        let (
+    ) -> Result<(), SetCookiesError> {
+        let CookiesData {
             sessionid,
             steamid,
-            _access_token,
-        ) = extract_auth_data_from_cookies(&cookies);
+            ..
+        } = extract_auth_data_from_cookies(&cookies)?;
         let sessionid = if let Some(sessionid) = sessionid {
             sessionid
         } else {
@@ -93,6 +88,8 @@ impl MobileAPI {
         for cookie_str in &cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
         }
+        
+        Ok(())
     }
     
     /// Accepts a confirmation.

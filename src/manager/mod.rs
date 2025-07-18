@@ -11,7 +11,7 @@ use crate::api::SteamTradeOfferAPI;
 use crate::mobile_api::MobileAPI;
 use crate::static_functions::get_api_key;
 use crate::helpers::get_default_client;
-use crate::error::{ParameterError, Error};
+use crate::error::{Error, ParameterError, SetCookiesError};
 use crate::request::{NewTradeOffer, GetTradeHistoryOptions};
 use crate::enums::{TradeOfferState, OfferFilter, GetUserDetailsMethod};
 use crate::types::{AppId, ContextId, TradeOfferId};
@@ -72,6 +72,9 @@ impl TradeOfferManager {
     /// Some features will only work if cookies are set, such as sending or responding to trade
     /// offers. Make sure your cookies are set before calling these methods.
     /// 
+    /// # Errors
+    /// If the cookies do not contain a `steamLoginSecure` cookie that includes an access token.
+    /// 
     /// # Examples
     /// ```no_run
     /// use steam_tradeoffer_manager::TradeOfferManager;
@@ -80,16 +83,19 @@ impl TradeOfferManager {
     /// let cookies = vec![
     ///     "sessionid=blahblahblah".to_string(),
     ///     "steamLoginSecure=blahblahblah".to_string(),
-    /// ];
+    /// ]; 
     /// 
-    /// manager.set_cookies(cookies);
+    /// if let Err(error) = manager.set_cookies(cookies) {
+    ///     println!("Error setting cookies: {error}");
+    /// }
     /// ```
     pub fn set_cookies(
         &self,
         cookies: Vec<String>,
-    ) {
-        self.api.set_cookies(cookies.clone());
-        self.mobile_api.set_cookies(cookies);
+    ) -> Result<(), SetCookiesError> {
+        self.api.set_cookies(cookies.clone())?;
+        self.mobile_api.set_cookies(cookies)?;
+        Ok(())
     }
     
     /// Gets the logged-in user's [`SteamID`].
@@ -581,7 +587,8 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
         };
         
         if let Some(cookies) = builder.cookies {
-            manager.set_cookies(cookies);
+            // We don't care if this fails.
+            manager.set_cookies(cookies).ok();
         }
         
         manager

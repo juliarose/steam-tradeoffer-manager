@@ -20,6 +20,8 @@ pub struct GetInventoryOptions<'a> {
     pub language: Language,
     /// The number of items to fetch per page. Defaults to 2000.
     pub page_size: u32,
+    /// Optional access token for authenticated requests.
+    pub access_token: Option<String>,
 }
 
 impl Default for GetInventoryOptions<'_> {
@@ -32,6 +34,7 @@ impl Default for GetInventoryOptions<'_> {
             tradable_only: true,
             language: Language::English,
             page_size: 2000,
+            access_token: None,
         }
     }
 }
@@ -52,6 +55,7 @@ impl<'a> GetInventoryOptions<'a> {
             tradable_only: true,
             language: Language::English,
             page_size: 2000,
+            access_token: None,
         }
     }
 }

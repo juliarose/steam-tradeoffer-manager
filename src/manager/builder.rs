@@ -3,6 +3,7 @@ use crate::helpers::USER_AGENT_STRING;
 use crate::helpers::default_data_directory;
 use crate::ClassInfoCache;
 use crate::enums::Language;
+use crate::api::DEFAULT_GET_INVENTORY_PAGE_SIZE;
 use std::path::PathBuf;
 use std::sync::Arc;
 use reqwest::cookie::Jar;
@@ -10,7 +11,9 @@ use reqwest_middleware::ClientWithMiddleware;
 
 /// Builder for constructing a [`TradeOfferManager`].
 /// 
-/// An API key or access token is required to use the Steam Web API for trade offers.
+/// An access token or API key is required to use the Steam Web API. If you provide an API key,
+/// requests will prefer using your access token when available. Do not supply an API key if
+/// you only want to use access tokens for API requests.
 /// 
 /// You can get an API key from [Steam Community](https://steamcommunity.com/dev/apikey) or by
 /// using the [`TradeOfferManager::get_api_key`][`crate::TradeOfferManager`] method.
@@ -69,7 +72,7 @@ impl TradeOfferManagerBuilder {
             access_token: None,
             identity_secret: None,
             language: Language::English,
-            get_inventory_page_size: 2000,
+            get_inventory_page_size: DEFAULT_GET_INVENTORY_PAGE_SIZE,
             classinfo_cache: None,
             data_directory: default_data_directory(),
             cookie_jar: None,

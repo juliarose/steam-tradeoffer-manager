@@ -1,5 +1,5 @@
 use crate::types::HttpClient;
-use crate::error::{TradeOfferError, Error};
+use crate::error::{Error, SetCookiesError, TradeOfferError};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::fmt::Write;
@@ -48,10 +48,17 @@ pub fn generate_sessionid() -> String {
     })
 }
 
+#[derive(Debug, Clone)]
+pub struct CookiesData {
+    pub sessionid: Option<String>,
+    pub steamid: Option<u64>,
+    pub access_token: String,
+}
+
 /// Extracts the session ID and Steam ID from cookie values.
 pub fn extract_auth_data_from_cookies(
     cookies: &[String],
-) -> (Option<String>, Option<u64>, Option<String>) {
+) -> Result<CookiesData, SetCookiesError> {
     let mut sessionid = None;
     let mut steamid = None;
     let mut access_token = None;
@@ -60,7 +67,6 @@ pub fn extract_auth_data_from_cookies(
         if let Some((_, key, value)) = regex_captures!(r#"([^=]+)=(.+)"#, cookie) {
             match key {
                 "sessionid" => sessionid = Some(value.to_string()),
-                "steamLogin" |
                 "steamLoginSecure" => if let Some((
                     _,
                     steamid_str,
@@ -68,13 +74,21 @@ pub fn extract_auth_data_from_cookies(
                 )) = regex_captures!(r#"^(\d{17})%7C%7C([^;]+)"#, value) {
                     steamid = steamid_str.parse::<u64>().ok();
                     access_token = Some(access_token_str.to_string());
+                } else {
+                    return Err(SetCookiesError::MissingAccessToken);
                 },
                 _ => {},
             }
         }
     }
     
-    (sessionid, steamid, access_token)
+    let access_token = access_token.ok_or(SetCookiesError::MissingAccessToken)?;
+    
+    Ok(CookiesData {
+        sessionid,
+        steamid,
+        access_token,
+    })
 }
 
 /// Writes a file atomically.

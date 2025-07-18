@@ -60,7 +60,11 @@ pub struct RawTradeOffer {
 }
 
 impl RawTradeOffer {
-    /// Attempts to combine this [`RawTradeOffer`] into a [`TradeOffer`] using the given map.
+    /// Attempts to combine this [`RawTradeOffer`] into a [`TradeOffer`] using the given map of
+    /// classinfo data.
+    /// 
+    /// Returns an error if any of the assets in the offer do not have classinfo data in the map
+    /// (check [`MissingClassInfoError`] for more details).
     pub fn try_combine_classinfos(
         self,
         map: &ClassInfoMap,

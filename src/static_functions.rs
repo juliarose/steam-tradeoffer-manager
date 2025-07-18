@@ -5,7 +5,7 @@ use crate::response::{Asset, ClassInfo};
 use crate::request::GetInventoryOptions;
 use crate::types::*;
 use crate::helpers::{parses_response, extract_auth_data_from_cookies};
-use crate::helpers::COMMUNITY_HOSTNAME;
+use crate::helpers::{COMMUNITY_HOSTNAME, CookiesData};
 use crate::error::{Error, ParseHtmlError, MissingClassInfoError};
 use crate::serialize;
 use std::collections::HashMap;
@@ -46,10 +46,11 @@ pub async fn get_inventory<'a>(
     options: &GetInventoryOptions<'a>,
 ) -> Result<Vec<Asset>, Error> { 
     #[derive(Serialize)]
-    struct Query<'a> {
+    struct Query<'a, 'b> {
         l: &'a str,
         count: u32,
         start_assetid: Option<u64>,
+        access_token: Option<&'b String>,
     }
     
     let mut responses: Vec<GetInventoryResponse> = Vec::new();
@@ -67,6 +68,7 @@ pub async fn get_inventory<'a>(
                 l: options.language.api_language_code(),
                 count: options.page_size,
                 start_assetid,
+                access_token: options.access_token.as_ref(),
             })
             .send()
             .await?;
@@ -142,11 +144,11 @@ pub async fn get_api_key(
         submit: String,
     }
     
-    let (
+    let CookiesData {
         sessionid,
-        _steamid,
-        _access_token,
-    ) = extract_auth_data_from_cookies(cookies);
+        ..
+    } = extract_auth_data_from_cookies(cookies)
+        .map_err(|_| Error::NotLoggedIn)?;
     let sessionid = sessionid
         .ok_or(Error::NotLoggedIn)?;
     let cookie_store = Arc::new(Jar::default());

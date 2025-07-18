@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.0 (2025-07-18)
+
+### Changed
+- Bumped `another-steam-totp` to `0.4.0`.
+- `set_cookies` for `TradeOfferManager`, `SteamTradeOfferAPI`, `MobileAPI` now accepts a `Vec<Cookie>` and returns an error if cookies could not be set.
+
+### Added
+- `access_token` to `TradeOfferManagerBuilder` and `SteamTradeOfferAPIBuilder`. This can be used for authenticated requests to the Steam API.
+- `access_token` to `GetInventoryOptions`.
+- `page_size` to `GetInventoryOptions`.
+- `owner_descriptions` to `ClassInfo`.
+- `sealed` to `ClassInfo`.
+
 ## 0.4.1 (2024-12-25)
 
 ### Changed

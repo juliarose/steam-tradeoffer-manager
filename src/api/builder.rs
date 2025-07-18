@@ -1,4 +1,4 @@
-use super::SteamTradeOfferAPI;
+use super::{SteamTradeOfferAPI, DEFAULT_GET_INVENTORY_PAGE_SIZE};
 use crate::helpers::USER_AGENT_STRING;
 use crate::helpers::default_data_directory;
 use crate::ClassInfoCache;
@@ -8,9 +8,11 @@ use std::sync::Arc;
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
 
-/// Builder for constructing a [`SteamTradeOfferAPI`]. You need to supply either an API key or an
-/// access token for most features to work, but some features will work with just cookies, such as
-/// sending or responding to trade offers.
+/// Builder for constructing a [`SteamTradeOfferAPI`].
+/// 
+/// An access token or API key is required to use the Steam Web API. If you provide an API key,
+/// requests will prefer using your access token when available. Do not supply an API key if
+/// you only want to use access tokens for API requests.
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPIBuilder {
     /// Your account's API key from <https://steamcommunity.com/dev/apikey>.
@@ -47,7 +49,7 @@ impl SteamTradeOfferAPIBuilder {
             api_key: None,
             access_token: None,
             language: Language::English,
-            get_inventory_page_size: 2000,
+            get_inventory_page_size: DEFAULT_GET_INVENTORY_PAGE_SIZE,
             classinfo_cache: None,
             data_directory: default_data_directory(),
             cookie_jar: None,

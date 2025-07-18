@@ -6,7 +6,6 @@ pub use anyhow::Error as AnyhowError;
 
 use crate::enums::TradeOfferState;
 use crate::types::*;
-use std::fmt;
 
 /// Any range of errors encountered when making requests.
 #[derive(thiserror::Error, Debug)]
@@ -119,6 +118,17 @@ pub enum FileError {
     SystemTime(#[from] std::time::SystemTimeError),
 }
 
+/// An error occurred when setting cookies.
+#[derive(thiserror::Error, Debug)]
+pub enum SetCookiesError {
+    /// The Steam ID is missing from the cookies.
+    #[error("Missing Steam login cookie")]
+    MissingSteamLogin,
+    /// The Steam ID is missing from the cookies.
+    #[error("Access token not found in steamLoginSecure cookie.")]
+    MissingAccessToken,
+}
+
 /// An error received from a response when sending or acting of trade offers.
 #[derive(thiserror::Error, Debug, PartialEq, Eq)]
 #[repr(u8)]
@@ -127,7 +137,7 @@ pub enum TradeOfferError {
     #[error("{}", .0)]
     Unknown(String),
     /// An unknown error occurred with a numeric EResult code.
-    #[error("{}", .0)]
+    #[error("Unknown EResult ({})", .0)]
     UnknownEResult(u32),
     /// # Code 2
     /// Returned when a more specific error code couldn't be determined.
@@ -224,6 +234,10 @@ impl TradeOfferError {
 
 impl From<&str> for TradeOfferError {
     fn from(message: &str) -> Self {
+        // This simply checks the last piece for a number in parentheses.
+        // 
+        // Strings generally appear as:
+        // "There was an error accepting this trade offer. Please try again later. (28)"
         if let Some(code) = message.trim().split(' ').next_back() {
             let mut chars = code.chars();
             
@@ -235,12 +249,20 @@ impl From<&str> for TradeOfferError {
                 return Self::Unknown(message.into());
             }
             
+            // Consume the rest of the characters and attempt to parse it as a number.
             if let Ok(code) = chars.as_str().parse::<u32>() {
                 return Self::from_code(code);
             }
         }
         
         Self::Unknown(message.into())
+    }
+}
+
+/// Converts a u32 error code into a TradeOfferError.
+impl From<u32> for TradeOfferError {
+    fn from(code: u32) -> Self {
+        Self::from_code(code)
     }
 }
 
@@ -255,6 +277,7 @@ impl From<reqwest_middleware::Error> for Error {
 
 /// Details of the missing classinfo.
 #[derive(thiserror::Error, Debug)]
+#[error("Missing classinfo for {}:{}:{}", .appid, .classid, .instanceid.unwrap_or(0))]
 pub struct MissingClassInfoError {
     /// The app ID of the missing classinfo.
     pub appid: AppId,
@@ -262,16 +285,6 @@ pub struct MissingClassInfoError {
     pub classid: ClassId,
     /// The instance ID of the missing classinfo.
     pub instanceid: InstanceId,
-}
-
-impl fmt::Display for MissingClassInfoError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Missing description for {}:{}:{})",
-            self.appid, self.classid, self.instanceid.unwrap_or(0),
-        )
-    }
 }
 
 /// An error occurred when parsing HTML.

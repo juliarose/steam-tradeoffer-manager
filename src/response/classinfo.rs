@@ -70,6 +70,11 @@ pub struct ClassInfo {
     #[serde(default)]
     #[serde(deserialize_with = "serialize::hashmap_or_vec")]
     pub descriptions: Vec<Description>,
+    /// Descriptions only visible to the owner for this item. This can only be obtained when an
+    /// access token is provided.
+    #[serde(default)]
+    #[serde(deserialize_with = "serialize::hashmap_or_vec")]
+    pub owner_descriptions: Vec<Description>,
     /// Tags for this item.
     #[serde(default)]
     #[serde(deserialize_with = "serialize::hashmap_or_vec")]
@@ -92,6 +97,11 @@ pub struct ClassInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "serialize::option_string")]
     pub item_expiration: Option<ServerTime>,
+    /// Whether this item is trade sealed or not. This can only be obtained when an access token is
+    /// provided. `false` if not present.
+    #[serde(default)]
+    #[serde(deserialize_with = "serialize::into_bool")]
+    pub sealed: bool,
 }
 
 impl ClassInfo {
