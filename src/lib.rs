@@ -45,6 +45,7 @@ pub mod api;
 pub mod mobile_api;
 
 pub use static_functions::get_inventory;
+pub use another_steam_totp::get_steam_server_time_offset;
 pub use classinfo_cache::ClassInfoCache;
 pub use manager::{TradeOfferManager, TradeOfferManagerBuilder};
 

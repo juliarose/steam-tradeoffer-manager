@@ -186,7 +186,7 @@ impl TradeOfferManager {
         &self,
         options: PollOptions,
     ) -> Result<(PollSender, PollReceiver), Error> {
-        if self.api.api_key.is_none() && self.api.access_token.read().unwrap().is_none() {
+        if self.api.api_key.is_none() && self.api.session.read().unwrap().access_token.is_none() {
             return Err(ParameterError::MissingApiKeyOrAccessToken.into());
         }
         
