@@ -1,10 +1,10 @@
 use super::{SteamTradeOfferAPI, DEFAULT_GET_INVENTORY_PAGE_SIZE};
-use crate::helpers::USER_AGENT_STRING;
-use crate::helpers::default_data_directory;
+use crate::helpers::{Session, default_data_directory, USER_AGENT_STRING};
 use crate::ClassInfoCache;
 use crate::enums::Language;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::sync::RwLock;
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
 
@@ -34,6 +34,8 @@ pub struct SteamTradeOfferAPIBuilder {
     pub(crate) client: Option<ClientWithMiddleware>,
     /// User agent for requests.
     pub(crate) user_agent: &'static str,
+    /// The session.
+    pub(crate) session: Option<Arc<RwLock<Option<Session>>>>,
 }
 
 impl Default for SteamTradeOfferAPIBuilder {
@@ -55,6 +57,7 @@ impl SteamTradeOfferAPIBuilder {
             cookie_jar: None,
             client: None,
             user_agent: USER_AGENT_STRING,
+            session: None,
         }
     }
     
@@ -107,6 +110,12 @@ impl SteamTradeOfferAPIBuilder {
     pub fn client(mut self, client: ClientWithMiddleware, cookies: Arc<Jar>) -> Self {
         self.client = Some(client);
         self.cookie_jar = Some(cookies);
+        self
+    }
+    
+    /// Sets the session.
+    pub(crate) fn session(mut self, session: Arc<RwLock<Option<Session>>>) -> Self {
+        self.session = Some(session);
         self
     }
     

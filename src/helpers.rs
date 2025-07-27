@@ -1,3 +1,5 @@
+// This module is a bit disorganized but contains various utility functions and types. 
+
 use crate::types::HttpClient;
 use crate::error::{Error, SetCookiesError, TradeOfferError};
 use std::path::PathBuf;
@@ -24,6 +26,36 @@ lazy_static! {
     };
 }
 
+/// A browser user agent string.
+pub const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
+pub(crate) const COMMUNITY_HOSTNAME: &str = "steamcommunity.com";
+pub(crate) const WEB_API_HOSTNAME: &str = "api.steampowered.com";
+
+#[derive(Debug, Clone)]
+pub struct CookiesData {
+    pub sessionid: Option<String>,
+    pub steamid: u64,
+    pub access_token: String,
+}
+
+/// Session data from cookies.
+#[derive(Debug, Clone, Default)]
+pub struct Session {
+    /// The session ID.
+    pub sessionid: String,
+    /// The access token for trade offers.
+    pub access_token: String,
+    /// The Steam ID of the user.
+    pub steamid: u64,
+}
+
+#[derive(Debug, Default)]
+struct TradeErrorOrEResultResponse<'a> {
+    num_keys: usize,
+    response: Option<&'a str>,
+    str_error: Option<&'a str>,
+}
+
 pub fn default_data_directory() -> PathBuf {
     if let Some(base_dirs) = BaseDirs::new() {
         base_dirs.config_dir().join("rust-steam-tradeoffer-manager")
@@ -31,11 +63,6 @@ pub fn default_data_directory() -> PathBuf {
         "./rust-steam-tradeoffer-manager".into()
     }
 }
-
-/// A browser user agent string.
-pub const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
-pub(crate) const COMMUNITY_HOSTNAME: &str = "steamcommunity.com";
-pub(crate) const WEB_API_HOSTNAME: &str = "api.steampowered.com";
 
 /// Generates a random sessionid.
 pub fn generate_sessionid() -> String {
@@ -48,19 +75,12 @@ pub fn generate_sessionid() -> String {
     })
 }
 
-#[derive(Debug, Clone)]
-pub struct CookiesData {
-    pub sessionid: Option<String>,
-    pub steamid: Option<u64>,
-    pub access_token: String,
-}
-
 /// Extracts the session ID and Steam ID from cookie values.
 pub fn extract_auth_data_from_cookies(
     cookies: &[String],
 ) -> Result<CookiesData, SetCookiesError> {
     let mut sessionid = None;
-    let mut steamid = None;
+    let mut steamid = 0;
     let mut access_token = None;
      
     for cookie in cookies {
@@ -72,7 +92,7 @@ pub fn extract_auth_data_from_cookies(
                     steamid_str,
                     access_token_str,
                 )) = regex_captures!(r#"^(\d{17})%7C%7C([^;]+)"#, value) {
-                    steamid = steamid_str.parse::<u64>().ok();
+                    steamid = steamid_str.parse::<u64>().map_err(|e| SetCookiesError::InvalidSteamID(e))?;
                     access_token = Some(access_token_str.to_string());
                 } else {
                     return Err(SetCookiesError::MissingAccessToken);
@@ -89,6 +109,35 @@ pub fn extract_auth_data_from_cookies(
         steamid,
         access_token,
     })
+}
+
+/// Extracts the session from cookies and returns a [`Session`] object. This will generate a new
+/// session ID if one is not found in the cookies. The cookies will be modified to include the new
+/// session ID.
+pub fn get_session_from_cookies(
+    cookies: &mut Vec<String>,
+) -> Result<Session, SetCookiesError> {
+    let CookiesData {
+        sessionid,
+        steamid,
+        access_token,
+    } = extract_auth_data_from_cookies(&cookies)?;
+    let sessionid = if let Some(sessionid) = sessionid {
+        sessionid
+    } else {
+        // the cookies don't contain a sessionid
+        let sessionid = generate_sessionid();
+        
+        cookies.push(format!("sessionid={sessionid}"));
+        sessionid
+    };
+    let session = Session {
+        sessionid,
+        access_token,
+        steamid,
+    };
+    
+    Ok(session)
 }
 
 /// Writes a file atomically.
@@ -149,13 +198,6 @@ fn is_login(location_option: Option<&header::HeaderValue>) -> bool {
     }
     
     false
-}
-
-#[derive(Debug, Default)]
-struct TradeErrorOrEResultResponse<'a> {
-    num_keys: usize,
-    response: Option<&'a str>,
-    str_error: Option<&'a str>,
 }
 
 /// Deserializes a response that may contain a `str_error` or an `EResult` code.

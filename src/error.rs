@@ -1,5 +1,7 @@
 //! Error types.
 
+use std::num::ParseIntError;
+
 pub use another_steam_totp::Error as TOTPError;
 pub use reqwest::Error as ReqwestError;
 pub use anyhow::Error as AnyhowError;
@@ -127,6 +129,9 @@ pub enum SetCookiesError {
     /// The Steam ID is missing from the cookies.
     #[error("Access token not found in steamLoginSecure cookie.")]
     MissingAccessToken,
+    /// The Steam ID is invalid.
+    #[error("Invalid Steam ID: {}", .0)]
+    InvalidSteamID(ParseIntError),
 }
 
 /// An error received from a response when sending or acting of trade offers.

@@ -23,8 +23,8 @@ use crate::response::*;
 use crate::enums::{Language, GetUserDetailsMethod};
 use crate::static_functions::get_inventory;
 use crate::serialize;
-use crate::helpers::{parses_response, generate_sessionid, extract_auth_data_from_cookies};
-use crate::helpers::{COMMUNITY_HOSTNAME, WEB_API_HOSTNAME, CookiesData};
+use crate::helpers::{parses_response, get_session_from_cookies, Session};
+use crate::helpers::{COMMUNITY_HOSTNAME, WEB_API_HOSTNAME};
 use crate::error::{Error, ParameterError, MissingClassInfoError, SetCookiesError};
 use crate::classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers};
 use crate::request::{GetInventoryOptions, NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions};
@@ -37,22 +37,13 @@ use reqwest::header::REFERER;
 use lazy_regex::{regex_captures, regex_is_match};
 use url::Url;
 
-/// Session data from cookies.
-#[derive(Debug, Clone, Default)]
-pub(crate) struct Session {
-    /// The session ID.
-    pub sessionid: Option<String>,
-    /// The access token for trade offers.
-    pub access_token: Option<String>,
-}
-
 /// The underlying API for interacting with Steam trade offers.
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPI {
     /// The API key.
     pub api_key: Option<String>,
     /// The access token for trade offers.
-    pub(crate) session: Arc<RwLock<Session>>,
+    pub(crate) session: Arc<RwLock<Option<Session>>>,
     /// The language for descriptions.
     pub language: Language,
     /// The number of items to fetch per page when getting inventories.
@@ -93,6 +84,47 @@ impl SteamTradeOfferAPI {
         format!("https://{}/{interface}/{method}/v{version}", Self::API_HOSTNAME)
     }
     
+    /// Gets an owned session ID from the session.
+    fn get_sessionid(
+        &self,
+    ) -> Result<String, Error> {
+        if let Some(session) = self.session.read().unwrap().as_ref() {
+            return Ok(session.sessionid.clone());
+        }
+        
+        Err(Error::NotLoggedIn)
+    }
+    
+    /// Gets an owned access token from the session.
+    fn get_access_token(
+        &self,
+    ) -> Result<String, Error> {
+        if let Some(session) = self.session.read().unwrap().as_ref() {
+            return Ok(session.access_token.clone());
+        }
+        
+        Err(Error::NotLoggedIn)
+    }
+    
+    /// Gets the API key and access token. Returns an error if both are missing.
+    fn get_api_key_and_access_token(
+        &self,
+    ) -> Result<(Option<&String>, Option<String>), Error> {
+        let key = self.api_key.as_ref();
+        let access_token = self.get_access_token().ok();
+        
+        if key.is_none() && access_token.is_none() {
+            return Err(ParameterError::MissingApiKeyOrAccessToken.into());
+        }
+        
+        if access_token.is_some() {
+            // If we have an access token, we don't want to use the API key.
+            return Ok((None, access_token));
+        }
+
+        Ok((key, access_token))
+    }
+    
     /// Sets cookies.
     /// 
     /// Some features will only work if cookies are set, such as sending or responding to trade
@@ -101,28 +133,12 @@ impl SteamTradeOfferAPI {
         &self,
         mut cookies: Vec<String>,
     ) -> Result<(), SetCookiesError> {
-        let CookiesData {
-            sessionid,
-            access_token,
-            ..
-        } = extract_auth_data_from_cookies(&cookies)?;
-        let sessionid = if let Some(sessionid) = sessionid {
-            sessionid
-        } else {
-            // the cookies don't contain a sessionid
-            let sessionid = generate_sessionid();
-            
-            cookies.push(format!("sessionid={sessionid}"));
-            sessionid
-        };
+        let session = get_session_from_cookies(&mut cookies)?;
         // Should not panic since the URL is hardcoded.
         let url = format!("https://{}", Self::HOSTNAME).parse::<Url>()
             .unwrap_or_else(|error| panic!("URL could not be parsed from {}: {}", Self::HOSTNAME, error));
         
-        *self.session.write().unwrap() = Session {
-            sessionid: Some(sessionid),
-            access_token: Some(access_token),
-        };
+        *self.session.write().unwrap() = Some(session);
         
         for cookie_str in &cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
@@ -177,8 +193,7 @@ impl SteamTradeOfferAPI {
             return Err(Error::Parameter(ParameterError::EmptyOffer));
         }
         
-        let sessionid = self.session.read().unwrap().sessionid.clone()
-            .ok_or(Error::NotLoggedIn)?;
+        let sessionid = self.get_sessionid()?;
         let referer = {
             let pathname: String = match &counter_tradeofferid {
                 Some(id) => id.to_string(),
@@ -276,21 +291,16 @@ impl SteamTradeOfferAPI {
         classes: &[ClassInfoAppClass],
     ) -> Result<ClassInfoMap, Error> {
         let query = {
-            let key = self.api_key.as_ref();
-            let access_token = self.session.read().unwrap().access_token.clone();
-            
-            if key.is_none() && access_token.is_none() {
-                return Err(ParameterError::MissingApiKeyOrAccessToken.into());
-            }
-            
             let mut query = Vec::new();
             
-            if let Some(access_token) = access_token {
+            // We prefer using the key for this method
+            if let Some(key) = &self.api_key {
                 // No need to provide the key if we have an access token.
-                query.push(("access_token".to_string(), access_token));
+                query.push(("key".to_string(), key.to_string()));
             } else {
-                // unwrap is safe here since we checked for the presence of the key above.
-                query.push(("key".to_string(), key.unwrap().into()));
+                let access_token = self.get_access_token()?;
+                
+                query.push(("access_token".to_string(), access_token));
             }
             
             query.push(("appid".to_string(), appid.to_string()));
@@ -449,9 +459,9 @@ impl SteamTradeOfferAPI {
         options: &request::GetTradeOffersOptions,
     ) -> Result<(Vec<response::RawTradeOffer>, Option<ClassInfoMap>), Error> {
         #[derive(Serialize)]
-        struct Form<'a, 'b> {
+        struct Form<'a> {
             key: Option<&'a String>,
-            access_token: Option<&'b String>,
+            access_token: Option<&'a String>,
             language: &'a str,
             active_only: bool,
             historical_only: bool,
@@ -471,18 +481,7 @@ impl SteamTradeOfferAPI {
             historical_cutoff,
         } = options;
         let uri = Self::get_api_url("IEconService", "GetTradeOffers", 1);
-        let mut key = self.api_key.as_ref();
-        let access_token = self.session.read().unwrap().access_token.clone();
-        
-        if key.is_none() && access_token.is_none() {
-            return Err(ParameterError::MissingApiKeyOrAccessToken.into());
-        }
-        
-        if access_token.is_some() {
-            // No need to provide the key if we have an access token.
-            key = None;
-        }
-        
+        let (key, access_token) = self.get_api_key_and_access_token()?;
         let mut cursor = None;
         let time_historical_cutoff = historical_cutoff
             .map(|cutoff| cutoff.timestamp() as u64);
@@ -626,18 +625,7 @@ impl SteamTradeOfferAPI {
         }
         
         let uri = Self::get_api_url("IEconService", "GetTradeOffer", 1);
-        let mut key = self.api_key.as_ref();
-        let access_token = self.session.read().unwrap().access_token.clone();
-        
-        if key.is_none() && access_token.is_none() {
-            return Err(ParameterError::MissingApiKeyOrAccessToken.into());
-        }
-        
-        if access_token.is_some() {
-            // No need to provide the key if we have an access token.
-            key = None;
-        }
-        
+        let (key, access_token) = self.get_api_key_and_access_token()?;
         let response = self.client.get(&uri)
             .query(&Form {
                 key,
@@ -721,9 +709,9 @@ impl SteamTradeOfferAPI {
         options: request::GetTradeHistoryRequestOptions,
     ) -> Result<GetTradeHistoryResponseBody, Error> {
         #[derive(Serialize)]
-        struct Form<'a, 'b> {
+        struct Form<'a> {
             key: Option<&'a String>,
-            acccess_token: Option<&'b String>,
+            acccess_token: Option<&'a String>,
             max_trades: u32,
             start_after_time: Option<u32>,
             start_after_tradeid: Option<TradeId>,
@@ -745,18 +733,7 @@ impl SteamTradeOfferAPI {
         // Convert the datetime to a UNIX timestamp.
         let start_after_time = start_after_time
             .map(|time| time.timestamp() as u32);
-        let mut key = self.api_key.as_ref();
-        let access_token = self.session.read().unwrap().access_token.clone();
-        
-        if key.is_none() && access_token.is_none() {
-            return Err(ParameterError::MissingApiKeyOrAccessToken.into());
-        }
-        
-        if access_token.is_some() {
-            // No need to provide the key if we have an access token.
-            key = None;
-        }
-        
+        let (key, access_token) = self.get_api_key_and_access_token()?;
         let uri = Self::get_api_url("IEconService", "GetTradeHistory", 1);
         let response = self.client.get(&uri)
             .query(&Form {
@@ -821,8 +798,7 @@ impl SteamTradeOfferAPI {
             partner: SteamID,
         }
         
-        let sessionid = self.session.read().unwrap().sessionid.clone()
-            .ok_or(Error::NotLoggedIn)?;
+        let sessionid = self.get_sessionid()?;
         let referer = Self::get_url(&format!("/tradeoffer/{tradeofferid}"));
         let params = AcceptOfferParams {
             sessionid,
@@ -858,8 +834,7 @@ impl SteamTradeOfferAPI {
             tradeofferid: TradeOfferId,
         }
         
-        let sessionid = self.session.read().unwrap().sessionid.clone()
-            .ok_or(Error::NotLoggedIn)?;
+        let sessionid = self.get_sessionid()?;
         let referer = Self::get_url(&format!("/tradeoffer/{tradeofferid}"));
         let uri = Self::get_url(&format!("/tradeoffer/{tradeofferid}/decline"));
         let response = self.client.post(&uri)
@@ -890,8 +865,7 @@ impl SteamTradeOfferAPI {
             tradeofferid: TradeOfferId,
         }
         
-        let sessionid = self.session.read().unwrap().sessionid.clone()
-            .ok_or(Error::NotLoggedIn)?;
+        let sessionid = self.get_sessionid()?;
         let referer = Self::get_url(&format!("/tradeoffer/{tradeofferid}"));
         let uri = Self::get_url(&format!("/tradeoffer/{tradeofferid}/cancel"));
         let response = self.client.post(&uri)
@@ -993,7 +967,7 @@ impl SteamTradeOfferAPI {
         contextid: ContextId,
         tradable_only: bool,
     ) -> Result<Vec<Asset>, Error> {
-        let access_token = self.session.read().unwrap().access_token.clone();
+        let access_token = self.get_access_token().ok();
         
         get_inventory(&GetInventoryOptions {
             client: &self.client,
@@ -1028,7 +1002,7 @@ impl SteamTradeOfferAPI {
         
         let mut responses: Vec<GetInventoryResponseIgnoreDescriptions> = Vec::new();
         let mut start_assetid: Option<u64> = None;
-        let access_token = self.session.read().unwrap().access_token.clone();
+        let access_token = self.get_access_token().ok();
         let sid = u64::from(steamid);
         let uri = Self::get_url(&format!("/inventory/{sid}/{appid}/{contextid}"));
         let referer = Self::get_url(&format!("/profiles/{sid}/inventory"));
@@ -1116,20 +1090,15 @@ impl From<SteamTradeOfferAPIBuilder> for SteamTradeOfferAPI {
                 Arc::clone(&cookies),
                 builder.user_agent,
             ));
-        let classinfo_cache = builder.classinfo_cache.unwrap_or_default();
-        let session = Session {
-            access_token: builder.access_token,
-            sessionid: None,
-        };
         
         Self {
             client,
             cookies,
             api_key: builder.api_key,
-            session: Arc::new(std::sync::RwLock::new(session)),
+            session: builder.session.unwrap_or_default(),
             language: builder.language,
             get_inventory_page_size: builder.get_inventory_page_size,
-            classinfo_cache,
+            classinfo_cache: builder.classinfo_cache.unwrap_or_default(),
             data_directory: builder.data_directory,
         }
     }

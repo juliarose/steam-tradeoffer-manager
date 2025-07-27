@@ -15,8 +15,8 @@ use reqwest_middleware::ClientWithMiddleware;
 /// requests will prefer using your access token when available. Do not supply an API key if
 /// you only want to use access tokens for API requests.
 /// 
-/// You can get an API key from [Steam Community](https://steamcommunity.com/dev/apikey) or by
-/// using the [`TradeOfferManager::get_api_key`][`crate::TradeOfferManager`] method.
+/// You can get an API key from <https://steamcommunity.com/dev/apikey> or by using the
+/// [`TradeOfferManager::get_api_key`][`crate::TradeOfferManager`] method.
 /// 
 /// By default, the data directory is stored in the config directory of the current user
 /// determined by the OS:

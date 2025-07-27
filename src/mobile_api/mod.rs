@@ -14,8 +14,8 @@ pub use builder::MobileAPIBuilder;
 use crate::SteamID;
 use crate::response::Confirmation;
 use crate::error::{Error, ParameterError, SetCookiesError};
-use crate::helpers::{extract_auth_data_from_cookies, generate_sessionid, get_default_client, parses_response};
-use crate::helpers::{COMMUNITY_HOSTNAME, CookiesData};
+use crate::helpers::{get_session_from_cookies, get_default_client, parses_response, Session};
+use crate::helpers::COMMUNITY_HOSTNAME;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::{Ordering, AtomicU64};
@@ -32,14 +32,14 @@ pub struct MobileAPI {
     pub identity_secret: Option<String>,
     /// The time offset from Steam's servers.
     pub time_offset: i64,
+    /// The session.
+    pub(crate) session: Arc<RwLock<Option<Session>>>,
     /// The client for making requests.
     client: ClientWithMiddleware,
     /// The cookies to make requests with. Since the requests are made with the provided client, 
     /// the cookies should be the same as what the client uses.
     cookies: Arc<Jar>,
-    /// The session ID.
-    sessionid: Arc<RwLock<Option<String>>>,
-    /// The SteamID  of the logged in user. `0` if no login cookies were passed.
+    /// The SteamID of the logged in user. `0` if no login cookies were passed.
     steamid: Arc<AtomicU64>,
 }
 
@@ -60,30 +60,14 @@ impl MobileAPI {
         &self,
         mut cookies: Vec<String>,
     ) -> Result<(), SetCookiesError> {
-        let CookiesData {
-            sessionid,
-            steamid,
-            ..
-        } = extract_auth_data_from_cookies(&cookies)?;
-        let sessionid = if let Some(sessionid) = sessionid {
-            sessionid
-        } else {
-            // the cookies don't contain a sessionid
-            let sessionid = generate_sessionid();
-            
-            cookies.push(format!("sessionid={sessionid}"));
-            sessionid
-        };
-        
+        let session = get_session_from_cookies(&mut cookies)?;
         // Should not panic since the URL is hardcoded.
         let url = format!("https://{}", Self::HOSTNAME).parse::<Url>()
             .unwrap_or_else(|error| panic!("URL could not be parsed from {}: {}", Self::HOSTNAME, error));
         
-        *self.sessionid.write().unwrap() = Some(sessionid);
-        
-        if let Some(steamid) = steamid {
-            self.steamid.store(steamid, Ordering::Relaxed);
-        }
+        // The session contains steamid but an Atomicu64 is faster to access.
+        self.steamid.store(session.steamid, Ordering::Relaxed);
+        *self.session.write().unwrap() = Some(session);
         
         for cookie_str in &cookies {
             self.cookies.add_cookie_str(cookie_str, &url);
@@ -238,11 +222,13 @@ impl From<MobileAPIBuilder> for MobileAPI {
                 Arc::clone(&cookies),
                 builder.user_agent,
             ));
+        let session = builder.session
+            .unwrap_or_else(|| Arc::new(RwLock::new(None)));
         
         Self {
             client,
-            cookies: Arc::clone(&cookies),
-            sessionid: Arc::new(std::sync::RwLock::new(None)),
+            cookies,
+            session,
             identity_secret: builder.identity_secret,
             steamid: Arc::new(AtomicU64::new(0)),
             time_offset: builder.time_offset,

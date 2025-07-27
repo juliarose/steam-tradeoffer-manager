@@ -16,8 +16,7 @@ use crate::request::{NewTradeOffer, GetTradeHistoryOptions};
 use crate::enums::{TradeOfferState, OfferFilter, GetUserDetailsMethod};
 use crate::types::{AppId, ContextId, TradeOfferId};
 use crate::response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Confirmation, Trades};
-use std::sync::Mutex;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, RwLock};
 use steamid_ng::SteamID;
 use tokio::task::JoinHandle;
 
@@ -186,7 +185,7 @@ impl TradeOfferManager {
         &self,
         options: PollOptions,
     ) -> Result<(PollSender, PollReceiver), Error> {
-        if self.api.api_key.is_none() && self.api.session.read().unwrap().access_token.is_none() {
+        if self.api.api_key.is_none() && self.api.session.read().unwrap().is_none() {
             return Err(ParameterError::MissingApiKeyOrAccessToken.into());
         }
         
@@ -399,8 +398,7 @@ impl TradeOfferManager {
         &self,
         tradeofferid: TradeOfferId,
     ) -> Result<(), Error> {
-        let confirmations = self.get_trade_confirmations().await?;
-        let confirmation = confirmations
+        let confirmation = self.get_trade_confirmations().await?
             .into_iter()
             .find(|confirmation| confirmation.creator_id == tradeofferid);
         
@@ -563,6 +561,7 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
             .language(builder.language)
             .get_inventory_page_size(builder.get_inventory_page_size)
             .classinfo_cache(classinfo_cache);
+        let session = Arc::new(RwLock::new(None));
         
         if let Some(api_key) = builder.api_key {
             api_builder = api_builder.api_key(api_key);   
@@ -572,9 +571,12 @@ impl From<TradeOfferManagerBuilder> for TradeOfferManager {
             api_builder = api_builder.access_token(access_token);
         }
         
+        api_builder = api_builder.session(Arc::clone(&session));
+        
         let mut mobile_api_builder = MobileAPI::builder()
             .client(client, cookies)
-            .time_offset(builder.time_offset);
+            .time_offset(builder.time_offset)
+            .session(session);
         
         if let Some(identity_secret) = builder.identity_secret {
             mobile_api_builder = mobile_api_builder.identity_secret(identity_secret);

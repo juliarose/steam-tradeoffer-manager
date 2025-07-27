@@ -1,6 +1,6 @@
 use super::MobileAPI;
-use crate::helpers::USER_AGENT_STRING;
-use std::sync::Arc;
+use crate::helpers::{Session, USER_AGENT_STRING};
+use std::sync::{Arc, RwLock};
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;
 
@@ -17,6 +17,8 @@ pub struct MobileAPIBuilder {
     pub(crate) user_agent: &'static str,
     /// How many seconds your computer is behind Steam's servers. Used in mobile confirmations.
     pub(crate) time_offset: i64,
+    /// The session.
+    pub(crate) session: Option<Arc<RwLock<Option<Session>>>>,
 }
 
 impl Default for MobileAPIBuilder {
@@ -34,6 +36,7 @@ impl MobileAPIBuilder {
             client: None,
             user_agent: USER_AGENT_STRING,
             time_offset: 0,
+            session: None,
         }
     }
     
@@ -54,6 +57,12 @@ impl MobileAPIBuilder {
     /// How many seconds your computer is behind Steam's servers. Used in mobile confirmations.
     pub fn time_offset(mut self, time_offset: i64) -> Self {
         self.time_offset = time_offset;
+        self
+    }
+    
+    /// Sets the session.
+    pub(crate) fn session(mut self, session: Arc<RwLock<Option<Session>>>) -> Self {
+        self.session = Some(session);
         self
     }
     
