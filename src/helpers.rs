@@ -92,7 +92,7 @@ pub fn extract_auth_data_from_cookies(
                     steamid_str,
                     access_token_str,
                 )) = regex_captures!(r#"^(\d{17})%7C%7C([^;]+)"#, value) {
-                    steamid = steamid_str.parse::<u64>().map_err(|e| SetCookiesError::InvalidSteamID(e))?;
+                    steamid = steamid_str.parse::<u64>().map_err(SetCookiesError::InvalidSteamID)?;
                     access_token = Some(access_token_str.to_string());
                 } else {
                     return Err(SetCookiesError::MissingAccessToken);
@@ -121,7 +121,7 @@ pub fn get_session_from_cookies(
         sessionid,
         steamid,
         access_token,
-    } = extract_auth_data_from_cookies(&cookies)?;
+    } = extract_auth_data_from_cookies(cookies)?;
     let sessionid = if let Some(sessionid) = sessionid {
         sessionid
     } else {
@@ -340,7 +340,7 @@ where
     // Log non-success status and include body for debuggingAdd commentMore actions
     if !status.is_success() {
         let body_text = String::from_utf8_lossy(&bytes);
-        log::warn!("Steam response error. Status: {}, Body: {}", status, body_text);
+        log::warn!("Steam response error. Status: {status}, Body: {body_text}");
         
         // Redirects that might imply not logged in
         if (300..=399).contains(&status.as_u16()) {

@@ -1,5 +1,5 @@
 //! This is the underlying API for the manager. In most cases you should stick to using the
-//! manager, but if you need more control over the requests, you can use this API     .
+//! manager, but if you need more control over the requests, you can use this API directly.
 
 pub mod response;
 pub mod request;
