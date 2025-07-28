@@ -32,7 +32,7 @@ pub(crate) const COMMUNITY_HOSTNAME: &str = "steamcommunity.com";
 pub(crate) const WEB_API_HOSTNAME: &str = "api.steampowered.com";
 
 #[derive(Debug, Clone)]
-pub struct CookiesData {
+pub(crate) struct CookiesData {
     pub sessionid: Option<String>,
     pub steamid: u64,
     pub access_token: String,

@@ -1,5 +1,5 @@
 //! This is the underlying API for the manager. In most cases you should stick to using the
-//! manager, but if you need more control over the requests, you can use this API directly.
+//! manager, but if you need more control over the requests, you can use this API     .
 
 pub mod response;
 pub mod request;
@@ -25,7 +25,7 @@ use crate::static_functions::get_inventory;
 use crate::serialize;
 use crate::helpers::{parses_response, get_session_from_cookies, Session};
 use crate::helpers::{COMMUNITY_HOSTNAME, WEB_API_HOSTNAME};
-use crate::error::{Error, ParameterError, MissingClassInfoError, SetCookiesError};
+use crate::error::{Result, Error, ParameterError, MissingClassInfoError, SetCookiesError};
 use crate::classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers};
 use crate::request::{GetInventoryOptions, NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions};
 use std::path::PathBuf;
@@ -87,7 +87,7 @@ impl SteamTradeOfferAPI {
     /// Gets an owned session ID from the session.
     fn get_sessionid(
         &self,
-    ) -> Result<String, Error> {
+    ) -> Result<String> {
         if let Some(session) = self.session.read().unwrap().as_ref() {
             return Ok(session.sessionid.clone());
         }
@@ -98,7 +98,7 @@ impl SteamTradeOfferAPI {
     /// Gets an owned access token from the session.
     fn get_access_token(
         &self,
-    ) -> Result<String, Error> {
+    ) -> Result<String> {
         if let Some(session) = self.session.read().unwrap().as_ref() {
             return Ok(session.access_token.clone());
         }
@@ -109,7 +109,7 @@ impl SteamTradeOfferAPI {
     /// Gets the API key and access token. Returns an error if both are missing.
     fn get_api_key_and_access_token(
         &self,
-    ) -> Result<(Option<&String>, Option<String>), Error> {
+    ) -> Result<(Option<&String>, Option<String>)> {
         let key = self.api_key.as_ref();
         let access_token = self.get_access_token().ok();
         
@@ -132,7 +132,7 @@ impl SteamTradeOfferAPI {
     pub fn set_cookies(
         &self,
         mut cookies: Vec<String>,
-    ) -> Result<(), SetCookiesError> {
+    ) -> std::result::Result<(), SetCookiesError> {
         let session = get_session_from_cookies(&mut cookies)?;
         // Should not panic since the URL is hardcoded.
         let url = format!("https://{}", Self::HOSTNAME).parse::<Url>()
@@ -152,7 +152,7 @@ impl SteamTradeOfferAPI {
         &self,
         offer: &NewTradeOffer,
         counter_tradeofferid: Option<TradeOfferId>,
-    ) -> Result<SentOffer, Error> {
+    ) -> Result<SentOffer> {
         #[derive(Serialize)]
         struct OfferFormUser<'b> {
             assets: &'b Vec<NewTradeOfferItem>,
@@ -249,7 +249,7 @@ impl SteamTradeOfferAPI {
     pub async fn get_receipt(
         &self,
         trade_id: &TradeId,
-    ) -> Result<Vec<Asset>, Error> {
+    ) -> Result<Vec<Asset>> {
         let uri = Self::get_url(&format!("/trade/{trade_id}/receipt"));
         let response = self.client.get(&uri)
             .send()
@@ -272,7 +272,7 @@ impl SteamTradeOfferAPI {
             let assets = raw_assets
                 .into_iter()
                 .map(|asset| helpers::from_raw_receipt_asset(asset, &map))
-                .collect::<Result<Vec<_>, _>>()?;
+                .collect::<std::result::Result<Vec<_>, _>>()?;
             
             return Ok(assets);
         }
@@ -289,7 +289,7 @@ impl SteamTradeOfferAPI {
         &self,
         appid: AppId,
         classes: &[ClassInfoAppClass],
-    ) -> Result<ClassInfoMap, Error> {
+    ) -> Result<ClassInfoMap> {
         let query = {
             let mut query = Vec::new();
             
@@ -368,7 +368,7 @@ impl SteamTradeOfferAPI {
         &self,
         appid: AppId,
         classes: Vec<ClassInfoAppClass>,
-    ) -> Result<Vec<ClassInfoMap>, Error> {
+    ) -> Result<Vec<ClassInfoMap>> {
         let chunk_size = 100;
         let chunks = classes.chunks(chunk_size);
         let mut maps = Vec::with_capacity(chunks.len());
@@ -384,7 +384,7 @@ impl SteamTradeOfferAPI {
     pub async fn get_asset_classinfos(
         &self,
         classes: &[ClassInfoClass],
-    ) -> Result<ClassInfoMap, Error> {
+    ) -> Result<ClassInfoMap> {
         if classes.is_empty() {
             return Ok(Default::default());
         }
@@ -457,7 +457,7 @@ impl SteamTradeOfferAPI {
     pub async fn get_raw_trade_offers(
         &self,
         options: &request::GetTradeOffersOptions,
-    ) -> Result<(Vec<response::RawTradeOffer>, Option<ClassInfoMap>), Error> {
+    ) -> Result<(Vec<response::RawTradeOffer>, Option<ClassInfoMap>)> {
         #[derive(Serialize)]
         struct Form<'a> {
             key: Option<&'a String>,
@@ -557,7 +557,7 @@ impl SteamTradeOfferAPI {
     pub async fn map_raw_trade_offers(
         &self,
         offers: Vec<response::RawTradeOffer>,
-    ) -> Result<Vec<TradeOffer>, Error> {
+    ) -> Result<Vec<TradeOffer>> {
         let classes = offers
             .iter()
             .flat_map(|offer| {
@@ -595,7 +595,7 @@ impl SteamTradeOfferAPI {
     pub async fn get_trade_offers(
         &self,
         options: &request::GetTradeOffersOptions,
-    ) -> Result<Vec<TradeOffer>, Error> {
+    ) -> Result<Vec<TradeOffer>> {
         let (raw_offers, _descriptions) = self.get_raw_trade_offers(options).await?;
         let offers = self.map_raw_trade_offers(raw_offers).await?;
         
@@ -606,7 +606,7 @@ impl SteamTradeOfferAPI {
     pub async fn get_trade_offer(
         &self,
         tradeofferid: TradeOfferId,
-    ) -> Result<response::RawTradeOffer, Error> {
+    ) -> Result<response::RawTradeOffer> {
         #[derive(Serialize)]
         struct Form<'a, 'b> {
             key: Option<&'a String>,
@@ -643,7 +643,7 @@ impl SteamTradeOfferAPI {
     pub async fn get_trade_history(
         &self,
         options: &GetTradeHistoryOptions,
-    ) -> Result<Trades, Error> {
+    ) -> Result<Trades> {
         let body = self.get_trade_history_request(request::GetTradeHistoryRequestOptions{
             max_trades: options.max_trades,
             start_after_time: options.start_after_time,
@@ -667,7 +667,7 @@ impl SteamTradeOfferAPI {
             let trades = body.trades
                 .into_iter()
                 .map(|trade| trade.try_combine_classinfos(&descriptions))
-                .collect::<Result<_, _>>()?;
+                .collect::<std::result::Result<_, _>>()?;
                 
             Ok(Trades {
                 trades,
@@ -685,7 +685,7 @@ impl SteamTradeOfferAPI {
     pub async fn get_trade_history_without_descriptions(
         &self,
         options: &GetTradeHistoryOptions,
-    ) -> Result<response::RawTrades, Error> {
+    ) -> Result<response::RawTrades> {
         let body = self.get_trade_history_request(request::GetTradeHistoryRequestOptions{
             max_trades: options.max_trades,
             start_after_time: options.start_after_time,
@@ -707,7 +707,7 @@ impl SteamTradeOfferAPI {
     async fn get_trade_history_request(
         &self,
         options: request::GetTradeHistoryRequestOptions,
-    ) -> Result<GetTradeHistoryResponseBody, Error> {
+    ) -> Result<GetTradeHistoryResponseBody> {
         #[derive(Serialize)]
         struct Form<'a> {
             key: Option<&'a String>,
@@ -760,7 +760,7 @@ impl SteamTradeOfferAPI {
         &self,
         partner: SteamID,
         method: T,
-    ) -> Result<UserDetails, Error> 
+    ) -> Result<UserDetails> 
         where T: Into<GetUserDetailsMethod>,
     {
         let uri = {
@@ -786,7 +786,7 @@ impl SteamTradeOfferAPI {
         &self,
         tradeofferid: TradeOfferId,
         partner: SteamID,
-    ) -> Result<AcceptedOffer, Error> {
+    ) -> Result<AcceptedOffer> {
         #[derive(Serialize)]
         struct AcceptOfferParams {
             sessionid: String,
@@ -822,7 +822,7 @@ impl SteamTradeOfferAPI {
     pub async fn decline_offer(
         &self,
         tradeofferid: TradeOfferId,
-    ) -> Result<TradeOfferId, Error> {
+    ) -> Result<TradeOfferId> {
         #[derive(Serialize)]
         struct DeclineOfferParams {
             sessionid: String,
@@ -853,7 +853,7 @@ impl SteamTradeOfferAPI {
     pub async fn cancel_offer(
         &self,
         tradeofferid: TradeOfferId,
-    ) -> Result<TradeOfferId, Error> {
+    ) -> Result<TradeOfferId> {
         #[derive(Serialize)]
         struct CancelOfferParams {
             sessionid: String,
@@ -887,7 +887,7 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<Asset>, Error> { 
+    ) -> Result<Vec<Asset>> { 
         #[derive(Serialize)]
         struct Query<'a> {
             l: &'a str,
@@ -966,7 +966,7 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<Asset>, Error> {
+    ) -> Result<Vec<Asset>> {
         let access_token = self.get_access_token().ok();
         
         get_inventory(&GetInventoryOptions {
@@ -991,7 +991,7 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         contextid: ContextId,
         tradable_only: bool,
-    ) -> Result<Vec<Asset>, Error> {
+    ) -> Result<Vec<Asset>> {
         #[derive(Serialize)]
         struct Query<'a> {
             l: &'a str,
@@ -1002,6 +1002,7 @@ impl SteamTradeOfferAPI {
         
         let mut responses: Vec<GetInventoryResponseIgnoreDescriptions> = Vec::new();
         let mut start_assetid: Option<u64> = None;
+        // Not required, but included when available.
         let access_token = self.get_access_token().ok();
         let sid = u64::from(steamid);
         let uri = Self::get_url(&format!("/inventory/{sid}/{appid}/{contextid}"));

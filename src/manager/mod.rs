@@ -11,7 +11,7 @@ use crate::api::SteamTradeOfferAPI;
 use crate::mobile_api::MobileAPI;
 use crate::static_functions::get_api_key;
 use crate::helpers::get_default_client;
-use crate::error::{Error, ParameterError, SetCookiesError};
+use crate::error::{Result, Error, ParameterError, SetCookiesError};
 use crate::request::{NewTradeOffer, GetTradeHistoryOptions};
 use crate::enums::{TradeOfferState, OfferFilter, GetUserDetailsMethod};
 use crate::types::{AppId, ContextId, TradeOfferId};
@@ -62,7 +62,7 @@ impl TradeOfferManager {
     /// ```
     pub async fn get_api_key(
         cookies: &[String],
-    ) -> Result<String, Error> {
+    ) -> Result<String> {
         get_api_key(cookies).await
     }
     
@@ -91,7 +91,7 @@ impl TradeOfferManager {
     pub fn set_cookies(
         &self,
         cookies: Vec<String>,
-    ) -> Result<(), SetCookiesError> {
+    ) -> std::result::Result<(), SetCookiesError> {
         self.api.set_cookies(cookies.clone())?;
         self.mobile_api.set_cookies(cookies)?;
         Ok(())
@@ -103,7 +103,7 @@ impl TradeOfferManager {
     /// If the cookies are not set. (See [`TradeOfferManager::set_cookies`])
     pub fn get_steamid(
         &self,
-    ) -> Result<SteamID, Error> {
+    ) -> Result<SteamID> {
         self.mobile_api.get_steamid()
     }
     
@@ -184,7 +184,7 @@ impl TradeOfferManager {
     pub fn start_polling(
         &self,
         options: PollOptions,
-    ) -> Result<(PollSender, PollReceiver), Error> {
+    ) -> Result<(PollSender, PollReceiver)> {
         if self.api.api_key.is_none() && self.api.session.read().unwrap().is_none() {
             return Err(ParameterError::MissingApiKeyOrAccessToken.into());
         }
@@ -233,7 +233,7 @@ impl TradeOfferManager {
     pub async fn accept_offer(
         &self,
         offer: &mut TradeOffer,
-    ) -> Result<AcceptedOffer, Error> {
+    ) -> Result<AcceptedOffer> {
         // Offer must not be created by us.
         if offer.is_our_offer {
             return Err(ParameterError::CannotAcceptOfferWeCreated.into());
@@ -264,7 +264,7 @@ impl TradeOfferManager {
     pub async fn cancel_offer(
         &self,
         offer: &mut TradeOffer,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         if !offer.is_our_offer {
             return Err(ParameterError::CannotCancelOfferWeDidNotCreate.into());
         }
@@ -283,7 +283,7 @@ impl TradeOfferManager {
     pub async fn decline_offer(
         &self,
         offer: &mut TradeOffer,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         if offer.is_our_offer {
             return Err(ParameterError::CannotDeclineOfferWeCreated.into());
         }
@@ -298,7 +298,7 @@ impl TradeOfferManager {
     pub async fn send_offer(
         &self,
         offer: &NewTradeOffer,
-    ) -> Result<SentOffer, Error> {
+    ) -> Result<SentOffer> {
         self.api.send_offer(offer, None).await
     }
     
@@ -307,7 +307,7 @@ impl TradeOfferManager {
         &self,
         offer: &mut TradeOffer,
         counter_offer: &NewTradeOffer,
-    ) -> Result<SentOffer, Error> {
+    ) -> Result<SentOffer> {
         let sent_offer = self.api.send_offer(
             counter_offer,
             Some(offer.tradeofferid),
@@ -326,7 +326,7 @@ impl TradeOfferManager {
         &self,
         appid: AppId,
         contextid: ContextId,
-    ) -> Result<Vec<Asset>, Error> {
+    ) -> Result<Vec<Asset>> {
         let steamid = self.get_steamid()?;
         
         self.api.get_inventory(steamid, appid, contextid, true).await
@@ -338,7 +338,7 @@ impl TradeOfferManager {
         steamid: SteamID,
         appid: AppId,
         contextid: ContextId,
-    ) -> Result<Vec<Asset>, Error> {
+    ) -> Result<Vec<Asset>> {
         self.api.get_inventory(steamid, appid, contextid, true).await
     }
     
@@ -348,7 +348,7 @@ impl TradeOfferManager {
         steamid: SteamID,
         appid: AppId,
         contextid: ContextId,
-    ) -> Result<Vec<Asset>, Error> {
+    ) -> Result<Vec<Asset>> {
         self.api.get_inventory(steamid, appid, contextid, false).await
     }
     
@@ -358,7 +358,7 @@ impl TradeOfferManager {
         &self,
         partner: SteamID,
         method: T,
-    ) -> Result<UserDetails, Error> 
+    ) -> Result<UserDetails> 
         where T: Into<GetUserDetailsMethod>,
     {
         self.api.get_user_details(partner, method).await
@@ -367,7 +367,7 @@ impl TradeOfferManager {
     /// Gets trade confirmations.
     pub async fn get_trade_confirmations(
         &self,
-    ) -> Result<Vec<Confirmation>, Error> {
+    ) -> Result<Vec<Confirmation>> {
         self.mobile_api.get_trade_confirmations().await
     }
     
@@ -382,7 +382,7 @@ impl TradeOfferManager {
     pub async fn confirm_offer(
         &self,
         trade_offer: &TradeOffer,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         self.confirm_offer_id(trade_offer.tradeofferid).await
     }
     
@@ -397,7 +397,7 @@ impl TradeOfferManager {
     pub async fn confirm_offer_id(
         &self,
         tradeofferid: TradeOfferId,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         let confirmation = self.get_trade_confirmations().await?
             .into_iter()
             .find(|confirmation| confirmation.creator_id == tradeofferid);
@@ -413,7 +413,7 @@ impl TradeOfferManager {
     pub async fn accept_confirmation(
         &self,
         confirmation: &Confirmation,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         self.mobile_api.accept_confirmation(confirmation).await
     }
     
@@ -421,7 +421,7 @@ impl TradeOfferManager {
     pub async fn accept_confirmations(
         &self,
         confirmations: &[Confirmation],
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         for confirmation in confirmations {
             self.mobile_api.accept_confirmation(confirmation).await?
         }
@@ -433,7 +433,7 @@ impl TradeOfferManager {
     pub async fn cancel_confirmation(
         &self,
         confirmation: &Confirmation,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         self.mobile_api.cancel_confirmation(confirmation).await
     }
     
@@ -446,7 +446,7 @@ impl TradeOfferManager {
     pub async fn get_receipt(
         &self,
         offer: &TradeOffer,
-    ) -> Result<Vec<Asset>, Error> {
+    ) -> Result<Vec<Asset>> {
         if offer.trade_offer_state != TradeOfferState::Accepted {
             Err(ParameterError::NotInAcceptedState(offer.trade_offer_state).into())
         } else if offer.items_to_receive.is_empty() {
@@ -462,7 +462,7 @@ impl TradeOfferManager {
     pub async fn update_offer(
         &self,
         offer: &mut TradeOffer,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         let updated = self.api.get_trade_offer(offer.tradeofferid).await?;
         
         offer.tradeofferid = updated.tradeofferid;
@@ -480,7 +480,7 @@ impl TradeOfferManager {
     /// Gets active trade offers.
     pub async fn get_active_trade_offers(
         &self
-    ) -> Result<Vec<TradeOffer>, Error> {
+    ) -> Result<Vec<TradeOffer>> {
         let historical_cutoff = time::timestamp_to_server_time(u32::MAX as i64);
         let offers = self.get_trade_offers(
             OfferFilter::ActiveOnly,
@@ -495,7 +495,7 @@ impl TradeOfferManager {
         &self,
         filter: OfferFilter,
         historical_cutoff: Option<ServerTime>,
-    ) -> Result<Vec<TradeOffer>, Error> {
+    ) -> Result<Vec<TradeOffer>> {
         let offers = self.api.get_trade_offers(&GetTradeOffersOptions {
             active_only: filter == OfferFilter::ActiveOnly,
             historical_only: filter == OfferFilter::HistoricalOnly,
@@ -529,7 +529,7 @@ impl TradeOfferManager {
     pub async fn get_trade_history(
         &self,
         options: &GetTradeHistoryOptions,
-    ) -> Result<Trades, Error> {
+    ) -> Result<Trades> {
         self.api.get_trade_history(options).await
     }
 }

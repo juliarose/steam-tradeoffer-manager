@@ -9,6 +9,9 @@ pub use anyhow::Error as AnyhowError;
 use crate::enums::TradeOfferState;
 use crate::types::*;
 
+/// Result type returned by most methods in this crate.
+pub(crate) type Result<T> = std::result::Result<T, Error>;
+
 /// Any range of errors encountered when making requests.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

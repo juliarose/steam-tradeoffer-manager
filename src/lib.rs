@@ -45,7 +45,6 @@ pub mod api;
 pub mod mobile_api;
 
 pub use static_functions::get_inventory;
-pub use another_steam_totp::get_steam_server_time_offset;
 pub use classinfo_cache::ClassInfoCache;
 pub use manager::{TradeOfferManager, TradeOfferManagerBuilder};
 
@@ -66,5 +65,5 @@ pub use reqwest;
 pub use reqwest_middleware;
 pub use chrono;
 pub use steamid_ng;
-/// Steam ID. Re-export from [`steamid_ng`].
 pub use steamid_ng::SteamID;
+pub use another_steam_totp::get_steam_server_time_offset;

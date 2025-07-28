@@ -13,7 +13,7 @@ pub use builder::MobileAPIBuilder;
 
 use crate::SteamID;
 use crate::response::Confirmation;
-use crate::error::{Error, ParameterError, SetCookiesError};
+use crate::error::{Result, Error, ParameterError, SetCookiesError};
 use crate::helpers::{get_session_from_cookies, get_default_client, parses_response, Session};
 use crate::helpers::COMMUNITY_HOSTNAME;
 use std::collections::HashMap;
@@ -59,7 +59,7 @@ impl MobileAPI {
     pub fn set_cookies(
         &self,
         mut cookies: Vec<String>,
-    ) -> Result<(), SetCookiesError> {
+    ) -> std::result::Result<(), SetCookiesError> {
         let session = get_session_from_cookies(&mut cookies)?;
         // Should not panic since the URL is hardcoded.
         let url = format!("https://{}", Self::HOSTNAME).parse::<Url>()
@@ -80,7 +80,7 @@ impl MobileAPI {
     pub async fn accept_confirmation(
         &self,
         confirmation: &Confirmation,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         self.send_confirmation_ajax(&confirmation.id, &confirmation.nonce, Operation::Allow).await
     }
 
@@ -88,7 +88,7 @@ impl MobileAPI {
     pub async fn cancel_confirmation(
         &self,
         confirmation: &Confirmation,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         self.send_confirmation_ajax(&confirmation.id, &confirmation.nonce, Operation::Cancel).await
     }
     
@@ -97,7 +97,7 @@ impl MobileAPI {
         &self,
         id: u64,
         nonce: u64,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         self.send_confirmation_ajax(&id, &nonce, Operation::Allow).await
     }
     
@@ -106,14 +106,14 @@ impl MobileAPI {
         &self,
         id: u64,
         nonce: u64,
-    ) -> Result<(), Error> {
+    ) -> Result<()> {
         self.send_confirmation_ajax(&id, &nonce, Operation::Cancel).await
     }
     
     /// Gets the trade confirmations.
     pub async fn get_trade_confirmations(
         &self,
-    ) -> Result<Vec<Confirmation>, Error> {
+    ) -> Result<Vec<Confirmation>> {
         #[derive(Deserialize)]
         pub struct GetTradeConfirmationsResponse {
             // #[serde(default)]
@@ -137,7 +137,7 @@ impl MobileAPI {
     fn get_confirmation_query_params<'a>(
         &self,
         tag: Tag,
-    ) -> Result<HashMap<&'a str, String>, Error> {
+    ) -> Result<HashMap<&'a str, String>> {
         let steamid = self.get_steamid()?;
         let identity_secret = self.identity_secret.as_ref()
             .ok_or(ParameterError::NoIdentitySecret)?;
@@ -164,7 +164,7 @@ impl MobileAPI {
         id: &u64,
         nonce: &u64,
         operation: Operation,
-    ) -> Result<(), Error>  {
+    ) -> Result<()>  {
         #[derive(Deserialize)]
         struct SendConfirmationResponse {
             pub success: bool,
@@ -196,7 +196,7 @@ impl MobileAPI {
     /// Gets the logged-in user's SteamID.
     pub fn get_steamid(
         &self,
-    ) -> Result<SteamID, Error> {
+    ) -> Result<SteamID> {
         let steamid_64 = self.steamid.load(Ordering::Relaxed);
         
         if steamid_64 == 0 {

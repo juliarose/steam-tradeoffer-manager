@@ -3,7 +3,7 @@
 ## 0.5.0 (2025-07-18)
 
 ### Changed
-- Bumped `another-steam-totp` to `0.4.0`.
+- Bumped `another-steam-totp` to `0.4`.
 - `set_cookies` for `TradeOfferManager`, `SteamTradeOfferAPI`, `MobileAPI` now accepts a `Vec<Cookie>` and returns an error if cookies could not be set.
 
 ### Added
