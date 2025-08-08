@@ -336,8 +336,8 @@ where
         .get("x-eresult")
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.parse::<u32>().ok());
-
-    // Log non-success status and include body for debuggingAdd commentMore actions
+    
+    // Log non-success status and include body for debugging
     if !status.is_success() {
         let body_text = String::from_utf8_lossy(&bytes);
         log::warn!("Steam response error. Status: {status}, Body: {body_text}");
@@ -386,7 +386,7 @@ where
                 return Err(Error::ResponseUnsuccessful);
             }
     
-            // Session seems expiredAdd comment
+            // Session seems expired
             if html.contains("Access is denied") {
                 return Err(Error::NotLoggedIn);
             }

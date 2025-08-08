@@ -23,13 +23,6 @@ pub struct MobileAPIBuilder {
 
 impl Default for MobileAPIBuilder {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl MobileAPIBuilder {
-    /// Creates a new [`MobileAPIBuilder`].
-    pub fn new() -> Self {
         Self {
             identity_secret: None,
             cookies: None,
@@ -38,6 +31,13 @@ impl MobileAPIBuilder {
             time_offset: 0,
             session: None,
         }
+    }
+}
+
+impl MobileAPIBuilder {
+    /// Creates a new [`MobileAPIBuilder`].
+    pub fn new() -> Self {
+        Self::default()
     }
     
     /// The identity secret for the account. Required for mobile confirmations.

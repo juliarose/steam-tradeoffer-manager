@@ -60,13 +60,6 @@ pub struct TradeOfferManagerBuilder {
 
 impl Default for TradeOfferManagerBuilder {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl TradeOfferManagerBuilder {
-    /// Creates a new [`TradeOfferManagerBuilder`].
-    pub fn new() -> Self {
         Self {
             api_key: None,
             access_token: None,
@@ -81,6 +74,13 @@ impl TradeOfferManagerBuilder {
             time_offset: 0,
             cookies: None,
         }
+    }
+}
+
+impl TradeOfferManagerBuilder {
+    /// Creates a new [`TradeOfferManagerBuilder`].
+    pub fn new() -> Self {
+        Self::default()
     }
     
     /// The API key. Some features will work without an API key and only require cookies, such as

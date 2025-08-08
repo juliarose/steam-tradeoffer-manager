@@ -1,10 +1,12 @@
 use crate::types::{AppId, ClassId, InstanceId};
 use crate::serialize;
 use crate::types::ServerTime;
+use std::borrow::Borrow;
+use std::hash::Hash;
 use serde::{Serialize, Deserialize};
 
 /// Contains details about an item including names and descriptions.
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct ClassInfo {
     /// The item's app ID. This is included when including descriptions in the `GetTradeOffers`
     /// and `GetTradeHistory` response.
@@ -106,7 +108,11 @@ pub struct ClassInfo {
 
 impl ClassInfo {
     /// Convenience method for getting a value from `app_data`.
-    pub fn get_app_data_value(&self, key: &str) -> Option<&serde_json::Value> {
+    pub fn get_app_data_value<Q>(&self, key: &Q) -> Option<&serde_json::Value>
+    where
+        String: Borrow<Q>,
+        Q: ?Sized + Ord + Eq + Hash,
+    {
         if let Some(app_data) = &self.app_data {
             app_data.get(key)
         } else {
@@ -114,20 +120,35 @@ impl ClassInfo {
         }
     }
     
-    /// Convenience method for parsing a value from `app_data`. Parses string values into any
-    /// generic that implements [`std::str::FromStr`].
-    pub fn get_app_data_value_parsed<T>(&self, key: &str) -> Option<T>
+    /// Convenience method for parsing a string value from `app_data` into the desired type.
+    /// 
+    /// # Examples
+    /// ```
+    /// use steam_tradeoffer_manager::response::ClassInfo;
+    /// use serde_json::json;
+    /// 
+    /// let app_data = serde_json::from_str(r#"{"def_index": "123"}"#).unwrap();
+    /// let classinfo = ClassInfo {
+    ///     app_data: Some(app_data),
+    ///     ..Default::default()
+    /// };
+    /// 
+    /// // Parse def_index as u64
+    /// let def_index: Option<u64> = classinfo.get_app_data_value_parsed("def_index");
+    /// assert_eq!(def_index, Some(123));
+    /// ```
+    pub fn get_app_data_value_parsed<Q, T>(&self, key: &Q) -> Option<T>
     where
+        String: Borrow<Q>,
+        Q: ?Sized + Ord + Eq + Hash,
         T: std::str::FromStr,
     {
-        if let Some(app_data) = &self.app_data {
-            app_data.get(key).and_then(|value| match value {
+        self.get_app_data_value(key).and_then(|value| {
+            match value {
                 serde_json::Value::String(string) => string.parse::<T>().ok(),
                 _ => None,
-            })
-        } else {
-            None
-        }
+            }
+        })
     }
     
     /// Gets `def_index` value out of app_data parsed as a [`u64`].
@@ -175,8 +196,10 @@ impl Description {
     /// // prefixed with # is ok too
     /// assert!(description.is_color("#ffffff"));
     /// ```
-    pub fn is_color(&self, color: &str) -> bool {
+    pub fn is_color<S: AsRef<str>>(&self, color: S) -> bool {
         if let Some(description_color) = &self.color {
+            let color = color.as_ref();
+            
             if color.starts_with('#') {
                 description_color.eq_ignore_ascii_case(&color[1..color.len()])
             } else {
@@ -188,7 +211,7 @@ impl Description {
     }
     
     /// Checks if description color matches string.
-    pub fn is_color_str(&self, color: &str) -> bool {
+    pub fn is_color_str<S: AsRef<str>>(&self, color: S) -> bool {
         self.is_color(color)
     }
 }

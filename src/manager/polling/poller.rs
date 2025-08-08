@@ -15,8 +15,7 @@ use steamid_ng::SteamID;
 /// [`TradeOffer`]. The second part is the previous [`TradeOfferState`] if this is not a newly
 /// encountered offer.
 pub type Poll = Vec<(TradeOffer, Option<TradeOfferState>)>;
-/// The result of a poll. Either containing a [`Poll`] or an [`Error`] if an error was encountered
-/// during a poll.
+/// The result of a poll.
 pub type Result = std::result::Result<Poll, Error>;
 
 const OFFERS_SINCE_BUFFER_SECONDS: i64 = 60 * 30;
@@ -192,7 +191,7 @@ impl Poller {
         // Only save if changes were detected.
         if self.poll_data.changed {
             self.poll_data.changed = false;
-            // It's really not a problem to await on this.
+            // This could be saved in a background task, but for simplicity, we await here.
             // Saving the file takes a negligible amount of time (usually under a ms on an SSD).
             let _ = file::save_poll_data(
                 self.steamid,

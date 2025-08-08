@@ -40,13 +40,6 @@ pub struct SteamTradeOfferAPIBuilder {
 
 impl Default for SteamTradeOfferAPIBuilder {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl SteamTradeOfferAPIBuilder {
-    /// Creates a new [`SteamTradeOfferAPIBuilder`].
-    pub fn new() -> Self {
         Self {
             api_key: None,
             access_token: None,
@@ -59,6 +52,13 @@ impl SteamTradeOfferAPIBuilder {
             user_agent: USER_AGENT_STRING,
             session: None,
         }
+    }
+}
+
+impl SteamTradeOfferAPIBuilder {
+    /// Creates a new [`SteamTradeOfferAPIBuilder`].
+    pub fn new() -> Self {
+        Self::default()
     }
     
     /// The API key. Some features will work without an API key and only require cookies, such as
