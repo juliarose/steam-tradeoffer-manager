@@ -81,15 +81,15 @@ impl MobileAPI {
         &self,
         confirmation: &Confirmation,
     ) -> Result<()> {
-        self.send_confirmation_ajax(&confirmation.id, &confirmation.nonce, Operation::Allow).await
+        self.send_confirmation_ajax(confirmation.id, confirmation.nonce, Operation::Allow).await
     }
-
+    
     /// Cancels a confirmation.
     pub async fn cancel_confirmation(
         &self,
         confirmation: &Confirmation,
     ) -> Result<()> {
-        self.send_confirmation_ajax(&confirmation.id, &confirmation.nonce, Operation::Cancel).await
+        self.send_confirmation_ajax(confirmation.id, confirmation.nonce, Operation::Cancel).await
     }
     
     /// Accepts a confirmation by ID.
@@ -98,7 +98,7 @@ impl MobileAPI {
         id: u64,
         nonce: u64,
     ) -> Result<()> {
-        self.send_confirmation_ajax(&id, &nonce, Operation::Allow).await
+        self.send_confirmation_ajax(id, nonce, Operation::Allow).await
     }
     
     /// Cancels a confirmation by ID.
@@ -107,7 +107,7 @@ impl MobileAPI {
         id: u64,
         nonce: u64,
     ) -> Result<()> {
-        self.send_confirmation_ajax(&id, &nonce, Operation::Cancel).await
+        self.send_confirmation_ajax(id, nonce, Operation::Cancel).await
     }
     
     /// Gets the trade confirmations.
@@ -134,19 +134,16 @@ impl MobileAPI {
         Ok(response.conf)
     }
     
-    fn get_confirmation_query_params<'a>(
+    fn get_confirmation_query_params(
         &self,
         tag: Tag,
-    ) -> Result<HashMap<&'a str, String>> {
+    ) -> Result<HashMap<&'static str, String>> {
         let steamid = self.get_steamid()?;
         let identity_secret = self.identity_secret.as_ref()
             .ok_or(ParameterError::NoIdentitySecret)?;
-        let (key, time) = generate_confirmation_key(
-            identity_secret,
-            tag,
-            Some(self.time_offset),
-        )?;
-        let mut params: HashMap<&str, String> = HashMap::new();
+        let time_offset = Some(self.time_offset);
+        let (key, time) = generate_confirmation_key(identity_secret, tag, time_offset)?;
+        let mut params: HashMap<&'static str, String> = HashMap::new();
         let device_id = get_device_id(u64::from(steamid));
         
         params.insert("p", device_id);
@@ -161,8 +158,8 @@ impl MobileAPI {
     
     async fn send_confirmation_ajax(
         &self,
-        id: &u64,
-        nonce: &u64,
+        id: u64,
+        nonce: u64,
         operation: Operation,
     ) -> Result<()>  {
         #[derive(Deserialize)]

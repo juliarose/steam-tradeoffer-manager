@@ -1,6 +1,7 @@
 use super::{NewTradeOfferItem, NewTradeOffer};
 use crate::SteamID;
 use crate::helpers::COMMUNITY_HOSTNAME;
+use url::Url;
 
 /// Builder for constructing new trade offers.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -52,7 +53,7 @@ impl NewTradeOfferBuilder {
     /// The trade offer URL for sending an offer if you are not friends with the partner. 
     /// Silently fails if the URL does not contain a token. If you want to check if the token
     /// was parsed successfully check if the `token` of the builder is `Some`.
-    pub fn trade_offer_url(mut self, trade_offer_url: &str) -> Self {
+    pub fn trade_offer_url<S: AsRef<str>>(mut self, trade_offer_url: S) -> Self {
         self.token = parse_offer_access_token(trade_offer_url);
         self
     }
@@ -75,8 +76,8 @@ impl NewTradeOfferBuilder {
     }
 }
         
-fn parse_offer_access_token(trade_offer_url: &str) -> Option<String> {
-    let url = url::Url::parse(trade_offer_url).ok()?;
+fn parse_offer_access_token<S: AsRef<str>>(trade_offer_url: S) -> Option<String> {
+    let url = trade_offer_url.as_ref().parse::<Url>().ok()?;
     let hostname = url.host_str();
     
     if hostname != Some(COMMUNITY_HOSTNAME) {
