@@ -22,6 +22,8 @@ const ERROR_NO_API_KEY: &str = "This account does not have an API key";
 /// A stand-alone method for getting a user's inventory. Optionally allows specifying a client to
 /// use for requests (useful if you need to proxy your requests, for example).
 /// 
+/// For trade-reversible items (CS2), make sure to pass `false` for `tradable_only`.
+/// 
 /// # Examples
 /// ```no_run
 /// use steam_tradeoffer_manager::get_inventory;

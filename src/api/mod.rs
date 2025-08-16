@@ -960,6 +960,8 @@ impl SteamTradeOfferAPI {
     /// 
     /// The number of items to fetch per request can be set using with
     /// [`crate::TradeOfferManagerBuilder::get_inventory_page_size`].
+    /// 
+    /// For trade-reversible items (CS2), make sure to pass `false` for `tradable_only`.
     pub async fn get_inventory(
         &self,
         steamid: SteamID,
