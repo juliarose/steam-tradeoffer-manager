@@ -1,8 +1,7 @@
 use super::TradeOfferManager;
-use crate::helpers::USER_AGENT_STRING;
-use crate::helpers::default_data_directory;
 use crate::ClassInfoCache;
 use crate::enums::Language;
+use crate::helpers::{default_data_directory, USER_AGENT_STRING};
 use crate::api::DEFAULT_GET_INVENTORY_PAGE_SIZE;
 use std::path::PathBuf;
 use std::sync::Arc;

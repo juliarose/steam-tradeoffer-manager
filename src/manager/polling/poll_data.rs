@@ -1,9 +1,9 @@
-use crate::time::{date_difference_from_now, ServerTime};
-use crate::types::TradeOfferId;
 use crate::enums::TradeOfferState;
+use crate::time::date_difference_from_now;
+use crate::types::{TradeOfferId, ServerTime};
 use std::collections::{HashMap, HashSet};
-use serde::{Serialize, Deserialize};
 use chrono::Duration;
+use serde::{Deserialize, Serialize};
 
 /// Used for storing account poll data.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

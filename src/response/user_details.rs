@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::cmp;
-use serde::{Serialize, Deserialize};
 
 /// Details for users.
 #[derive(Debug, Serialize, Deserialize, Clone)]

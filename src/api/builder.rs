@@ -1,7 +1,8 @@
 use super::{SteamTradeOfferAPI, DEFAULT_GET_INVENTORY_PAGE_SIZE};
-use crate::helpers::{Session, default_data_directory, USER_AGENT_STRING};
 use crate::ClassInfoCache;
 use crate::enums::Language;
+use crate::helpers::{default_data_directory, USER_AGENT_STRING};
+use crate::session::Session;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::RwLock;

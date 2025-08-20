@@ -1,11 +1,11 @@
+use crate::helpers::write_file_atomic;
 use crate::response::ClassInfo;
 use crate::error::FileError;
 use crate::types::{AppId, ClassInfoClass, ClassInfoAppClass};
-use crate::helpers::write_file_atomic;
-use std::path::{Path, PathBuf};
 use std::collections::HashSet;
-use serde_json::value::RawValue;
+use std::path::{Path, PathBuf};
 use futures::future::join_all;
+use serde_json::value::RawValue;
 
 type ClassInfoFile = (ClassInfoClass, ClassInfo);
 

@@ -6,10 +6,10 @@ mod poll_action;
 mod poller;
 mod poll_data;
 
-pub use poll_type::PollType;
 pub use poll_action::PollAction;
-pub use poller::{Result, Poll};
 pub use poll_data::PollData;
+pub use poll_type::PollType;
+pub use poller::{Poll, Result};
 /// The receiver for polling events.
 pub type PollReceiver = mpsc::Receiver<Result>;
 /// The sender for polling events.
@@ -17,12 +17,14 @@ pub type PollSender = mpsc::Sender<PollAction>;
 
 use poller::Poller;
 
-use crate::SteamID;
 use crate::api::SteamTradeOfferAPI;
+use crate::SteamID;
+
 use std::collections::HashMap;
 use std::sync::Arc;
-use chrono::{Duration, DateTime};
-use tokio::sync::{Mutex, mpsc};
+
+use chrono::{DateTime, Duration};
+use tokio::sync::{mpsc, Mutex};
 use tokio::task::JoinHandle;
 
 const DEFAULT_POLL_INTERVAL_SECONDS: i64 = 30;

@@ -7,23 +7,27 @@
 mod builder;
 mod operation;
 
+pub use builder::MobileAPIBuilder;
 use operation::Operation;
 
-pub use builder::MobileAPIBuilder;
-
 use crate::SteamID;
+use crate::error::{Error, ParameterError, Result, SetCookiesError};
+use crate::helpers::{
+    get_default_client,
+    get_session_from_cookies,
+    parses_response,
+    COMMUNITY_HOSTNAME,
+};
+use crate::session::Session;
 use crate::response::Confirmation;
-use crate::error::{Result, Error, ParameterError, SetCookiesError};
-use crate::helpers::{get_session_from_cookies, get_default_client, parses_response, Session};
-use crate::helpers::COMMUNITY_HOSTNAME;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::sync::atomic::{Ordering, AtomicU64};
-use another_steam_totp::{Tag, get_device_id, generate_confirmation_key};
-use serde::Deserialize;
+use std::sync::atomic::{AtomicU64, Ordering};
+use another_steam_totp::{generate_confirmation_key, get_device_id, Tag};
 use reqwest::cookie::Jar;
-use url::Url;
 use reqwest_middleware::ClientWithMiddleware;
+use serde::Deserialize;
+use url::Url;
 
 /// The API for mobile confirmations.
 #[derive(Debug, Clone)]

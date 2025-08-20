@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
 use strum_macros::Display;
+use serde::{Deserialize, Serialize};
 
 /// The type of confirmation.
 #[derive(Debug, Serialize, Deserialize, Display, PartialEq, Clone, Copy)]

@@ -1,6 +1,6 @@
-use num_enum::{TryFromPrimitive, IntoPrimitive};
-use serde_repr::{Serialize_repr, Deserialize_repr};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use strum_macros::{Display, EnumString};
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 /// The state of a trade offer.
 #[derive(Debug, Serialize_repr, Deserialize_repr, Display, EnumString, PartialEq, TryFromPrimitive, IntoPrimitive, Clone, Copy)]

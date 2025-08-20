@@ -3,13 +3,13 @@
 use crate::response::ClassInfo;
 use crate::types::{ClassId, ClassInfoAppClass, ClassInfoAppMap, ClassInfoMap};
 use std::collections::HashMap;
+use std::fmt::{self, Display};
+use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
-use std::marker::PhantomData;
-use std::fmt::{self, Display};
+use serde::{Deserialize, Serializer};
+use serde::de::{self, Deserializer, MapAccess, SeqAccess, Unexpected, Visitor};
 use steamid_ng::SteamID;
-use serde::{Serializer, Deserialize};
-use serde::de::{self, MapAccess, Visitor, SeqAccess, Deserializer, Unexpected};
 
 pub fn empty_string_is_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
 where

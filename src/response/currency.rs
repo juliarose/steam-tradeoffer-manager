@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Currency.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]

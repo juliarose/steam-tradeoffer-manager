@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// The result returned after accepting a trade offer.
 #[derive(Debug, Serialize, Deserialize, Clone)]

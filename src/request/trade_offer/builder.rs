@@ -1,6 +1,6 @@
-use super::{NewTradeOfferItem, NewTradeOffer};
-use crate::SteamID;
+use super::{NewTradeOffer, NewTradeOfferItem};
 use crate::helpers::COMMUNITY_HOSTNAME;
+use crate::SteamID;
 use url::Url;
 
 /// Builder for constructing new trade offers.

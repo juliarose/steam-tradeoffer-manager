@@ -1,6 +1,8 @@
 //! This is the underlying API for the manager. In most cases you should stick to using the
 //! manager, but if you need more control over the requests, you can use this API directly.
 
+pub use builder::SteamTradeOfferAPIBuilder;
+
 pub mod response;
 pub mod request;
 
@@ -8,33 +10,30 @@ mod builder;
 mod response_wrappers;
 mod helpers;
 
-/// The default number of items to fetch per page when getting inventories.
 pub(crate) const DEFAULT_GET_INVENTORY_PAGE_SIZE: u32 = 2000;
 
 use response::*;
 use response_wrappers::*;
 
-pub use builder::SteamTradeOfferAPIBuilder;
-
-use crate::SteamID;
-use crate::helpers::get_default_client;
-use crate::types::*;
-use crate::response::*;
-use crate::enums::{Language, GetUserDetailsMethod};
-use crate::static_functions::get_inventory;
-use crate::serialize;
-use crate::helpers::{parses_response, get_session_from_cookies, Session};
-use crate::helpers::{COMMUNITY_HOSTNAME, WEB_API_HOSTNAME};
-use crate::error::{Result, Error, ParameterError, MissingClassInfoError, SetCookiesError};
 use crate::classinfo_cache::{ClassInfoCache, helpers as classinfo_cache_helpers};
+use crate::enums::{Language, GetUserDetailsMethod};
+use crate::error::{Result, Error, ParameterError, MissingClassInfoError, SetCookiesError};
+use crate::helpers::{COMMUNITY_HOSTNAME, WEB_API_HOSTNAME};
+use crate::helpers::{get_default_client, parses_response, get_session_from_cookies};
 use crate::request::{GetInventoryOptions, NewTradeOffer, NewTradeOfferItem, GetTradeHistoryOptions};
-use std::path::PathBuf;
+use crate::response::*;
+use crate::serialize;
+use crate::session::Session;
+use crate::static_functions::get_inventory;
+use crate::types::*;
+use crate::SteamID;
 use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
-use serde::{Deserialize, Serialize};
+use lazy_regex::{regex_captures, regex_is_match};
 use reqwest::cookie::Jar;
 use reqwest::header::REFERER;
-use lazy_regex::{regex_captures, regex_is_match};
+use serde::{Deserialize, Serialize};
 use url::Url;
 
 /// The underlying API for interacting with Steam trade offers.
@@ -969,8 +968,6 @@ impl SteamTradeOfferAPI {
         contextid: ContextId,
         tradable_only: bool,
     ) -> Result<Vec<Asset>> {
-        let access_token = self.get_access_token().ok();
-        
         get_inventory(&GetInventoryOptions {
             client: &self.client,
             steamid,
@@ -979,7 +976,6 @@ impl SteamTradeOfferAPI {
             tradable_only,
             language: self.language,
             page_size: self.get_inventory_page_size,
-            access_token,
         }).await
     }
     

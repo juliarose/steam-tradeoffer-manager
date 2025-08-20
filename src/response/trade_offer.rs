@@ -1,12 +1,12 @@
 use super::asset::Asset;
-use crate::SteamID;
-use crate::time::ServerTime;
-use crate::enums::{TradeOfferState, ConfirmationMethod};
-use crate::types::{TradeId, TradeOfferId};
+use crate::enums::{ConfirmationMethod, TradeOfferState};
 use crate::serialize;
+use crate::time::ServerTime;
+use crate::types::{TradeId, TradeOfferId};
+use crate::SteamID;
 use std::fmt;
-use serde::{Deserialize, Serialize};
 use chrono::serde::ts_seconds;
+use serde::{Deserialize, Serialize};
 
 /// Trade offer.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]

@@ -29,13 +29,16 @@
 #![warn(missing_docs)]
 extern crate lazy_static;
 
+// Internal modules
 mod manager;
 mod serialize;
 mod helpers;
 mod classinfo_cache;
 mod time;
+mod session;
 mod static_functions;
 
+// Public modules
 pub mod error;
 pub mod request;
 pub mod response;
@@ -44,10 +47,12 @@ pub mod types;
 pub mod api;
 pub mod mobile_api;
 
+// Re-exports for convenience
 pub use static_functions::get_inventory;
 pub use classinfo_cache::ClassInfoCache;
 pub use manager::{TradeOfferManager, TradeOfferManagerBuilder};
 
+// Polling-related exports in a dedicated submodule
 pub mod polling {
     //! Models related to polling trade offers.
     pub use super::manager::polling::{
@@ -61,6 +66,7 @@ pub mod polling {
     };
 }
 
+// External crate re-exports
 pub use reqwest;
 pub use reqwest_middleware;
 pub use chrono;

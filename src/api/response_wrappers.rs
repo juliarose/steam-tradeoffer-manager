@@ -2,13 +2,14 @@
 
 use super::response as api_response;
 use super::RawTrade;
+use crate::response;
+use crate::serialize;
 use crate::types::{ClassInfoAppClass, ClassInfoMap};
-use crate::{response, serialize};
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::fmt;
+use std::sync::Arc;
+use serde::de::{Deserializer, MapAccess, SeqAccess, Visitor};
 use serde::Deserialize;
-use serde::de::{MapAccess, Visitor, SeqAccess, Deserializer};
 use serde_json::value::RawValue;
 
 type RgInventory = HashMap<String, api_response::RawAssetOld>;

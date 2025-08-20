@@ -1,13 +1,13 @@
 //! Error types.
 
+use crate::enums::TradeOfferState;
+use crate::types::*;
+
 use std::num::ParseIntError;
 
 pub use another_steam_totp::Error as TOTPError;
-pub use reqwest::Error as ReqwestError;
 pub use anyhow::Error as AnyhowError;
-
-use crate::enums::TradeOfferState;
-use crate::types::*;
+pub use reqwest::Error as ReqwestError;
 
 /// Result type returned by most methods in this crate.
 pub(crate) type Result<T> = std::result::Result<T, Error>;

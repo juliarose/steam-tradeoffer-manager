@@ -1,12 +1,12 @@
 use super::response as api_response;
 use super::SteamTradeOfferAPI;
-use crate::error::{MissingClassInfoError, ParseHtmlError, ParameterError};
-use crate::SteamID;
-use crate::types::ClassInfoMap;
 use crate::response::{self, User, UserDetails};
+use crate::types::ClassInfoMap;
+use crate::SteamID;
+use crate::error::{MissingClassInfoError, ParseHtmlError, ParameterError};
 use std::sync::Arc;
-use lazy_regex::Regex;
 use lazy_regex::regex_captures;
+use lazy_regex::Regex;
 
 pub fn offer_referer_url(
     pathname: &str,

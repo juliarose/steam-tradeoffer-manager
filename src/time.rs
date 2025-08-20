@@ -1,5 +1,5 @@
 use std::time::SystemTime;
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Duration, Utc};
 
 /// The datetime format used for requests and responses.
 pub type ServerTime = DateTime<Utc>;

@@ -1,9 +1,8 @@
-use crate::types::{AppId, ClassId, InstanceId};
 use crate::serialize;
-use crate::types::ServerTime;
+use crate::types::{AppId, ClassId, InstanceId, ServerTime};
+use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
 use std::hash::Hash;
-use serde::{Serialize, Deserialize};
 
 /// Contains details about an item including names and descriptions.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]

@@ -1,9 +1,9 @@
+use crate::serialize;
 use crate::enums::ConfirmationType;
 use crate::types::ServerTime;
-use crate::serialize;
 use std::fmt;
 use chrono::serde::ts_seconds;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Mobile confirmation. Used primarily for confirming trade offers or listing items on the market.
 #[derive(Debug, Serialize, Deserialize, PartialEq,  Clone)]

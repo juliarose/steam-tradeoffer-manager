@@ -48,11 +48,10 @@ pub async fn get_inventory<'a>(
     options: &GetInventoryOptions<'a>,
 ) -> Result<Vec<Asset>, Error> { 
     #[derive(Serialize)]
-    struct Query<'a, 'b> {
+    struct Query<'a> {
         l: &'a str,
         count: u32,
         start_assetid: Option<u64>,
-        access_token: Option<&'b String>,
     }
     
     let mut responses: Vec<GetInventoryResponse> = Vec::new();
@@ -70,7 +69,6 @@ pub async fn get_inventory<'a>(
                 l: options.language.api_language_code(),
                 count: options.page_size,
                 start_assetid,
-                access_token: options.access_token.as_ref(),
             })
             .send()
             .await?;

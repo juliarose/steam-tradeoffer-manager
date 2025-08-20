@@ -5,20 +5,20 @@ pub use builder::TradeOfferManagerBuilder;
 use polling::{Polling, PollOptions, PollReceiver, PollSender};
 
 use crate::api::request::GetTradeOffersOptions;
-use crate::time;
-use crate::types::ServerTime;
 use crate::api::SteamTradeOfferAPI;
-use crate::mobile_api::MobileAPI;
-use crate::static_functions::get_api_key;
-use crate::helpers::get_default_client;
-use crate::error::{Result, Error, ParameterError, SetCookiesError};
-use crate::request::{NewTradeOffer, GetTradeHistoryOptions};
 use crate::enums::{TradeOfferState, OfferFilter, GetUserDetailsMethod};
-use crate::types::{AppId, ContextId, TradeOfferId};
+use crate::error::{Result, Error, ParameterError, SetCookiesError};
+use crate::helpers::get_default_client;
+use crate::mobile_api::MobileAPI;
+use crate::request::{NewTradeOffer, GetTradeHistoryOptions};
 use crate::response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Confirmation, Trades};
+use crate::static_functions::get_api_key;
+use crate::time;
+use crate::types::{AppId, ContextId, TradeOfferId};
+use crate::types::ServerTime;
 use std::sync::{Arc, Mutex, RwLock};
-use steamid_ng::SteamID;
 use tokio::task::JoinHandle;
+use steamid_ng::SteamID;
 
 /// Manager which includes functionality for interacting with trade offers, confirmations and
 /// inventories.

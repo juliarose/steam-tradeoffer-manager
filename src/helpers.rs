@@ -1,22 +1,23 @@
 // This module is a bit disorganized but contains various utility functions and types. 
 
-use crate::types::HttpClient;
 use crate::error::{Error, SetCookiesError, TradeOfferError};
+use crate::types::HttpClient;
+use crate::session::Session;
+use std::fmt::Write;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::fmt::Write;
+use async_fs::File;
 use bytes::Bytes;
-use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
+use directories::BaseDirs;
+use futures::io::AsyncWriteExt;
+use lazy_regex::{regex_captures, regex_is_match};
+use lazy_static::lazy_static;
+use reqwest::cookie::{CookieStore, Jar};
 use reqwest::header;
-use reqwest::cookie::{Jar, CookieStore};
-use serde::de::{self, MapAccess, Visitor, DeserializeOwned, Deserializer};
+use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
+use serde::de::{self, DeserializeOwned, Deserializer, MapAccess, Visitor};
 use serde::Deserialize;
 use serde_json::de::SliceRead;
-use lazy_regex::{regex_captures, regex_is_match};
-use async_fs::File;
-use futures::io::AsyncWriteExt;
-use lazy_static::lazy_static;
-use directories::BaseDirs;
 
 lazy_static! {
     pub static ref DEFAULT_CLIENT: HttpClient = {
@@ -32,21 +33,10 @@ pub(crate) const COMMUNITY_HOSTNAME: &str = "steamcommunity.com";
 pub(crate) const WEB_API_HOSTNAME: &str = "api.steampowered.com";
 
 #[derive(Debug, Clone)]
-pub(crate) struct CookiesData {
+pub struct CookiesData {
     pub sessionid: Option<String>,
     pub steamid: u64,
     pub access_token: String,
-}
-
-/// Session data from cookies.
-#[derive(Debug, Clone, Default)]
-pub struct Session {
-    /// The session ID.
-    pub sessionid: String,
-    /// The access token for trade offers.
-    pub access_token: String,
-    /// The Steam ID of the user.
-    pub steamid: u64,
 }
 
 #[derive(Debug, Default)]

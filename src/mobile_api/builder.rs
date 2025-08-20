@@ -1,5 +1,6 @@
 use super::MobileAPI;
-use crate::helpers::{Session, USER_AGENT_STRING};
+use crate::helpers::USER_AGENT_STRING;
+use crate::session::Session;
 use std::sync::{Arc, RwLock};
 use reqwest::cookie::Jar;
 use reqwest_middleware::ClientWithMiddleware;

@@ -1,8 +1,8 @@
+use crate::serialize;
+use crate::types::{Amount, AppId, AssetId, ContextId};
 use crate::api::response::RawAsset;
 use crate::response::Asset;
-use crate::types::{AppId, ContextId, AssetId, Amount};
-use crate::serialize;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// An item to send in a trade offer.
 #[derive(Deserialize, Serialize, Debug, Clone, Default, Eq, PartialEq)]
