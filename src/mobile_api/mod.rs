@@ -1,5 +1,6 @@
-//! This is the underlying mobile API for the manager. In most cases you should stick to using the
-//! manager, but if you need more control over the requests, you can use this API directly.
+//! This is the underlying mobile API for the manager. You generally shouldn't need to use this,
+//! but if you want more direct control over the requests or only care about the mobile API
+//! features, you can use this API directly.
 
 // Most of the code here is taken from https://github.com/dyc3/steamguard-cli with some
 // modifications to fit with the rest of this crate.

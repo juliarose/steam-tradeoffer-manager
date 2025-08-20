@@ -8,10 +8,12 @@
 
 ### Added
 - `access_token` to `TradeOfferManagerBuilder` and `SteamTradeOfferAPIBuilder`. This can be used for authenticated requests to the Steam API.
-- `access_token` to `GetInventoryOptions`.
 - `page_size` to `GetInventoryOptions`.
 - `owner_descriptions` to `ClassInfo`.
 - `sealed` to `ClassInfo`.
+
+### Changed
+- Several error types.
 
 ## 0.4.1 (2024-12-25)
 

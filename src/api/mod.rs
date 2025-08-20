@@ -1,5 +1,5 @@
-//! This is the underlying API for the manager. In most cases you should stick to using the
-//! manager, but if you need more control over the requests, you can use this API directly.
+//! This is the underlying API for the manager. You generally shouldn't need to use this, but if
+//! you want more direct control over the requests, you can use this API directly.
 
 pub use builder::SteamTradeOfferAPIBuilder;
 
@@ -198,7 +198,6 @@ impl SteamTradeOfferAPI {
                 Some(id) => id.to_string(),
                 None => String::from("new"),
             };
-            
             
             helpers::offer_referer_url(&pathname, offer.partner, &offer.token.as_deref())?
         };
@@ -760,12 +759,12 @@ impl SteamTradeOfferAPI {
         partner: SteamID,
         method: T,
     ) -> Result<UserDetails> 
-        where T: Into<GetUserDetailsMethod>,
+    where
+        T: Into<GetUserDetailsMethod>,
     {
         let uri = {
             let method = method.into();
             let pathname = method.pathname();
-            
             
             helpers::offer_referer_url(&pathname, partner, &method.token())?
         };

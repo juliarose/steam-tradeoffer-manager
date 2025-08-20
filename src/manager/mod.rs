@@ -359,7 +359,8 @@ impl TradeOfferManager {
         partner: SteamID,
         method: T,
     ) -> Result<UserDetails> 
-        where T: Into<GetUserDetailsMethod>,
+    where
+        T: Into<GetUserDetailsMethod>,
     {
         self.api.get_user_details(partner, method).await
     }
@@ -531,6 +532,16 @@ impl TradeOfferManager {
         options: &GetTradeHistoryOptions,
     ) -> Result<Trades> {
         self.api.get_trade_history(options).await
+    }
+    
+    /// Gets a reference to the underlying API.
+    pub fn api(&self) -> &SteamTradeOfferAPI {
+        &self.api
+    }
+    
+    /// Gets a reference to the underlying mobile API.
+    pub fn mobile_api(&self) -> &MobileAPI {
+        &self.mobile_api
     }
 }
 
