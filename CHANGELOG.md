@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0 (2025-07-18)
+## 0.5.0 (2025-08-20)
 
 ### Changed
 - Bumped `another-steam-totp` to `0.4`.
