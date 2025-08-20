@@ -1,4 +1,4 @@
-use strum_macros::Display;
+use strum::Display;
 use serde::{Deserialize, Serialize};
 
 /// The type of confirmation.

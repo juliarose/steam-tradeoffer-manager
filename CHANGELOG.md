@@ -11,6 +11,7 @@
 - `page_size` to `GetInventoryOptions`.
 - `owner_descriptions` to `ClassInfo`.
 - `sealed` to `ClassInfo`.
+- `api` and `mobile_api` methods to `TradeOfferManager`.
 
 ### Changed
 - Several error types.

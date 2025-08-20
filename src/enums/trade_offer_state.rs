@@ -1,5 +1,5 @@
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use strum_macros::{Display, EnumString};
+use strum::{Display, EnumString};
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 /// The state of a trade offer.

@@ -18,16 +18,14 @@ pub type TradeOfferId = u64;
 /// An ID of a trade.
 pub type TradeId = u128;
 
-
 pub use crate::time::ServerTime;
 
 // Types internally used by the crate.
 use crate::response::ClassInfo;
 use std::sync::Arc;
 use std::collections::HashMap;
-use reqwest_middleware::ClientWithMiddleware;
 
-pub(crate) type HttpClient = ClientWithMiddleware;
+pub(crate) type HttpClient = reqwest_middleware::ClientWithMiddleware;
 pub(crate) type ClassInfoClass = (AppId, ClassId, InstanceId);
 pub(crate) type ClassInfoMap = HashMap<ClassInfoClass, Arc<ClassInfo>>;
 pub(crate) type ClassInfoAppClass = (ClassId, InstanceId);
