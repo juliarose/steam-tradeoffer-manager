@@ -58,8 +58,8 @@ pub fn parse_user_details(
         }
     }
     
-    // This probably works for the most part. It may have issues on certain strings so it's excluded
-    // for now.
+    // This probably works for the most part. It may have issues on certain strings so it's
+    // excluded for now.
     // fn get_persona_names(contents: &str) -> Result<(String, String), ParseHtmlError> {
     //     let my_persona_name = regex_captures!(r#"var g_strYourPersonaName = "(?:[^"\\]|\\.)*";\n"#, contents)
     //         .map(|(_, name)| unescape(name))
@@ -73,7 +73,10 @@ pub fn parse_user_details(
     //     Ok((my_persona_name, them_persona_name))
     // }
     
-    if let Some((_, _contents)) = regex_captures!(r#"\n\W*<script type="text/javascript">\W*\r?\n?(\W*var g_rgAppContextData[\s\S]*)</script>"#, body) {
+    if let Some((
+        _,
+        _contents,
+    )) = regex_captures!(r#"\n\W*<script type="text/javascript">\W*\r?\n?(\W*var g_rgAppContextData[\s\S]*)</script>"#, body) {
         let my_escrow_days = get_days(
             regex_captures!(r#"var g_daysMyEscrow = (\d+);"#, body)
         );
@@ -100,7 +103,8 @@ pub fn parse_receipt_script(
     Regex::new(r#"oItem\s*=\s*(\{.*\});\s*\n"#)
         .map_err(|_| ParseHtmlError::Malformed("Invalid regexp"))?
         .captures_iter(script)
-        // filter out the matches that can't be parsed (e.g. if there are too many digits to store in an i64).
+        // filter out the matches that can't be parsed
+        // (e.g. if there are too many digits to store in an i64).
         .map(|capture| if let Some(m) = capture.get(1) {
             let asset = serde_json::from_str::<api_response::RawReceiptAsset>(m.as_str())?;
             

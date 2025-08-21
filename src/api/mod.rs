@@ -135,7 +135,9 @@ impl SteamTradeOfferAPI {
         let session = get_session_from_cookies(&mut cookies)?;
         // Should not panic since the URL is hardcoded.
         let url = format!("https://{}", Self::HOSTNAME).parse::<Url>()
-            .unwrap_or_else(|error| panic!("URL could not be parsed from {}: {}", Self::HOSTNAME, error));
+            .unwrap_or_else(|error| {
+                panic!("URL could not be parsed from {}: {}", Self::HOSTNAME, error)
+            });
         
         *self.session.write().unwrap() = Some(session);
         
@@ -254,11 +256,17 @@ impl SteamTradeOfferAPI {
             .await?;
         let body = response.text().await?;
         
-        if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &body) {
+        if let Some((
+            _,
+            message,
+        )) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &body) {
            return Err(Error::UnexpectedResponse(message.trim().into()));
         }
         
-        if let Some((_, script)) = regex_captures!(r#"(var oItem;[\s\S]*)</script>"#, &body) {
+        if let Some((
+            _,
+            script,
+        )) = regex_captures!(r#"(var oItem;[\s\S]*)</script>"#, &body) {
             let raw_assets = helpers::parse_receipt_script(script)?;
             let classes = raw_assets
                 .iter()
@@ -918,7 +926,9 @@ impl SteamTradeOfferAPI {
             if body.more_items {
                 // shouldn't occur, but we wouldn't want to call this endlessly if it does...
                 if body.more_start == start {
-                    return Err(Error::MalformedResponse("Pagination cursor is the same as the previous response."));
+                    return Err(Error::MalformedResponse(
+                        "Pagination cursor is the same as the previous response."
+                    ));
                 }
                 
                 start = body.more_start;
@@ -1025,7 +1035,9 @@ impl SteamTradeOfferAPI {
             if body.more_items {
                 // shouldn't occur, but we wouldn't want to call this endlessly if it does...
                 if body.last_assetid == start_assetid {
-                    return Err(Error::MalformedResponse("Pagination cursor is the same as the previous response."));
+                    return Err(Error::MalformedResponse(
+                        "Pagination cursor is the same as the previous response."
+                    ));
                 }
                 
                 start_assetid = body.last_assetid;

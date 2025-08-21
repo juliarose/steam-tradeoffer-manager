@@ -74,7 +74,11 @@ pub fn extract_auth_data_from_cookies(
     let mut access_token = None;
      
     for cookie in cookies {
-        if let Some((_, key, value)) = regex_captures!(r#"([^=]+)=(.+)"#, cookie) {
+        if let Some((
+            _,
+            key,
+            value,
+        )) = regex_captures!(r#"([^=]+)=(.+)"#, cookie) {
             match key {
                 "sessionid" => sessionid = Some(value.to_string()),
                 "steamLoginSecure" => if let Some((
@@ -82,7 +86,9 @@ pub fn extract_auth_data_from_cookies(
                     steamid_str,
                     access_token_str,
                 )) = regex_captures!(r#"^(\d{17})%7C%7C([^;]+)"#, value) {
-                    steamid = steamid_str.parse::<u64>().map_err(SetCookiesError::InvalidSteamID)?;
+                    steamid = steamid_str
+                        .parse::<u64>()
+                        .map_err(SetCookiesError::InvalidSteamID)?;
                     access_token = Some(access_token_str.to_string());
                 } else {
                     return Err(SetCookiesError::MissingAccessToken);
@@ -166,7 +172,10 @@ where
 {
     let mut headers = header::HeaderMap::new();
     
-    headers.insert(header::USER_AGENT, header::HeaderValue::from_static(user_agent_string));
+    headers.insert(
+        header::USER_AGENT,
+        header::HeaderValue::from_static(user_agent_string),
+    );
     
     let client = reqwest::ClientBuilder::new()
         .cookie_provider(cookie_store)
@@ -357,12 +366,15 @@ where
             let html = String::from_utf8_lossy(&bytes);
             
             if html.contains(r#"<h1>Sorry!</h1>"#) {
-                return if let Some((_, message)) = regex_captures!("<h3>(.+)</h3>", &html) {
+                return if let Some((
+                    _,
+                    message,
+                )) = regex_captures!("<h3>(.+)</h3>", &html) {
                     Err(Error::UnexpectedResponse(message.into()))
                 } else {
                     Err(Error::MalformedResponseWithBody(
-                        "Steam returned an HTML response but an error message could not be detected (an <h3> tag was \
-                        expected but was not found)",
+                        "Steam returned an HTML response but an error message could not be \
+                        detected (an <h3> tag was expected but was not found)",
                         html.into()
                     ))
                 };
@@ -381,7 +393,10 @@ where
                 return Err(Error::NotLoggedIn);
             }
             
-            if let Some((_, message)) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
+            if let Some((
+                _,
+                message,
+            )) = regex_captures!(r#"<div id="error_msg">\s*([^<]+)\s*</div>"#, &html) {
                 return Err(Error::TradeOffer(TradeOfferError::from(message)));
             }
             
