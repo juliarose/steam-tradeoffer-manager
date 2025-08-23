@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1 (2025-09-15)
+
+### Changed
+- Fixed typo where some requests were passing "acccess_token" instead of "access_token".
+
 ## 0.5.0 (2025-08-20)
 
 ### Changed

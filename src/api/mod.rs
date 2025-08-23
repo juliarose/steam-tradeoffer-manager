@@ -616,7 +616,7 @@ impl SteamTradeOfferAPI {
         #[derive(Serialize)]
         struct Form<'a, 'b> {
             key: Option<&'a String>,
-            acccess_token: Option<&'b String>,
+            access_token: Option<&'b String>,
             tradeofferid: TradeOfferId,
         }
         
@@ -635,7 +635,7 @@ impl SteamTradeOfferAPI {
         let response = self.client.get(&uri)
             .query(&Form {
                 key,
-                acccess_token: access_token.as_ref(),
+                access_token: access_token.as_ref(),
                 tradeofferid,
             })
             .send()
@@ -717,7 +717,7 @@ impl SteamTradeOfferAPI {
         #[derive(Serialize)]
         struct Form<'a> {
             key: Option<&'a String>,
-            acccess_token: Option<&'a String>,
+            access_token: Option<&'a String>,
             max_trades: u32,
             start_after_time: Option<u32>,
             start_after_tradeid: Option<TradeId>,
@@ -744,7 +744,7 @@ impl SteamTradeOfferAPI {
         let response = self.client.get(&uri)
             .query(&Form {
                 key,
-                acccess_token: access_token.as_ref(),
+                access_token: access_token.as_ref(),
                 max_trades,
                 start_after_time,
                 start_after_tradeid,
