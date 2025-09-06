@@ -24,7 +24,7 @@ pub struct TradeOffer {
     /// The [`SteamID`] of our partner.
     pub partner: SteamID,
     /// The message included in the offer. If the message is empty or not present this will be
-    /// `None`.
+    /// [`None`].
     pub message: Option<String>,
     /// The items we're receiving in this offer.
     pub items_to_receive: Vec<Asset>,
@@ -45,7 +45,7 @@ pub struct TradeOffer {
     pub time_updated: ServerTime,
     /// The state of this offer.
     pub trade_offer_state: TradeOfferState,
-    /// The end date if this trade is in escrow. `None` when this offer is not in escrow.
+    /// The end date if this trade is in escrow. [`None`] when this offer is not in escrow.
     #[serde(with = "serialize::ts_seconds_option_none_when_zero")]
     pub escrow_end_date: Option<ServerTime>,
     /// The confirmation method for this offer.

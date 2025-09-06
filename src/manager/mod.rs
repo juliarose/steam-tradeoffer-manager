@@ -97,7 +97,7 @@ impl TradeOfferManager {
         Ok(())
     }
     
-    /// Gets the logged-in user's [`SteamID`]. `None` if you are not logged in. Make sure your
+    /// Gets the logged-in user's [`SteamID`]. [`None`] if you are not logged in. Make sure your
     /// cookies are set.
     pub fn get_steamid(
         &self,
@@ -321,16 +321,17 @@ impl TradeOfferManager {
     /// Gets our inventory. This method **does not** include untradable items.
     /// 
     /// # Errors
-    /// If the cookies are not set. (See [`TradeOfferManager::set_cookies`])
+    /// - If the cookies are not set. (See [`TradeOfferManager::set_cookies`])
     pub async fn get_my_inventory(
         &self,
         appid: AppId,
         contextid: ContextId,
+        tradable_only: bool,
     ) -> Result<Vec<Asset>> {
         let steamid = self.get_steamid()
             .ok_or(Error::NotLoggedIn)?;
         
-        self.api.get_inventory(steamid, appid, contextid, true).await
+        self.api.get_inventory(steamid, appid, contextid, tradable_only).await
     }
     
     /// Gets a user's inventory. This method **does not** include untradable items.
@@ -339,22 +340,43 @@ impl TradeOfferManager {
         steamid: SteamID,
         appid: AppId,
         contextid: ContextId,
+        tradable_only: bool,
     ) -> Result<Vec<Asset>> {
-        self.api.get_inventory(steamid, appid, contextid, true).await
-    }
-    
-    /// Gets a user's inventory including untradable items.
-    pub async fn get_inventory_with_untradables(
-        &self,
-        steamid: SteamID,
-        appid: AppId,
-        contextid: ContextId,
-    ) -> Result<Vec<Asset>> {
-        self.api.get_inventory(steamid, appid, contextid, false).await
+        self.api.get_inventory(steamid, appid, contextid, tradable_only).await
     }
     
     /// Gets escrow details for a user. The `method` for obtaining details can be a `tradeofferid`
-    /// or `access_token` or neither.
+    /// or an `access_token` or [`None`] (you don't need anything if the user is on your friend
+    /// list).
+    /// 
+    /// # Examples
+    /// ```no_run
+    /// use steam_tradeoffer_manager::{TradeOfferManager, SteamID};
+    /// use steam_tradeoffer_manager::types::TradeOfferId;
+    /// 
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let manager = TradeOfferManager::builder()
+    ///         .cookies(vec![
+    ///             "sessionid=blahblahblah".to_string(),
+    ///             "steamLoginSecure=blahblahblah".to_string(),
+    ///         ])
+    ///         .build();
+    ///     let steamid = SteamID::from(76561198000000000);
+    ///     // Get details using an access token.
+    ///     let details = manager.get_user_details(steamid, "YDafssHP").await?;
+    ///     
+    ///     println!("Has escrow? {}", details.has_escrow());
+    ///     
+    ///     // If you have a tradeofferid, you can use that too.
+    ///     let tradeofferid: TradeOfferId = 8386184234;
+    ///     let details = manager.get_user_details(steamid, tradeofferid).await?;
+    ///
+    ///     println!("Has escrow? {}", details.has_escrow());
+    ///     
+    ///     Ok(())
+    /// }
+    /// ```
     pub async fn get_user_details<T>(
         &self,
         partner: SteamID,
@@ -551,6 +573,7 @@ impl std::ops::Drop for TradeOfferManager {
         if let Ok(polling) = self.polling.lock() {
             if let Some(handle) = &*polling {
                 // Abort polling before dropping.
+                // I'm not really sure if this is necessary, but it doesn't hurt.
                 handle.abort();
             }
         }

@@ -25,7 +25,7 @@ pub struct RawTradeOffer {
     /// The [`SteamID`] of our partner.
     pub accountid_other: u32,
     /// The message included in the offer. If the message is empty or not present this will be
-    /// `None`.
+    /// [`None`].
     #[serde(default)]
     #[serde(deserialize_with = "serialize::empty_string_is_none")]
     pub message: Option<String>,
@@ -52,7 +52,7 @@ pub struct RawTradeOffer {
     pub time_updated: ServerTime,
     /// The state of this offer.
     pub trade_offer_state: TradeOfferState,
-    /// The end date if this trade is in escrow. `None` when this offer is not in escrow.
+    /// The end date if this trade is in escrow. [`None`] when this offer is not in escrow.
     #[serde(with = "serialize::ts_seconds_option_none_when_zero")]
     pub escrow_end_date: Option<ServerTime>,
     /// The confirmation method for this offer.
@@ -278,12 +278,12 @@ pub struct RawTradeAsset {
     /// The specific instance ID of the classinfo belonging to the class ID.
     #[serde(with = "serialize::option_string_0_as_none")]
     pub instanceid: InstanceId,
-    /// The context ID of the item received. `None` if this item has not yet finished
+    /// The context ID of the item received. [`None`] if this item has not yet finished
     /// transferring.
     #[serde(default)]
     #[serde(with = "serialize::option_string")]
     pub new_contextid: Option<ContextId>,
-    /// The unique asset ID of the item received. `None` if this item has not yet finished
+    /// The unique asset ID of the item received. [`None`] if this item has not yet finished
     /// transferring.
     #[serde(default)]
     #[serde(with = "serialize::option_string")]

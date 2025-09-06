@@ -1,3 +1,4 @@
+
 /// Method for obtaining a user's escrow details.
 #[derive(Debug, Clone)]
 pub enum GetUserDetailsMethod {

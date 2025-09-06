@@ -4,6 +4,10 @@
 
 ### Changed
 - `TradeOfferManager::get_steamid` now returns `Option<SteamID>` instead of `Result<SteamID>`.
+- `TradeOfferManager::get_my_inventory` and `TradeOfferManager::get_inventory` now takes a `tradable_only` parameter to specify whether to include untradable items.
+
+### Removed
+- `TradeOfferManager::get_inventory_with_untradables`.
 
 ## 0.5.1 (2025-09-15)
 

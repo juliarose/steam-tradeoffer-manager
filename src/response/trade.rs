@@ -68,11 +68,11 @@ pub struct TradeAsset {
     /// The amount. If this item is not stackable the amount will be `1`.
     #[serde(with = "serialize::string")]
     pub amount: Amount,
-    /// The context ID of the item received. `None` if this item has not yet finished transferring.
+    /// The context ID of the item received. [`None`] if this item has not yet finished transferring.
     #[serde(default)]
     #[serde(with = "serialize::option_string")]
     pub new_contextid: Option<ContextId>,
-    /// The unique asset ID of the item received. `None` if this item has not yet finished
+    /// The unique asset ID of the item received. [`None`] if this item has not yet finished
     /// transferring.
     #[serde(default)]
     #[serde(with = "serialize::option_string")]
