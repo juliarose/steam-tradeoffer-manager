@@ -318,7 +318,9 @@ impl TradeOfferManager {
         Ok(sent_offer)
     }
     
-    /// Gets our inventory. This method **does not** include untradable items.
+    /// Gets our inventory.
+    /// 
+    /// For trade-reversible items (CS2), make sure to pass `false` for `tradable_only`.
     /// 
     /// # Errors
     /// - If the cookies are not set. (See [`TradeOfferManager::set_cookies`])
@@ -334,7 +336,9 @@ impl TradeOfferManager {
         self.api.get_inventory(steamid, appid, contextid, tradable_only).await
     }
     
-    /// Gets a user's inventory. This method **does not** include untradable items.
+    /// Gets a user's inventory.
+    /// 
+    /// For trade-reversible items (CS2), make sure to pass `false` for `tradable_only`.
     pub async fn get_inventory(
         &self,
         steamid: SteamID,

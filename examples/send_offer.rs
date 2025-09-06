@@ -16,12 +16,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // using the `set_cookies` method on the manager.
         .cookies(cookies)
         .build();
-    let inventory = manager.get_inventory(
-        steamid,
-        440,
-        2,
-        true, // Only get tradable items.
-    ).await?;
+    let appid = 440; // Team Fortress 2
+    let contextid = 2;
+    let tradable_only = true;
+    let inventory = manager.get_inventory(steamid, appid, contextid, tradable_only).await?;
     let items = inventory.into_iter().take(5);
     let offer = NewTradeOffer::builder(steamid)
         // Any items that implement Into<NewTradeOfferItem> are fine.

@@ -966,8 +966,8 @@ impl SteamTradeOfferAPI {
     
     /// Gets a user's inventory.
     /// 
-    /// The number of items to fetch per request can be set using with
-    /// [`crate::TradeOfferManagerBuilder::get_inventory_page_size`].
+    /// The number of items to fetch per request can be set with
+    /// [`TradeOfferManagerBuilder::get_inventory_page_size`](crate::TradeOfferManagerBuilder::get_inventory_page_size).
     /// 
     /// For trade-reversible items (CS2), make sure to pass `false` for `tradable_only`.
     pub async fn get_inventory(
@@ -990,8 +990,10 @@ impl SteamTradeOfferAPI {
     
     /// Gets a user's inventory which includes `app_data` using the `GetAssetClassInfo` API.
     /// 
-    /// The number of items to fetch per request can be set using with
-    /// [`crate::TradeOfferManagerBuilder::get_inventory_page_size`].
+    /// The number of items to fetch per request can be set with
+    /// [`TradeOfferManagerBuilder::get_inventory_page_size`](crate::TradeOfferManagerBuilder::get_inventory_page_size).
+    /// 
+    /// For trade-reversible items (CS2), make sure to pass `false` for `tradable_only`.
     pub async fn get_inventory_with_classinfos(
         &self,
         steamid: SteamID,
