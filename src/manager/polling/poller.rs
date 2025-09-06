@@ -36,7 +36,8 @@ impl Poller {
     ) -> Result {
         let now = time::get_server_time_now();
         let mut offers_since = self.poll_data.offers_since
-            // Steam can be dumb and backdate a modified offer. We need to handle this by adding a buffer.
+            // Steam can be dumb and backdate a modified offer. We need to handle this by adding a
+            // buffer.
             .map(|date| date.timestamp() - OFFERS_SINCE_BUFFER_SECONDS)
             .unwrap_or(OFFERS_SINCE_ALL_TIMESTAMP);
         let mut active_only = true;

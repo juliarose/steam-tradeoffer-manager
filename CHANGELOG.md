@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0 (2025-10-10)
+
+### Changed
+- `TradeOfferManager::get_steamid` now returns `Option<SteamID>` instead of `Result<SteamID>`.
+
 ## 0.5.1 (2025-09-15)
 
 ### Changed

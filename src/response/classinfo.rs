@@ -25,8 +25,7 @@ pub struct ClassInfo {
     /// The name of the item on the Steam Community Market.
     pub market_name: String,
     /// The market hash name. This is used to link to the item on the Steam Community Market. This
-    /// is an empty string in some cases. For example, Steam coupons cannot be sold on the market
-    /// therefore have no market hash name.
+    /// is an empty string in some cases, like Steam coupons.
     #[serde(default)]
     pub market_hash_name: Option<String>,
     /// The color of the item's name.
@@ -161,13 +160,13 @@ impl ClassInfo {
     }
 }
 
-/// Color.
+/// The type used for colors.
 pub type Color = String;
 
 /// Description.
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Default)]
 pub struct Description {
-    /// Description type. Usually `"text"`or `"html"`. Not always present.
+    /// Description type. Usually `"text"` or `"html"`. Not always present.
     #[serde(default)]
     pub r#type: Option<String>,
     /// The description message.
@@ -212,6 +211,21 @@ impl Description {
     /// Checks if description color matches string.
     pub fn is_color_str<S: AsRef<str>>(&self, color: S) -> bool {
         self.is_color(color)
+    }
+    
+    /// Checks if description color matches another color (represented as a [`u32`]).
+    /// 
+    /// `false` if the description color can't be parsed as a [`u32`].
+    pub fn is_color_int(&self, color: u32) -> bool {
+        if let Some(description_color) = &self.color {
+            if let Ok(parsed) = u32::from_str_radix(description_color, 16) {
+                parsed == color
+            } else {
+                false
+            }
+        } else {
+            false
+        }
     }
 }
 

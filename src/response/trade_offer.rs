@@ -16,7 +16,9 @@ pub struct TradeOffer {
     pub tradeofferid: TradeOfferId,
     /// The trade ID for this offer. This should be present when the `trade_offer_state` of this
     /// offer is [`TradeOfferState::Accepted`]. It can also be present if the offer was accepted
-    /// but the trade is not yet complete. The trade should appear in your trade history.
+    /// but the trade is not yet complete. The trade should appear in your trade history, you can
+    /// use [`TradeOfferManager::get_trade_history`](crate::TradeOfferManager::get_trade_history) to
+    /// get it.
     #[serde(with = "serialize::option_string")]
     pub tradeid: Option<TradeId>,
     /// The [`SteamID`] of our partner.

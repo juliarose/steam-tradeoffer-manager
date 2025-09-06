@@ -72,7 +72,7 @@ impl TradeOfferManager {
     /// offers. Make sure your cookies are set before calling these methods.
     /// 
     /// # Errors
-    /// If the cookies do not contain a `steamLoginSecure` cookie that includes an access token.
+    /// - If the cookies do not contain a `steamLoginSecure` cookie that includes an access token.
     /// 
     /// # Examples
     /// ```no_run
@@ -97,22 +97,21 @@ impl TradeOfferManager {
         Ok(())
     }
     
-    /// Gets the logged-in user's [`SteamID`].
-    /// 
-    /// # Errors
-    /// If the cookies are not set. (See [`TradeOfferManager::set_cookies`])
+    /// Gets the logged-in user's [`SteamID`]. `None` if you are not logged in. Make sure your
+    /// cookies are set.
     pub fn get_steamid(
         &self,
-    ) -> Result<SteamID> {
-        self.mobile_api.get_steamid()
+    ) -> Option<SteamID> {
+        self.mobile_api.get_steamid().ok()
     }
     
-    /// Starts polling offers. Listen to the returned receiver for events. Use the returned sender
-    /// to send an action to the poller using [`steam_tradeoffer_manager::polling::PollAction`].
+    /// Starts polling offers. Listen to the returned receiver for events. Messages can be sent to
+    /// the polling task using [`PollAction`](crate::polling::PollAction).
     /// 
-    /// Call `stop_polling` to stop polling offers. Polling will also stop if either the receiver
-    /// or this [`TradeOfferManager`] are dropped. If this method is called again, the previous
-    /// polling task will be aborted.
+    /// Call [`TradeOfferManager::stop_polling`](crate::TradeOfferManager::stop_polling) to stop
+    /// polling offers. Polling will also stop if either the receiver or this [`TradeOfferManager`]
+    /// are dropped. If this method is called again, the previous polling task will be aborted and
+    /// a new one will be started.
     /// 
     /// # Examples
     /// ```no_run
@@ -179,7 +178,7 @@ impl TradeOfferManager {
     /// ```
     /// 
     /// # Errors
-    /// - If the API key is not set. (See [`TradeOfferManagerBuilder::get_api_key`])
+    /// - If the API key or an access token is not set.
     /// - If the cookies are not set. (See [`TradeOfferManager::set_cookies`])
     pub fn start_polling(
         &self,
@@ -189,7 +188,8 @@ impl TradeOfferManager {
             return Err(ParameterError::MissingApiKeyOrAccessToken.into());
         }
         
-        let steamid = self.get_steamid()?;
+        let steamid = self.get_steamid()
+            .ok_or(Error::NotLoggedIn)?;
         let mut polling = self.polling.lock().unwrap();
         
         if let Some(handle) = &*polling {
@@ -327,7 +327,8 @@ impl TradeOfferManager {
         appid: AppId,
         contextid: ContextId,
     ) -> Result<Vec<Asset>> {
-        let steamid = self.get_steamid()?;
+        let steamid = self.get_steamid()
+            .ok_or(Error::NotLoggedIn)?;
         
         self.api.get_inventory(steamid, appid, contextid, true).await
     }
