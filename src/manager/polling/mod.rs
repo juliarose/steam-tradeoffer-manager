@@ -25,7 +25,7 @@ use std::sync::Arc;
 
 use chrono::{DateTime, Duration};
 use tokio::sync::{mpsc, Mutex};
-use tokio::task::JoinHandle;
+use tokio_util::sync::CancellationToken;
 
 const DEFAULT_POLL_INTERVAL_SECONDS: i64 = 30;
 const DEFAULT_FULL_UPDATE_SECONDS: i64 = 5 * 60;
@@ -86,7 +86,7 @@ impl PollOptions {
 pub struct Polling {
     pub sender: mpsc::Sender<PollAction>,
     pub receiver: mpsc::Receiver<Result>,
-    pub handle: JoinHandle<()>,
+    pub cancellation_token: CancellationToken,
 }
 
 impl Polling {
@@ -99,6 +99,8 @@ impl Polling {
         // Sanity check the options.
         options.sanity_check();
         
+        let cancellation_token = CancellationToken::new();
+        let token = cancellation_token.clone();
         let poll_data = file::load_poll_data(
             steamid,
             &api.data_directory,
@@ -113,8 +115,9 @@ impl Polling {
             polling_sender,
             polling_receiver,
         ) = mpsc::channel::<Result>(10);
+        
         // This is the task that performs the polling.
-        let polling_handle = tokio::spawn(async move {
+        tokio::spawn(async move {
             // The asynchronous mutex allows only one poll to be performed at a time. This not only
             // ensures that the poller is not spammed with requests but also that the state is not
             // modified by multiple tasks at the same time.
@@ -125,35 +128,42 @@ impl Polling {
                 cancel_duration: options.cancel_duration,
                 poll_full_update_duration: options.poll_full_update_duration,
             }));
+            let poll_interval = options.poll_interval.to_std()
+                .unwrap_or(std::time::Duration::from_secs(DEFAULT_POLL_INTERVAL_SECONDS as u64));
+            
             // Task that listens for poll action events.
-            let handle = tokio::spawn(receive_poll_action_events(
+            tokio::spawn(receive_poll_action_events(
                 receiver,
                 polling_sender.clone(),
                 poller.clone(),
+                token.clone(),
             ));
-            let poll_interval = options.poll_interval.to_std()
-                .unwrap_or(std::time::Duration::from_secs(DEFAULT_POLL_INTERVAL_SECONDS as u64));
             
             // Performs polls.
             loop {
                 let poll = poller
                     .lock().await
-                    .do_poll(PollType::Auto).await;
+                    .do_poll(PollType::Auto)
+                    .await;
                 
-                match polling_sender.send(poll).await {
-                    Ok(_) => async_std::task::sleep(poll_interval).await,
+                if let Err(_error) = polling_sender.send(poll).await {
                     // The connection was closed or receiver stopped listening for events.
-                    Err(_error) => break,
+                    break;
+                }
+                
+                tokio::select! {
+                    // Breaks out of the loop and ends the task.
+                    _ = token.cancelled() => break,
+                    // Waits until the next poll interval before continuing.
+                    _ = async_std::task::sleep(poll_interval) => continue,
                 }
             }
-            
-            handle.abort();
         });
         
         Self {
             sender,
             receiver: polling_receiver,
-            handle: polling_handle,
+            cancellation_token,
         }
     }
 }
@@ -163,6 +173,7 @@ async fn receive_poll_action_events(
     mut receiver: mpsc::Receiver<PollAction>,
     sender: mpsc::Sender<Result>,
     poller: Arc<Mutex<Poller>>,
+    cancellation_token: CancellationToken,
 ) {
     /// Checks if a poll was called too recently. Mutates the `poll_events` map to update the last
     /// poll date to now.
@@ -187,24 +198,36 @@ async fn receive_poll_action_events(
     // To prevent spam.
     let mut poll_events: HashMap<PollType, DateTime<chrono::Utc>> = HashMap::new();
     
-    while let Some(message) = receiver.recv().await {
-        match message {
-            PollAction::DoPoll(poll_type) => {
-                // This type of poll was called too recently.
-                if is_called_too_recently(&mut poll_events, poll_type) {
-                    // Ignore it.
-                    continue;
-                }
-                
-                let poll = poller.lock().await.do_poll(poll_type).await;
-                
-                if sender.send(poll).await.is_err() {
-                    // They closed the connection.
+    loop {
+        tokio::select! {
+            // Breaks out of the loop and ends the task.
+            _ = cancellation_token.cancelled() => break,
+            message = receiver.recv() => {
+                if let Some(message) = message {
+                    match message {
+                        PollAction::DoPoll(poll_type) => {
+                            // To prevent spam.
+                            // This type of poll was called too recently.
+                            if is_called_too_recently(&mut poll_events, poll_type) {
+                                // Ignore it.
+                                continue;
+                            }
+                            
+                            let poll = poller.lock().await.do_poll(poll_type).await;
+                            
+                            if sender.send(poll).await.is_err() {
+                                // They closed the connection.
+                                break;
+                            }
+                        },
+                        // Breaks out of the loop and ends the task.
+                        PollAction::StopPolling => break,
+                    }
+                } else {
+                    // The sender was dropped
                     break;
                 }
-            },
-            // Breaks out of the loop and ends the task.
-            PollAction::StopPolling => break,
+            }
         }
     }
 }

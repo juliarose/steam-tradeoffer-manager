@@ -17,7 +17,7 @@ use crate::time;
 use crate::types::{AppId, ContextId, TradeOfferId};
 use crate::types::ServerTime;
 use std::sync::{Arc, Mutex, RwLock};
-use tokio::task::JoinHandle;
+use tokio_util::sync::{CancellationToken, DropGuard};
 use steamid_ng::SteamID;
 
 /// Manager which includes functionality for interacting with trade offers, confirmations and
@@ -29,7 +29,7 @@ pub struct TradeOfferManager {
     /// The underlying API for mobile confirmations.
     mobile_api: MobileAPI,
     /// The task handle for polling offers.
-    polling: Arc<Mutex<Option<JoinHandle<()>>>>,
+    polling: Arc<Mutex<Option<(CancellationToken, DropGuard)>>>,
 }
 
 impl TradeOfferManager {
@@ -192,22 +192,23 @@ impl TradeOfferManager {
             .ok_or(Error::NotLoggedIn)?;
         let mut polling = self.polling.lock().unwrap();
         
-        if let Some(handle) = &*polling {
-            // Abort the previous polling.
-            handle.abort();
+        if let Some((token, _)) = &*polling {
+            // Cancels the previous polling task.
+            token.cancel();
         }
         
         let Polling {
             sender,
             receiver,
-            handle,
+            cancellation_token,
         } = Polling::new(
             steamid,
             self.api.clone(),
             options,
         );
+        let drop_guard = cancellation_token.clone().drop_guard();
         
-        *polling = Some(handle);
+        *polling = Some((cancellation_token, drop_guard));
         
         Ok((sender, receiver))
     }
@@ -217,8 +218,9 @@ impl TradeOfferManager {
         &self,
     ) {
         if let Ok(polling) = self.polling.lock() {
-            if let Some(handle) = &*polling {
-                handle.abort();
+            if let Some((token, _)) = &*polling {
+                // Cancels the polling task.
+                token.cancel();
             }
         }
     }
@@ -569,18 +571,6 @@ impl TradeOfferManager {
     /// Gets a reference to the underlying mobile API.
     pub fn mobile_api(&self) -> &MobileAPI {
         &self.mobile_api
-    }
-}
-
-impl std::ops::Drop for TradeOfferManager {
-    fn drop(&mut self) {
-        if let Ok(polling) = self.polling.lock() {
-            if let Some(handle) = &*polling {
-                // Abort polling before dropping.
-                // I'm not really sure if this is necessary, but it doesn't hurt.
-                handle.abort();
-            }
-        }
     }
 }
 
