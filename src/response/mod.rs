@@ -9,7 +9,7 @@ mod accepted_offer;
 mod sent_offer;
 mod user_details;
 
-pub use asset::Asset;
+pub use asset::{Asset, AssetProperty, AssetPropertyValue};
 pub use classinfo::{Action, ClassInfo, Description, Tag};
 pub use confirmation::Confirmation;
 pub use currency::Currency;

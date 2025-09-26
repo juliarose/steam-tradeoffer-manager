@@ -84,6 +84,7 @@ impl RawTradeOffer {
                             amount: asset.amount,
                             missing: asset.missing,
                             classinfo: Arc::clone(classinfo),
+                            properties: None,
                         })
                     } else {
                         Err(MissingClassInfoError {

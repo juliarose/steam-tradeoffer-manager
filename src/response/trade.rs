@@ -112,6 +112,7 @@ impl TradeAsset {
             amount: self.amount,
             missing: false,
             classinfo: Arc::clone(&self.classinfo),
+            properties: None,
         })
     }
 }

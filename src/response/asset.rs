@@ -23,6 +23,9 @@ pub struct Asset {
     pub missing: bool,
     /// The [`ClassInfo`] containing names, descriptions, and other details about the item.
     pub classinfo: Arc<ClassInfo>,
+    /// Properties of the asset, if available.
+    #[serde(default)]
+    pub properties: Option<Vec<AssetProperty>>,
 }
 
 impl Asset {
@@ -46,6 +49,7 @@ impl From<TradeAsset> for Asset {
             amount: trade_asset.amount,
             missing: false,
             classinfo: trade_asset.classinfo,
+            properties: None,
         }
     }
 }
@@ -64,6 +68,27 @@ impl From<&TradeAsset> for Asset {
             amount: trade_asset.amount,
             missing: false,
             classinfo: Arc::clone(&trade_asset.classinfo),
+            properties: None,
         }
     }
+}
+
+/// Value of an asset property.
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
+pub enum AssetPropertyValue {
+    /// Integer value.
+    Int(i32),
+    /// Floating point value.
+    Float(f32),
+}
+
+/// Properties of an asset.
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
+pub struct AssetProperty {
+    /// ID of the property. This may be `None` if the property does not have an ID.
+    pub propertyid: i32,
+    /// Name of the property.
+    pub name: String,
+    /// Value of the property.
+    pub value: AssetPropertyValue,
 }

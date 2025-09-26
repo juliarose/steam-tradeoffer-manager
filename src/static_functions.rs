@@ -1,7 +1,7 @@
 //! Exported functions in lib.rs
 
 use crate::api::response as api_response;
-use crate::response::{Asset, ClassInfo};
+use crate::response::{Asset, AssetProperty, ClassInfo};
 use crate::request::GetInventoryOptions;
 use crate::types::*;
 use crate::helpers::{parses_response, extract_auth_data_from_cookies};
@@ -92,7 +92,7 @@ pub async fn get_inventory<'a>(
     
     let mut inventory = Vec::new();
     
-    for body in responses {
+    for mut body in responses {
         let mut items = body.assets
             .iter()
             .filter_map(|item| {
@@ -103,6 +103,9 @@ pub async fn get_inventory<'a>(
                         classid: item.classid,
                         instanceid: item.instanceid,
                     }));
+                let properties = body.asset_properties.remove(
+                    &(item.appid, item.contextid, item.assetid),
+                );
                 
                 match classinfo_result {
                     Ok(classinfo) if options.tradable_only && !classinfo.tradable => {
@@ -115,6 +118,7 @@ pub async fn get_inventory<'a>(
                         amount: item.amount,
                         missing: false,
                         classinfo: Arc::clone(classinfo),
+                        properties,
                     })),
                     Err(error) => Some(Err(error)),
                 }
@@ -243,14 +247,32 @@ struct GetInventoryResponse {
     #[serde(deserialize_with = "serialize::to_classinfo_map")]
     descriptions: HashMap<ClassInfoAppClass, Arc<ClassInfo>>,
     #[serde(default)]
+    #[serde(deserialize_with = "serialize::to_asset_properties_map")]
+    asset_properties: HashMap<(AppId, ContextId, AssetId), Vec<AssetProperty>>,
+    #[serde(default)]
     #[serde(deserialize_with = "serialize::option_str_to_number")]
     last_assetid: Option<u64>,
 }
 
-#[test]
-fn parses_get_inventory_response() {
-    let response: GetInventoryResponse = serde_json::from_str(include_str!("api/fixtures/inventory.json")).unwrap();
-    let asset = response.assets.first().unwrap();
+
+#[cfg(test)]
+mod tests {
+    use super::*;
     
-    assert_eq!(asset.assetid, 11152148507);
+    #[test]
+    fn parses_get_inventory_response() {
+        let response: GetInventoryResponse = serde_json::from_str(include_str!("api/fixtures/inventory.json")).unwrap();
+        let asset = response.assets.first().unwrap();
+        
+        assert_eq!(asset.assetid, 11152148507);
+    }
+    
+    #[test]
+    fn parses_get_inventory_with_properties_response() {
+        let response: GetInventoryResponse = serde_json::from_str(include_str!("api/fixtures/inventory_with_properties.json")).unwrap();
+        let asset_properties = response.asset_properties.get(&(730, 2, 46153215277)).unwrap();
+        let property = asset_properties.first().unwrap();
+        
+        assert!(property.propertyid == 2);
+    }
 }

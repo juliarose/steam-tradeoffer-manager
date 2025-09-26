@@ -40,6 +40,7 @@ pub fn from_raw_receipt_asset(
             amount: asset.amount,
             missing: false,
             classinfo: Arc::clone(classinfo),
+            properties: None,
         })
         .ok_or(MissingClassInfoError {
             appid: asset.appid,

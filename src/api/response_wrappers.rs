@@ -4,6 +4,7 @@ use super::response as api_response;
 use super::RawTrade;
 use crate::response;
 use crate::serialize;
+use crate::types::AssetPropertiesMap;
 use crate::types::{ClassInfoAppClass, ClassInfoMap};
 use std::collections::HashMap;
 use std::fmt;
@@ -84,6 +85,9 @@ pub struct GetInventoryResponseIgnoreDescriptions {
     #[serde(default)]
     #[serde(deserialize_with = "serialize::option_str_to_number")]
     pub last_assetid: Option<u64>,
+    #[serde(default)]
+    #[serde(deserialize_with = "serialize::to_asset_properties_map")]
+    pub asset_properties: AssetPropertiesMap,
 }
 
 #[derive(Deserialize, Debug)]

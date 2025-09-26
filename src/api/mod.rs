@@ -957,6 +957,7 @@ impl SteamTradeOfferAPI {
                     amount: item.amount,
                     missing: false,
                     classinfo: Arc::clone(classinfo),
+                    properties: None,
                 });
             }
         }
@@ -1016,6 +1017,7 @@ impl SteamTradeOfferAPI {
         let sid = u64::from(steamid);
         let uri = Self::get_url(&format!("/inventory/{sid}/{appid}/{contextid}"));
         let referer = Self::get_url(&format!("/profiles/{sid}/inventory"));
+        let mut asset_properties = HashMap::new();
         
         loop {
             let response = self.client.get(&uri)
@@ -1028,11 +1030,14 @@ impl SteamTradeOfferAPI {
                 })
                 .send()
                 .await?;
-            let body: GetInventoryResponseIgnoreDescriptions = parses_response(response).await?;
+            let mut body: GetInventoryResponseIgnoreDescriptions = parses_response(response).await?;
             
             if !body.success {
                 return Err(Error::ResponseUnsuccessful);
             }
+            
+            // Extract asset_properties before pushing body to responses
+            asset_properties.extend(std::mem::take(&mut body.asset_properties));
             
             if body.more_items {
                 // shouldn't occur, but we wouldn't want to call this endlessly if it does...
@@ -1070,6 +1075,8 @@ impl SteamTradeOfferAPI {
                     classid: item.classid,
                     instanceid: item.instanceid,
                 }))?;
+            let properties = asset_properties
+                .remove(&(item.appid, item.contextid, item.assetid));
             
             if tradable_only && !classinfo.tradable {
                 continue;
@@ -1082,6 +1089,7 @@ impl SteamTradeOfferAPI {
                 amount: item.amount,
                 missing: false,
                 classinfo: Arc::clone(classinfo),
+                properties,
             });
         }
         

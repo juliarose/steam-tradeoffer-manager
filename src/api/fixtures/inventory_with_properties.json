@@ -1,0 +1,342 @@
+{
+  "assets": [
+    {
+      "appid": 730,
+      "contextid": "2",
+      "assetid": "46153215277",
+      "classid": "6918207757",
+      "instanceid": "302028390",
+      "amount": "1"
+    },
+    {
+      "appid": 730,
+      "contextid": "2",
+      "assetid": "46153215276",
+      "classid": "4717330486",
+      "instanceid": "302028390",
+      "amount": "1"
+    }
+  ],
+  "descriptions": [
+    {
+      "appid": 730,
+      "classid": "6918207757",
+      "instanceid": "302028390",
+      "currency": 0,
+      "background_color": "",
+      "icon_url": "i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyL8jsHf7i1k4ue9fKV_JM-fB2CY1aB04eU6H3_mwxxw4znSmd79c3LBb1MgDZNwROdcuhG7kNHuNr7i5AXflcsbmuYuTdkk",
+      "descriptions": [
+        {
+          "type": "html",
+          "value": "Exterior: Minimal Wear",
+          "name": "exterior_wear"
+        },
+        {
+          "type": "html",
+          "value": " ",
+          "name": "blank"
+        },
+        {
+          "type": "html",
+          "value": "Versatile but expensive, the German-made MP7 SMG is the perfect choice for high-impact close-range combat. It has been painted using different shades of yellow.\n\n\u003Ci\u003EHere's some new material...\u003C/i\u003E",
+          "name": "description"
+        },
+        {
+          "type": "html",
+          "value": " ",
+          "name": "blank"
+        },
+        {
+          "type": "html",
+          "value": "The Radiant Collection",
+          "color": "9da1a9",
+          "name": "itemset_name"
+        },
+        {
+          "type": "html",
+          "value": " ",
+          "name": "blank"
+        }
+      ],
+      "tradable": 1,
+      "actions": [
+        {
+          "link": "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20S%owner_steamid%A%assetid%D894035446260441729",
+          "name": "Inspect in Game..."
+        }
+      ],
+      "name": "MP7 | Short Ochre",
+      "name_color": "D2D2D2",
+      "type": "Consumer Grade SMG",
+      "market_name": "MP7 | Short Ochre (Minimal Wear)",
+      "market_hash_name": "MP7 | Short Ochre (Minimal Wear)",
+      "market_actions": [
+        {
+          "link": "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20M%listingid%A%assetid%D894035446260441729",
+          "name": "Inspect in Game..."
+        }
+      ],
+      "commodity": 0,
+      "market_tradable_restriction": 7,
+      "market_marketable_restriction": 7,
+      "marketable": 1,
+      "tags": [
+        {
+          "category": "Type",
+          "internal_name": "CSGO_Type_SMG",
+          "localized_category_name": "Type",
+          "localized_tag_name": "SMG"
+        },
+        {
+          "category": "Weapon",
+          "internal_name": "weapon_mp7",
+          "localized_category_name": "Weapon",
+          "localized_tag_name": "MP7"
+        },
+        {
+          "category": "ItemSet",
+          "internal_name": "set_timed_drops_warm",
+          "localized_category_name": "Collection",
+          "localized_tag_name": "The Radiant Collection"
+        },
+        {
+          "category": "Quality",
+          "internal_name": "normal",
+          "localized_category_name": "Category",
+          "localized_tag_name": "Normal"
+        },
+        {
+          "category": "Rarity",
+          "internal_name": "Rarity_Common_Weapon",
+          "localized_category_name": "Quality",
+          "localized_tag_name": "Consumer Grade",
+          "color": "b0c3d9"
+        },
+        {
+          "category": "Exterior",
+          "internal_name": "WearCategory1",
+          "localized_category_name": "Exterior",
+          "localized_tag_name": "Minimal Wear"
+        }
+      ],
+      "sealed": 0
+    },
+    {
+      "appid": 730,
+      "classid": "4717330486",
+      "instanceid": "302028390",
+      "currency": 0,
+      "background_color": "",
+      "icon_url": "i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGJKz2lu_XsnXwtmkJjSU91dh8bj35VTqVBP4io_frnIV7Kb5OaU-JqfHDzXFle0u4LY8Gy_kkRgisGzcm4v4J3vDOAQmDMdyRvlK7EcmeCU3yw",
+      "descriptions": [
+        {
+          "type": "html",
+          "value": " ",
+          "name": "blank"
+        },
+        {
+          "type": "html",
+          "value": "Items in this container can be rented.",
+          "name": "attr: can open for rental"
+        },
+        {
+          "type": "html",
+          "value": "Container Series #339",
+          "color": "99ccff",
+          "name": "attr: set supply crate series"
+        },
+        {
+          "type": "html",
+          "value": " ",
+          "name": "blank"
+        },
+        {
+          "type": "html",
+          "value": "Contains one of the following:",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "Five-SeveN | Scrawl",
+          "color": "4b69ff",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "MAC-10 | Ensnared",
+          "color": "4b69ff",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "MAG-7 | Foresight",
+          "color": "4b69ff",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "MP5-SD | Necro Jr.",
+          "color": "4b69ff",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "P2000 | Lifted Spirits",
+          "color": "4b69ff",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "SCAR-20 | Poultrygeist",
+          "color": "4b69ff",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "Sawed-Off | Spirit Board",
+          "color": "4b69ff",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "PP-Bizon | Space Cat",
+          "color": "8847ff",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "G3SG1 | Dream Glade",
+          "color": "8847ff",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "M4A1-S | Night Terror",
+          "color": "8847ff",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "XM1014 | Zombie Offensive",
+          "color": "8847ff",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "USP-S | Ticket to Hell",
+          "color": "8847ff",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "Dual Berettas | Melondrama",
+          "color": "d32ce6",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "FAMAS | Rapid Eye Movement",
+          "color": "d32ce6",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "MP7 | Abyssal Apparition",
+          "color": "d32ce6",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "AK-47 | Nightwish",
+          "color": "eb4b4b",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "MP9 | Starlight Protector",
+          "color": "eb4b4b",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": "or an Exceedingly Rare Special Item!",
+          "color": "ffd700",
+          "name": "attribute"
+        },
+        {
+          "type": "html",
+          "value": " ",
+          "name": "blank"
+        },
+        {
+          "type": "html",
+          "value": "",
+          "color": "00a000",
+          "name": "attribute"
+        }
+      ],
+      "tradable": 1,
+      "name": "Dreams & Nightmares Case",
+      "name_color": "D2D2D2",
+      "type": "Base Grade Container",
+      "market_name": "Dreams & Nightmares Case",
+      "market_hash_name": "Dreams & Nightmares Case",
+      "commodity": 1,
+      "market_tradable_restriction": 7,
+      "market_marketable_restriction": 7,
+      "marketable": 1,
+      "tags": [
+        {
+          "category": "Type",
+          "internal_name": "CSGO_Type_WeaponCase",
+          "localized_category_name": "Type",
+          "localized_tag_name": "Container"
+        },
+        {
+          "category": "ItemSet",
+          "internal_name": "set_community_30",
+          "localized_category_name": "Collection",
+          "localized_tag_name": "The Dreams & Nightmares Collection"
+        },
+        {
+          "category": "Quality",
+          "internal_name": "normal",
+          "localized_category_name": "Category",
+          "localized_tag_name": "Normal"
+        },
+        {
+          "category": "Rarity",
+          "internal_name": "Rarity_Common",
+          "localized_category_name": "Quality",
+          "localized_tag_name": "Base Grade",
+          "color": "b0c3d9"
+        }
+      ],
+      "sealed": 0
+    }
+  ],
+  "asset_properties": [
+    {
+      "appid": 730,
+      "contextid": "2",
+      "assetid": "46153215277",
+      "asset_properties": [
+        {
+          "propertyid": 2,
+          "float_value": "0.111641205847263336",
+          "name": "Wear Rating"
+        },
+        {
+          "propertyid": 1,
+          "int_value": "116",
+          "name": "Pattern Template"
+        }
+      ]
+    }
+  ],
+  "more_items": 1,
+  "last_assetid": "46153215276",
+  "total_inventory_count": 325,
+  "success": 1,
+  "rwgrsn": -2
+}

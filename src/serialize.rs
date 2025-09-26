@@ -1,7 +1,7 @@
 //! Contains custom serialization and deserialization functions.
 
-use crate::response::ClassInfo;
-use crate::types::{ClassId, ClassInfoAppClass, ClassInfoAppMap, ClassInfoMap};
+use crate::response::{AssetProperty, ClassInfo};
+use crate::types::{AppId, AssetId, ClassId, ClassInfoAppClass, AssetPropertiesMap, ClassInfoAppMap, ClassInfoMap, ContextId};
 use std::collections::HashMap;
 use std::fmt::{self, Display};
 use std::marker::PhantomData;
@@ -272,6 +272,96 @@ where
     deserializer.deserialize_any(DeserializeBoolVisitor)
 }
 
+pub fn to_asset_properties_map<'de, D>(deserializer: D) -> Result<AssetPropertiesMap, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use crate::response::AssetPropertyValue;
+    
+    struct ClassInfoVisitor;
+    
+    #[derive(Debug, Deserialize)]
+    struct AssetPropertyItem {
+        #[serde(deserialize_with = "string_or_number")]
+        appid: AppId,
+        #[serde(deserialize_with = "string_or_number")]
+        contextid: ContextId,
+        #[serde(deserialize_with = "string_or_number")]
+        assetid: AssetId,
+        asset_properties: Vec<RawAssetProperty>,
+    }
+    
+    #[derive(Debug, Deserialize)]
+    struct RawAssetProperty {
+        propertyid: i32,
+        name: String,
+        #[serde(default)]
+        #[serde(with = "option_string_or_number")]
+        int_value: Option<i32>,
+        #[serde(default)]
+        #[serde(with = "option_string_or_number")]
+        float_value: Option<f32>,
+    }
+    
+    impl TryFrom<RawAssetProperty> for AssetProperty {
+        type Error = &'static str;
+        
+        fn try_from(raw: RawAssetProperty) -> Result<Self, Self::Error> {
+            let value = if let Some(int_value) = raw.int_value {
+                AssetPropertyValue::Int(int_value)
+            } else if let Some(float_value) = raw.float_value {
+                AssetPropertyValue::Float(float_value)
+            } else {
+                return Err("AssetProperty must have either int_value or float_value set");
+            };
+            
+            Ok(AssetProperty {
+                propertyid: raw.propertyid,
+                name: raw.name,
+                value,
+            })
+        }
+    }
+    
+    impl<'de> Visitor<'de> for ClassInfoVisitor {
+        type Value = AssetPropertiesMap;
+        
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("a sequence of asset properties")
+        }
+        
+        fn visit_unit<E>(self) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+        {
+            // Just return an empty map
+            Ok(HashMap::new())
+        }
+        
+        fn visit_seq<V>(self, mut seq: V) -> Result<Self::Value, V::Error>
+        where
+            V: SeqAccess<'de>,
+        {
+            let mut map: Self::Value = HashMap::with_capacity(seq.size_hint().unwrap_or(0));
+            
+            while let Some(item) = seq.next_element::<AssetPropertyItem>()? {
+                let key = (item.appid, item.contextid, item.assetid);
+                let properties = item.asset_properties
+                    .into_iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_, _>>()
+                    .map_err(de::Error::custom)?;
+                
+                map.insert(key, properties);
+            }
+            
+            Ok(map)
+        }
+    }
+
+    deserializer.deserialize_seq(ClassInfoVisitor)
+}
+
 pub fn to_classinfo_map<'de, D>(deserializer: D) -> Result<ClassInfoAppMap, D::Error>
 where
     D: Deserializer<'de>,
@@ -290,11 +380,11 @@ where
             V: SeqAccess<'de>,
         {
             let mut map: Self::Value = HashMap::with_capacity(seq.size_hint().unwrap_or(0));
-
+            
             while let Some(classinfo) = seq.next_element::<ClassInfo>()? {
                 map.insert((classinfo.classid, classinfo.instanceid), Arc::new(classinfo));
             }
-
+            
             Ok(map)
         }
     }

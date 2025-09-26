@@ -21,7 +21,7 @@ pub type TradeId = u128;
 pub use crate::time::ServerTime;
 
 // Types internally used by the crate.
-use crate::response::ClassInfo;
+use crate::response::{ClassInfo, AssetProperty};
 use std::sync::Arc;
 use std::collections::HashMap;
 
@@ -30,3 +30,4 @@ pub(crate) type ClassInfoClass = (AppId, ClassId, InstanceId);
 pub(crate) type ClassInfoMap = HashMap<ClassInfoClass, Arc<ClassInfo>>;
 pub(crate) type ClassInfoAppClass = (ClassId, InstanceId);
 pub(crate) type ClassInfoAppMap = HashMap<ClassInfoAppClass, Arc<ClassInfo>>;
+pub(crate) type AssetPropertiesMap = HashMap<(AppId, ContextId, AssetId), Vec<AssetProperty>>;
