@@ -33,7 +33,7 @@ const ERROR_NO_API_KEY: &str = "This account does not have an API key";
 /// #[tokio::main]
 /// async fn main() {
 ///     let options = GetInventoryOptions {
-///         steamid: SteamID::from(76561199436464454),
+///         steamid: SteamID::try_from(76561199436464454).unwrap(),
 ///         appid: 730,
 ///         contextid: 2,
 ///         tradable_only: false,

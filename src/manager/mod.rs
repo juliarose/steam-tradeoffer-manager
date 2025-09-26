@@ -368,7 +368,7 @@ impl TradeOfferManager {
     ///             "steamLoginSecure=blahblahblah".to_string(),
     ///         ])
     ///         .build();
-    ///     let steamid = SteamID::from(76561198000000000);
+    ///     let steamid = SteamID::try_from(76561198000000000).unwrap();
     ///     // Get details using an access token.
     ///     let details = manager.get_user_details(steamid, "YDafssHP").await?;
     ///     
