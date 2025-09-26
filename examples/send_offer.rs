@@ -9,7 +9,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .split("; ")
         .map(|s| s.to_owned())
         .collect::<Vec<_>>();
-    let steamid: SteamID = std::env::var("STEAMID_OTHER")?.parse::<u64>()?.into();
+    let steamid: SteamID = std::env::var("STEAMID_OTHER")?
+        .parse::<u64>()?
+        .try_into()?;
     // An API key isn't needed for this example.
     let manager = TradeOfferManager::builder()
         // Cookies are required for sending an offer. These can be included in the builder or

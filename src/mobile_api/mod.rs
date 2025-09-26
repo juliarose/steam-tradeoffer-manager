@@ -205,7 +205,11 @@ impl MobileAPI {
             return Err(Error::NotLoggedIn);
         }
         
-        Ok(SteamID::from(steamid_64))
+        let steamid = SteamID::try_from(steamid_64)
+            // Shouldn't fail, but if it does just return NotLoggedIn
+            .map_err(|_| Error::NotLoggedIn)?;
+        
+        Ok(steamid)
     }
     
     fn get_url(

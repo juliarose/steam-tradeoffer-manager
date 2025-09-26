@@ -6,7 +6,11 @@ use owo_colors::OwoColorize;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
     
-    let steamid: SteamID = std::env::var("STEAMID_OTHER").unwrap().parse::<u64>().unwrap().into();
+    let steamid: SteamID = std::env::var("STEAMID_OTHER")
+        .unwrap()
+        .parse::<u64>()
+        .unwrap()
+        .try_into()?;
     let cookies = std::env::var("COOKIES").expect("COOKIES missing")
         .split("; ")
         .map(|s| s.to_string())

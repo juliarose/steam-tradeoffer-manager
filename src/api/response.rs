@@ -7,7 +7,7 @@ use crate::enums::{TradeStatus, ConfirmationMethod, TradeOfferState};
 use crate::serialize;
 use std::sync::Arc;
 use serde::{Serialize, Deserialize};
-use steamid_ng::SteamID;
+use steamid_ng::{InstanceFlags, InstanceType, AccountType, Universe, Instance, SteamID};
 use chrono::serde::ts_seconds;
 
 /// Trade offer.
@@ -104,9 +104,9 @@ impl RawTradeOffer {
             trade_offer_state: self.trade_offer_state,
             partner: SteamID::new(
                 self.accountid_other,
-                steamid_ng::Instance::Desktop,
-                steamid_ng::AccountType::Individual,
-                steamid_ng::Universe::Public
+                Instance::new(InstanceType::Desktop, InstanceFlags::None),
+                AccountType::Individual,
+                Universe::Public
             ),
             message: self.message,
             is_our_offer: self.is_our_offer,

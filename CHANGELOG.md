@@ -5,6 +5,8 @@
 ### Changed
 - `TradeOfferManager::get_steamid` now returns `Option<SteamID>` instead of `Result<SteamID>`.
 - `TradeOfferManager::get_my_inventory` and `TradeOfferManager::get_inventory` now takes a `tradable_only` parameter to specify whether to include untradable items.
+- Polling uses `CancellationToken` rather than aborting the task to allow for more graceful shutdowns. This does not change the public API.
+- Bumped `steamid-ng` to `2.0.0`.
 
 ### Removed
 - `TradeOfferManager::get_inventory_with_untradables`.
