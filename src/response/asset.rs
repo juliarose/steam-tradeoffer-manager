@@ -23,7 +23,8 @@ pub struct Asset {
     pub missing: bool,
     /// The [`ClassInfo`] containing names, descriptions, and other details about the item.
     pub classinfo: Arc<ClassInfo>,
-    /// Properties of the asset, if available.
+    /// Properties of the asset, if available. This will only ever be included in inventory
+    /// responses.
     #[serde(default)]
     pub properties: Option<Vec<AssetProperty>>,
 }
@@ -35,12 +36,12 @@ impl Asset {
     }
 }
 
-/// Converts a [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are taken from
-/// `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
-/// 
-/// If you need an [`Asset`] of the newly acquired item, call `try_into_new_asset` on the
-/// [`TradeAsset`].
 impl From<TradeAsset> for Asset {
+    /// Converts a [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are taken from
+    /// `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
+    /// 
+    /// If you need an [`Asset`] of the newly acquired item, call `try_into_new_asset` on the
+    /// [`TradeAsset`].
     fn from(trade_asset: TradeAsset) -> Self {
         Asset {
             appid: trade_asset.appid,
@@ -54,12 +55,13 @@ impl From<TradeAsset> for Asset {
     }
 }
 
-/// Converts a borrowed [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are taken
-/// from `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
-/// 
-/// If you need an [`Asset`] of the newly acquired item, call `try_into_new_asset` on the
-/// [`TradeAsset`].
 impl From<&TradeAsset> for Asset {
+    /// Converts a borrowed [`TradeAsset`] into an [`Asset`]. The `contextid` and `assetid` are
+    /// taken from `contextid` and `assetid` respectively, **not** `new_contextid` and
+    /// `new_assetid`.
+    /// 
+    /// If you need an [`Asset`] of the newly acquired item, call `try_into_new_asset` on the
+    /// [`TradeAsset`].
     fn from(trade_asset: &TradeAsset) -> Self {
         Asset {
             appid: trade_asset.appid,
@@ -75,6 +77,7 @@ impl From<&TradeAsset> for Asset {
 
 /// Value of an asset property.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum AssetPropertyValue {
     /// Integer value.
     Int(i32),
@@ -85,7 +88,7 @@ pub enum AssetPropertyValue {
 /// Properties of an asset.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct AssetProperty {
-    /// ID of the property. This may be `None` if the property does not have an ID.
+    /// ID of the property.
     pub propertyid: i32,
     /// Name of the property.
     pub name: String,

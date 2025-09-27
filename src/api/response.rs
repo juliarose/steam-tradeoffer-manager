@@ -151,12 +151,12 @@ pub struct RawAsset {
     pub instanceid: InstanceId,
 }
 
-/// Converts a [`RawTradeAsset`] into a [`RawAsset`]. The `contextid` and `assetid` are taken from
-/// `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
-/// 
-/// If you need a [`RawAsset`] of the newly acquired item, call `try_into_new_asset` on the
-/// [`RawTradeAsset`].
 impl From<RawTradeAsset> for RawAsset {
+    /// Converts a [`RawTradeAsset`] into a [`RawAsset`]. The `contextid` and `assetid` are taken
+    /// from `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
+    /// 
+    /// If you need a [`RawAsset`] of the newly acquired item, call `try_into_new_asset` on the
+    /// [`RawTradeAsset`].
     fn from(raw_trade_asset: RawTradeAsset) -> Self {
         Self {
             appid: raw_trade_asset.appid,
@@ -170,12 +170,13 @@ impl From<RawTradeAsset> for RawAsset {
     }
 }
 
-/// Converts a borrowed [`RawTradeAsset`] into a [`RawAsset`]. The `contextid` and `assetid` are
-/// taken from `contextid` and `assetid` respectively, **not** `new_contextid` and `new_assetid`.
-/// 
-/// If you need a [`RawAsset`] of the newly acquired item, call `try_into_new_asset` on the
-/// [`RawTradeAsset`].
 impl From<&RawTradeAsset> for RawAsset {
+    /// Converts a borrowed [`RawTradeAsset`] into a [`RawAsset`]. The `contextid` and `assetid` are
+    /// taken from `contextid` and `assetid` respectively, **not** `new_contextid` and
+    /// `new_assetid`.
+    /// 
+    /// If you need a [`RawAsset`] of the newly acquired item, call `try_into_new_asset` on the
+    /// [`RawTradeAsset`].
     fn from(raw_trade_asset: &RawTradeAsset) -> Self {
         Self {
             appid: raw_trade_asset.appid,

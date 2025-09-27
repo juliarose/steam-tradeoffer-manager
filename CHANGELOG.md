@@ -2,6 +2,9 @@
 
 ## 0.6.0 (2025-10-10)
 
+### Added
+- `properties` field to `Asset` which contains the `asset_properties` of the asset (inventory responses only).
+
 ### Changed
 - `TradeOfferManager::get_steamid` now returns `Option<SteamID>` instead of `Result<SteamID>`.
 - `TradeOfferManager::get_my_inventory` and `TradeOfferManager::get_inventory` now takes a `tradable_only` parameter to specify whether to include untradable items.
@@ -9,12 +12,12 @@
 - Bumped `steamid-ng` to `2.0.0`.
 
 ### Removed
-- `TradeOfferManager::get_inventory_with_untradables`.
+- `TradeOfferManager::get_inventory_with_untradables`. Use `TradeOfferManager::get_inventory` with `tradable_only` set to `false` instead.
 
 ## 0.5.1 (2025-09-15)
 
-### Changed
-- Fixed typo where some requests were passing "acccess_token" instead of "access_token".
+### Fixed
+- Typo where some requests were passing "acccess_token" instead of "access_token".
 
 ## 0.5.0 (2025-08-20)
 

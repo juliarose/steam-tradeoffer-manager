@@ -267,8 +267,8 @@ impl From<&str> for TradeOfferError {
     }
 }
 
-/// Converts a u32 error code into a TradeOfferError.
 impl From<u32> for TradeOfferError {
+    /// Converts a u32 error code into a TradeOfferError.
     fn from(code: u32) -> Self {
         Self::from_code(code)
     }
