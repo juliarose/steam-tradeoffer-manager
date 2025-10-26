@@ -28,7 +28,8 @@ lazy_static! {
 }
 
 /// A browser user agent string.
-pub const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
+pub const USER_AGENT_STRING: &str = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, \
+like Gecko) Chrome/97.0.4692.71 Safari/537.36";
 pub(crate) const COMMUNITY_HOSTNAME: &str = "steamcommunity.com";
 pub(crate) const WEB_API_HOSTNAME: &str = "api.steampowered.com";
 
@@ -421,19 +422,24 @@ mod tests {
     
     #[test]
     fn deserializes_str_error_response() {
-        let json = r#"{"strError":"You cannot trade with this user because they have a trade ban (12345)"}"#;
+        let json = r#"{
+            "strError":"You cannot trade with this user because they have a trade ban (12345)"
+        }"#;
         let bytes = Bytes::from(json);
-        
         let result = deserialize_response_for_errors(&bytes).unwrap();
         
-        assert_eq!(result.str_error, Some("You cannot trade with this user because they have a trade ban (12345)"));
+        assert_eq!(result.str_error, Some(
+            "You cannot trade with this user because they have a trade ban (12345)"
+        ));
         assert_eq!(result.response, None);
         assert_eq!(result.num_keys, 1);
     }
     
     #[test]
     fn str_error_response_is_error() {
-        let json = r#"{"strError":"You cannot trade with this user because they have a trade ban (12345)"}"#;
+        let json = r#"{
+            "strError":"You cannot trade with this user because they have a trade ban (12345)"
+        }"#;
         let bytes = Bytes::from(json);
         let result = check_response_for_errors(&bytes, None);
         

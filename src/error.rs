@@ -58,7 +58,15 @@ pub enum Error {
     NoConfirmationForOffer(TradeOfferId),
     /// A confirmation could not be confirmed. If a message was contained in the response body it
     /// will be included.
-    #[error("Confirmation unsuccessful. {}", .0.as_ref().map(|s| s.as_str()).unwrap_or("The confirmation may have succeeded, the confirmation no longer exists, or another trade may be going through. Check confirmations again to verify."))]
+    #[error(
+        "Confirmation unsuccessful. {}",
+        .0.as_ref()
+            .map(|s| s.as_str())
+            .unwrap_or(
+                "The confirmation may have succeeded, the confirmation no longer exists, \
+or another trade may be going through. Check confirmations again to verify."
+            )
+    )]
     ConfirmationUnsuccessful(Option<String>),
     /// The response is not expected. Check the contained message for more details.
     #[error("Malformed response: {}", .0)]
@@ -81,7 +89,10 @@ pub enum ParameterError {
     #[error("No identity secret.")]
     NoIdentitySecret,
     /// Offer is missing trade ID.
-    #[error("Offer is missing trade ID. This usually means the offer it belongs to has not yet been accepted.")]
+    #[error(
+        "Offer is missing trade ID. This usually means the offer it belongs to has not yet been \
+accepted."
+    )]
     MissingTradeId,
     /// Offer is empty.
     #[error("Offer is empty.")]
@@ -317,7 +328,14 @@ pub enum ParseHtmlError {
 
 /// An asset for an item into a trade failed to be converted into its acquired item.
 #[derive(thiserror::Error, Debug)]
-#[error("Failed to convert item {}:{}:{} into acquired item as it is missing either the new_contextid or new_assetid property. This usually means the trade it belongs to has not yet been completed.", .appid, .contextid, .assetid)]
+#[error(
+    "Failed to convert item {}:{}:{} into acquired item as it is missing either the \
+new_contextid or new_assetid property. This usually means the trade it belongs to has not yet \
+been completed.",
+    .appid,
+    .contextid,
+    .assetid
+)]
 pub struct TryIntoNewAssetError {
     /// App ID.
     pub appid: AppId,
@@ -335,7 +353,8 @@ mod tests {
     
     #[test]
     fn parses_trade_offer_error() {
-        let message = "There was an error accepting this trade offer. Please try again later. (28)";
+        let message = "There was an error accepting this trade offer. \
+Please try again later. (28)";
         let error = TradeOfferError::from(message);
         
         assert_eq!(error, TradeOfferError::AlreadyRedeemed);

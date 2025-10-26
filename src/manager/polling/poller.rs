@@ -89,13 +89,14 @@ impl Poller {
                 .filter(|offer| {
                     let is_active_state = {
                         offer.trade_offer_state == TradeOfferState::Active ||
+                        // We also want to cancel offers that have not yet been confirmed.
                         offer.trade_offer_state == TradeOfferState::CreatedNeedsConfirmation
                     };
                     
                     is_active_state &&
                     offer.is_our_offer &&
                     offer.time_updated < cancel_time &&
-                    // offers with a tradeid are in progress and cannot be cancelled
+                    // offers with a tradeid are in progress and cannot be cancelled.
                     offer.tradeid.is_none()
                 })
                 .map(|offer| self.api.cancel_offer(offer.tradeofferid))
@@ -181,7 +182,10 @@ impl Poller {
                     let prev_state = prev_states_map.remove(&offer.tradeofferid);
                     
                     // insert new state into map
-                    self.poll_data.state_map.insert(offer.tradeofferid, offer.trade_offer_state);
+                    self.poll_data.state_map.insert(
+                        offer.tradeofferid,
+                        offer.trade_offer_state,
+                    );
                     
                     (offer, prev_state)
                 })

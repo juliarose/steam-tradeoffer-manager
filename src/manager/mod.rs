@@ -11,7 +11,15 @@ use crate::error::{Result, Error, ParameterError, SetCookiesError};
 use crate::helpers::get_default_client;
 use crate::mobile_api::MobileAPI;
 use crate::request::{NewTradeOffer, GetTradeHistoryOptions};
-use crate::response::{UserDetails, Asset, SentOffer, TradeOffer, AcceptedOffer, Confirmation, Trades};
+use crate::response::{
+    UserDetails,
+    Asset,
+    SentOffer,
+    TradeOffer,
+    AcceptedOffer,
+    Confirmation,
+    Trades,
+};
 use crate::static_functions::get_api_key;
 use crate::time;
 use crate::types::{AppId, ContextId, TradeOfferId};
@@ -243,7 +251,9 @@ impl TradeOfferManager {
         
         // Offer must be active to be accepted.
         if offer.trade_offer_state != TradeOfferState::Active {
-            return Err(ParameterError::CannotAcceptOfferThatIsNotActive(offer.trade_offer_state).into());
+            return Err(
+                ParameterError::CannotAcceptOfferThatIsNotActive(offer.trade_offer_state).into(),
+            );
         }
         
         let accepted_offer = self.api.accept_offer(offer.tradeofferid, offer.partner).await?;

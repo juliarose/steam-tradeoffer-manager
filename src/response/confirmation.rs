@@ -74,10 +74,13 @@ impl Confirmation {
     }
 }
 
+#[cfg(test)]
 mod tests {
     #[test]
     fn parsed_trade_offer_confirmation() {
-        let confirmation: super::Confirmation = serde_json::from_str(include_str!("fixtures/confirmation.json")).unwrap();
+        let confirmation: super::Confirmation = serde_json::from_str(
+            include_str!("fixtures/confirmation.json"),
+        ).unwrap();
         
         assert_eq!(confirmation.id, 13799599785);
         assert_eq!(confirmation.nonce, 9141945700999917347);

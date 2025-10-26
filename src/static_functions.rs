@@ -261,7 +261,9 @@ mod tests {
     
     #[test]
     fn parses_get_inventory_response() {
-        let response: GetInventoryResponse = serde_json::from_str(include_str!("api/fixtures/inventory.json")).unwrap();
+        let response: GetInventoryResponse = serde_json::from_str(
+            include_str!("api/fixtures/inventory.json"),
+        ).unwrap();
         let asset = response.assets.first().unwrap();
         
         assert_eq!(asset.assetid, 11152148507);
@@ -269,7 +271,9 @@ mod tests {
     
     #[test]
     fn parses_get_inventory_with_properties_response() {
-        let response: GetInventoryResponse = serde_json::from_str(include_str!("api/fixtures/inventory_with_properties.json")).unwrap();
+        let response: GetInventoryResponse = serde_json::from_str(
+            include_str!("api/fixtures/inventory_with_properties.json"),
+        ).unwrap();
         let asset_properties = response.asset_properties.get(&(730, 2, 46153215277)).unwrap();
         let property = asset_properties.first().unwrap();
         

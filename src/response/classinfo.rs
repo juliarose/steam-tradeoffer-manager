@@ -265,28 +265,35 @@ pub struct Action {
 /// App data.
 pub type AppData = Option<serde_json::Map<String, serde_json::value::Value>>;
 
+#[cfg(test)]
 mod tests {
     #[test]
     fn parses_csgo_item() {
-        let classinfo: super::ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_csgo.json")).unwrap();
+        let classinfo: super::ClassInfo = serde_json::from_str(
+            include_str!("fixtures/classinfo_csgo.json"),
+        ).unwrap();
         
         assert!(classinfo.tradable);
     }
     
     #[test]
     fn parses_coupon() {
-        let classinfo: super::ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_item_expiration.json")).unwrap();
+        let classinfo: super::ClassInfo = serde_json::from_str(
+            include_str!("fixtures/classinfo_item_expiration.json"),
+        ).unwrap();
         
         assert!(classinfo.item_expiration.is_some());
     }
     
     #[test]
     fn is_color_works() {
-        let classinfo: super::ClassInfo = serde_json::from_str(include_str!("fixtures/classinfo_item_expiration.json")).unwrap();
-        let descriptipn = classinfo.descriptions.first().unwrap();
+        let classinfo: super::ClassInfo = serde_json::from_str(
+            include_str!("fixtures/classinfo_item_expiration.json"),
+        ).unwrap();
+        let description = classinfo.descriptions.first().unwrap();
         
-        assert!(descriptipn.is_color("7a9fc5"));
-        assert!(descriptipn.is_color("#7a9fc5"));
-        assert!(!descriptipn.is_color(""));
+        assert!(description.is_color("7a9fc5"));
+        assert!(description.is_color("#7a9fc5"));
+        assert!(!description.is_color(""));
     }
 }

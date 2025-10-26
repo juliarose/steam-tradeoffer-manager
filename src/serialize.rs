@@ -1,7 +1,16 @@
 //! Contains custom serialization and deserialization functions.
 
 use crate::response::{AssetProperty, ClassInfo};
-use crate::types::{AppId, AssetId, ClassId, ClassInfoAppClass, AssetPropertiesMap, ClassInfoAppMap, ClassInfoMap, ContextId};
+use crate::types::{
+    AppId,
+    AssetId,
+    ClassId,
+    ClassInfoAppClass,
+    AssetPropertiesMap,
+    ClassInfoAppMap,
+    ClassInfoMap,
+    ContextId,
+};
 use std::collections::HashMap;
 use std::fmt::{self, Display};
 use std::marker::PhantomData;
@@ -382,7 +391,9 @@ where
             let mut map: Self::Value = HashMap::with_capacity(seq.size_hint().unwrap_or(0));
             
             while let Some(classinfo) = seq.next_element::<ClassInfo>()? {
-                map.insert((classinfo.classid, classinfo.instanceid), Arc::new(classinfo));
+                let key = (classinfo.classid, classinfo.instanceid);
+                
+                map.insert(key, Arc::new(classinfo));
             }
             
             Ok(map)
@@ -413,7 +424,9 @@ where
             
             while let Some(classinfo) = seq.next_element::<ClassInfo>()? {
                 if let Some(appid) = classinfo.appid {
-                    map.insert((appid, classinfo.classid, classinfo.instanceid), Arc::new(classinfo));
+                    let key = (appid, classinfo.classid, classinfo.instanceid);
+                    
+                    map.insert(key, Arc::new(classinfo));
                 }
             }
             
@@ -558,7 +571,9 @@ where
     deserializer.deserialize_any(ClassInfoMapVisitor)
 }
 
-pub fn deserialize_classinfo_map_raw<'de, D, T>(deserializer: D) -> Result<Vec<(ClassInfoAppClass, T)>, D::Error>
+pub fn deserialize_classinfo_map_raw<'de, D, T>(
+    deserializer: D,
+) -> Result<Vec<(ClassInfoAppClass, T)>, D::Error>
 where
     D: Deserializer<'de>,
     T: Deserialize<'de>,
