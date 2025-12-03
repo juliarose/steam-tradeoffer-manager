@@ -552,8 +552,7 @@ impl SteamTradeOfferAPI {
             .flatten()
             .collect::<HashMap<_, _>>();
         
-        return Ok((offers, Some(descriptions)));
-        
+        Ok((offers, Some(descriptions)))
     }
     
     /// Combines trade offers with their descriptions using the cache and the Steam Web API. 
