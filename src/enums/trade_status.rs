@@ -47,7 +47,6 @@ mod tests {
     
     #[test]
     fn serializes() {
-        
         assert_eq!(serde_json::to_string(&Body { status: TradeStatus::Init }).unwrap(), r#"{"status":0}"#);
     }
     

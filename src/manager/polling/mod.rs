@@ -82,7 +82,7 @@ impl PollOptions {
     }
 }
 
-/// Packs the sender, receiver, and [`JoinHandle`] for the poller.
+/// Packs the sender, receiver, and [`CancellationToken`] for the poller.
 pub struct Polling {
     pub sender: mpsc::Sender<PollAction>,
     pub receiver: mpsc::Receiver<Result>,

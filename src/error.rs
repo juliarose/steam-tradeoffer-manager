@@ -60,12 +60,10 @@ pub enum Error {
     /// will be included.
     #[error(
         "Confirmation unsuccessful. {}",
-        .0.as_ref()
-            .map(|s| s.as_str())
-            .unwrap_or(
-                "The confirmation may have succeeded, the confirmation no longer exists, \
+        .0.as_ref().map(|s| s.as_str()).unwrap_or(
+            "The confirmation may have succeeded, the confirmation no longer exists, \
 or another trade may be going through. Check confirmations again to verify."
-            )
+        )
     )]
     ConfirmationUnsuccessful(Option<String>),
     /// The response is not expected. Check the contained message for more details.

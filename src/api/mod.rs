@@ -344,10 +344,8 @@ impl SteamTradeOfferAPI {
                 let classinfo = serde_json::from_str::<ClassInfo>(classinfo_raw.get())
                     // Ignores invalid or empty classinfo data.
                     .ok()?;
-                // We return a pair so that we have a deserialized version to return from the
-                // method and a raw version to save to the file system. We do not need to clone
-                // data since we are keeping the boxed raw values to send to the tokio task. This
-                // should be quite efficient.
+                // We need both a serialized and raw version of the classinfo.
+                // One to save to the filesystem, and one for use in the map.
                 let pair = (
                     ((appid, classid, instanceid), Arc::new(classinfo)),
                     ((classid, instanceid), classinfo_raw),
@@ -544,18 +542,18 @@ impl SteamTradeOfferAPI {
             }
         }
         
-        let descriptions = if !descriptions.is_empty() {
-            let combined = descriptions
-                .into_iter()
-                .flatten()
-                .collect::<HashMap<_, _>>();
-            
-            Some(combined)
-        } else {
-            None
-        };
+        // No descriptions.
+        if descriptions.is_empty() {
+            return Ok((offers, None));
+        }
         
-        Ok((offers, descriptions))
+        let descriptions = descriptions
+            .into_iter()
+            .flatten()
+            .collect::<HashMap<_, _>>();
+        
+        return Ok((offers, Some(descriptions)));
+        
     }
     
     /// Combines trade offers with their descriptions using the cache and the Steam Web API. 
