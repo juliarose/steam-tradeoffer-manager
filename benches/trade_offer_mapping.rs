@@ -1,3 +1,7 @@
+// This tests the efficiency of mapping trade offers' items to their classinfos
+// using a preloaded ClassInfoCache.
+// This is the most expensive task in the crate.
+
 use steam_tradeoffer_manager::types::{AppId, ClassId, InstanceId};
 use steam_tradeoffer_manager::ClassInfoCache;
 use steam_tradeoffer_manager::response::ClassInfo;

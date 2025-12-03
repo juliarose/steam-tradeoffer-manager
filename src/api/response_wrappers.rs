@@ -110,7 +110,7 @@ pub struct GetInventoryOldResponse {
 
 #[derive(Deserialize, Debug)]
 pub struct GetAssetClassInfoResponse {
-    // The result only needs to be iterated over where a hashmap is unnecessary.
+    // The original response is a map but a vector is easier to work with.
     #[serde(deserialize_with = "serialize::deserialize_classinfo_map_raw")]
     pub result: Vec<(ClassInfoAppClass, Box<RawValue>)>,
 }

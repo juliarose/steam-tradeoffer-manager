@@ -36,6 +36,8 @@ use reqwest::header::REFERER;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+const CLASSINFO_CHUNK_SIZE: usize = 100;
+
 /// The underlying API for interacting with Steam trade offers.
 #[derive(Debug, Clone)]
 pub struct SteamTradeOfferAPI {
@@ -297,7 +299,9 @@ impl SteamTradeOfferAPI {
         classes: &[ClassInfoAppClass],
     ) -> Result<ClassInfoMap> {
         let query = {
-            let mut query = Vec::new();
+            // pre-allocate enough space
+            let capacity = 1 + 3 + (classes.len() * 2);
+            let mut query = Vec::with_capacity(capacity);
             
             // We prefer using the key for this method - this may change in the future.
             // For now it's reliable, and this method doesn't require authorization.
@@ -329,7 +333,7 @@ impl SteamTradeOfferAPI {
             .send()
             .await?;
         let body: GetAssetClassInfoResponse = parses_response(response).await?;
-        // Convert the classinfos into a map.
+        // Deserialize and convert the classinfos into a map.
         let (
             classinfos,
             classinfos_raw,
@@ -373,8 +377,7 @@ impl SteamTradeOfferAPI {
         appid: AppId,
         classes: Vec<ClassInfoAppClass>,
     ) -> Result<Vec<ClassInfoMap>> {
-        let chunk_size = 100;
-        let chunks = classes.chunks(chunk_size);
+        let chunks = classes.chunks(CLASSINFO_CHUNK_SIZE);
         let mut maps = Vec::with_capacity(chunks.len());
         
         for chunk in chunks {
@@ -430,14 +433,9 @@ impl SteamTradeOfferAPI {
         let mut cache_map = HashMap::with_capacity(needed.len());
         
         for (appid, classid, instanceid) in needed {
-            match apps.get_mut(appid) {
-                Some(classes) => {
-                    classes.push((*classid, *instanceid));
-                },
-                None => {
-                    apps.insert(*appid, vec![(*classid, *instanceid)]);
-                },
-            }
+            apps.entry(*appid)
+                .or_insert_with(Vec::new)
+                .push((*classid, *instanceid));
         }
         
         for (appid, classes) in apps {
@@ -969,7 +967,7 @@ impl SteamTradeOfferAPI {
     /// Gets a user's inventory.
     /// 
     /// The number of items to fetch per request can be set with
-    /// [`TradeOfferManagerBuilder::get_inventory_page_size`](crate::TradeOfferManagerBuilder::get_inventory_page_size).
+    /// [`SteamTradeOfferAPIBuilder::get_inventory_page_size`].
     /// 
     /// For trade-reversible items (CS2), make sure to pass `false` for `tradable_only`.
     pub async fn get_inventory(
