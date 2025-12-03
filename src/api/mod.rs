@@ -299,9 +299,9 @@ impl SteamTradeOfferAPI {
         let query = {
             let mut query = Vec::new();
             
-            // We prefer using the key for this method
+            // We prefer using the key for this method - this may change in the future.
+            // For now it's reliable, and this method doesn't require authorization.
             if let Some(key) = &self.api_key {
-                // No need to provide the key if we have an access token.
                 query.push(("key".to_string(), key.to_string()));
             } else {
                 let access_token = self.get_access_token()?;
@@ -344,8 +344,8 @@ impl SteamTradeOfferAPI {
                 let classinfo = serde_json::from_str::<ClassInfo>(classinfo_raw.get())
                     // Ignores invalid or empty classinfo data.
                     .ok()?;
-                // We need both a serialized and raw version of the classinfo.
-                // One to save to the filesystem, and one for use in the map.
+                // We need a raw version to save to the filesystem, and a deserialzied version
+                // to return in the map for use (with Arc).
                 let pair = (
                     ((appid, classid, instanceid), Arc::new(classinfo)),
                     ((classid, instanceid), classinfo_raw),
@@ -900,9 +900,13 @@ impl SteamTradeOfferAPI {
         
         let mut responses: Vec<GetInventoryOldResponse> = Vec::new();
         let mut start: Option<u64> = None;
-        let sid = u64::from(steamid);
-        let uri = Self::get_url(&format!("/profiles/{sid}/inventory/json/{appid}/{contextid}"));
-        let referer = Self::get_url(&format!("/profiles/{sid}/inventory"));
+        let steamid_64 = u64::from(steamid);
+        let uri = Self::get_url(
+            &format!("/profiles/{steamid_64}/inventory/json/{appid}/{contextid}")
+        );
+        let referer = Self::get_url(
+            &format!("/profiles/{steamid_64}/inventory")
+        );
         
         loop {
             let response = self.client.get(&uri)
@@ -1011,9 +1015,13 @@ impl SteamTradeOfferAPI {
         let mut start_assetid: Option<u64> = None;
         // Not required, but included when available.
         let access_token = self.get_access_token().ok();
-        let sid = u64::from(steamid);
-        let uri = Self::get_url(&format!("/inventory/{sid}/{appid}/{contextid}"));
-        let referer = Self::get_url(&format!("/profiles/{sid}/inventory"));
+        let steamid_64 = u64::from(steamid);
+        let uri = Self::get_url(
+            &format!("/inventory/{steamid_64}/{appid}/{contextid}")
+        );
+        let referer = Self::get_url(
+            &format!("/profiles/{steamid_64}/inventory")
+        );
         let mut asset_properties = HashMap::new();
         
         loop {

@@ -56,11 +56,11 @@ pub async fn get_inventory<'a>(
     
     let mut responses: Vec<GetInventoryResponse> = Vec::new();
     let mut start_assetid: Option<u64> = None;
-    let sid = u64::from(options.steamid);
+    let steamid_64 = u64::from(options.steamid);
     let appid = options.appid;
     let contextid = options.contextid;
-    let uri = format!("https://{COMMUNITY_HOSTNAME}/inventory/{sid}/{appid}/{contextid}");
-    let referer = format!("https://{COMMUNITY_HOSTNAME}/profiles/{sid}/inventory");
+    let uri = format!("https://{COMMUNITY_HOSTNAME}/inventory/{steamid_64}/{appid}/{contextid}");
+    let referer = format!("https://{COMMUNITY_HOSTNAME}/profiles/{steamid_64}/inventory");
     
     loop {
         let response = options.client.get(&uri)
