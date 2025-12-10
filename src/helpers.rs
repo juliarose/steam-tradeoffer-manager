@@ -324,10 +324,6 @@ pub async fn parses_response<D>(
 where
     D: DeserializeOwned,
 {
-    #[derive(Deserialize)]
-    struct TradeErrorBody {
-    }
-    
     let status = response.status();
     let headers = response.headers().clone();
     let bytes = response.bytes().await?;
