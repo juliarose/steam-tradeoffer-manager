@@ -16,7 +16,6 @@ use reqwest::cookie::{CookieStore, Jar};
 use reqwest::header;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use serde::de::{self, DeserializeOwned, Deserializer, MapAccess, Visitor};
-use serde::Deserialize;
 use serde_json::de::SliceRead;
 
 lazy_static! {
