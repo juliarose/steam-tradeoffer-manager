@@ -260,6 +260,7 @@ pub struct RawTrade {
     pub assets_received: Vec<RawTradeAsset>,
     /// The trade ID of the trade that rolled back this trade, if any.
     #[serde(default)]
+    #[serde(with = "serialize::option_string")]
     pub rollback_trade: Option<TradeId>,
 }
 
@@ -374,5 +375,35 @@ impl RawTrade {
             time_init: self.time_init,
             rollback_trade: self.rollback_trade,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserializes_rollback_trade_as_string() {
+        let trade: RawTrade = serde_json::from_str(r#"{
+            "tradeid": "724659172349898841",
+            "steamid_other": "76561198000000000",
+            "time_init": 1756987257,
+            "status": 12,
+            "rollback_trade": "724659172349898842"
+        }"#).unwrap();
+
+        assert_eq!(trade.rollback_trade, Some(724659172349898842));
+    }
+
+    #[test]
+    fn deserializes_missing_rollback_trade_as_none() {
+        let trade: RawTrade = serde_json::from_str(r#"{
+            "tradeid": "724659172349898841",
+            "steamid_other": "76561198000000000",
+            "time_init": 1756987257,
+            "status": 3
+        }"#).unwrap();
+
+        assert_eq!(trade.rollback_trade, None);
     }
 }
